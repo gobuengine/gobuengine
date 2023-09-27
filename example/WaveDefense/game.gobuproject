@@ -1,0 +1,11 @@
+{
+    "setting": {
+        "name": "WaveDefense",
+        "width": 1280,
+        "height": 720
+    },
+    "game":{
+        "worldGame":"main.gworld",
+        "worldEditor":"main.gworld",
+    }
+}
