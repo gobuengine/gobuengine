@@ -7,6 +7,7 @@
 #include "GobuSignalListComponentSelected.h"
 #include "GobuSignalListComponentSave.h"
 #include "GobuSignalListComponentSaveVirtual.h"
+#include "GobuSignalListComponentBuild.h"
 
 static GtkWidget *GobuUiComponentSystem_Toolbar(void);
 static GtkWidget *GobuUiComponentSystem_SourceView(void);
@@ -74,6 +75,7 @@ static GtkWidget *GobuUiComponentSystem_Toolbar(void)
 
     item = GobuWidgetButtonIconLabelNew("media-view-subtitles-symbolic", "Build");
     gtk_box_append(toolbar, item);
+    g_signal_connect(item, "clicked", G_CALLBACK(GobuSignalListComponentBuild), component);
 
     GobuWidgetToolbarSeparatorW(toolbar);
 

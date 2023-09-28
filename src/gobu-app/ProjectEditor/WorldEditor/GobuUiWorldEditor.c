@@ -3,6 +3,8 @@
 #include "GobuUiMenuBar.h"
 #include "GobuWidgets.h"
 
+#include "ContentBrowser/GobuUiContentBrowser.h"
+
 /* Local function */
 
 static GtkWidget *ToolbarInit(void);
@@ -90,7 +92,7 @@ static GtkWidget *DockedModuleInit(void)
         gtk_widget_set_size_request(GTK_WIDGET(notebook_docked_left_bottom), DOCK_L_MIN_SIZE, -1);
         gtk_paned_set_end_child(GTK_PANED(docked_left_top), notebook_docked_left_bottom);
         {
-            GtkWidget *viewFile = gtk_label_new("Content Browser");
+            GtkWidget *viewFile = GobuUiContentBrowserNew();
             gtk_notebook_append_page(GTK_NOTEBOOK(notebook_docked_left_bottom), viewFile, gtk_label_new("Content Browser"));
         }
 
