@@ -89,7 +89,16 @@
         "gobuuicontentbrowsernavtoolbar.h": "c",
         "gobucontentbrowser.h": "c",
         "gobufnresourcedefaultload.h": "c",
-        "gobuprojecteditorresource.h": "c"
+        "gobuprojecteditorresource.h": "c",
+        "sokol_gl.h": "c",
+        "sokol_glue.h": "c",
+        "gobufnlistcomponentsave.h": "c",
+        "gobu-gobu.h": "c",
+        "sokol_gfx.h": "c",
+        "gobu-project.h": "c",
+        "thread": "c",
+        "gobuembedstage.h": "c",
+        "worlrdviewport.h": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

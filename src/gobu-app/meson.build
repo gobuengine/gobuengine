@@ -13,6 +13,9 @@ gobuapp_src = [
     'ProjectManager/GobuSignalOpenProject.c',
     'ProjectManager/GobuFnCreateProject.c',
 
+    # MODULE WIDGETS-GTK
+    'ProjectEditor/Widget/GobuEmbedStage.c',
+
     # MODULE COMPONENTSYSTEM
     'ProjectEditor/ComponentSystem/GobuComponentSystem.c',
     'ProjectEditor/ComponentSystem/GobuUiComponentSystem.c',
@@ -54,6 +57,8 @@ gobuapp_src = [
     'ProjectEditor/WorldEditor/ContentBrowser/GobuUiContentBrowserNavToolbar.c',
     'ProjectEditor/WorldEditor/ContentBrowser/GobuUiContentBrowserToolbar.c',
     'ProjectEditor/WorldEditor/ContentBrowser/GobuUiContentBrowserViewFile.c',
+    # MODULE WORLD EDITOR:WorldEditor->WorlrdViewport
+    'ProjectEditor/WorldEditor/WorlrdViewport/WorlrdViewport.c',
     # MAIN
     'GobuWidgets.c',
     # 'ProjectEditor/gobu-editor-menubar.c', 

@@ -3,13 +3,11 @@
 #include "GobuWidgets.h"
 #include "ProjectManager/GobuProjectManager.h"
 #include "ProjectEditor/GobuProjectEditor.h"
-#include "gobu/gobu.h"
+#include "gobu/gobu-gobu.h"
 
 static void on_activate(GtkApplication *app)
 {
     GobuWidgetThemeInit();
-    GobuContext_init();
-
     GobuProjectManagerInit(app);
 }
 

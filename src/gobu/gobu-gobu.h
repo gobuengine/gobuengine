@@ -28,29 +28,78 @@
 #ifndef __GOBU_H__
 #define __GOBU_H__
 #include <glib.h>
+#include <stdint.h>
 #include "thirdparty/binn/binn.h"
+#include "thirdparty/flecs/flecs.h"
 
-typedef struct _GobuContext
+#define GobuEcsEntity ecs_entity_t
+#define GobuEcsWorld ecs_world_t
+
+typedef struct GobuColor
 {
-    struct
-    {
-        gboolean (*load)(const gchar *path);
-        gchar *path;
-        gchar *name;
-        gchar *component;
-    } project;
+    float r, g, b, a;
+} GobuColor;
 
-    struct
-    {
-        void *(*parse)(const gchar *stringify);
-        gchar *(*stringify)(void *obj_json);
-        void *(*parse_from_file)(const gchar *filename);
-        void *(*stringify_from_file)(void *obj_json, const gchar *filename);
-    } JSON;
-} GobuContext;
+typedef struct GobuTexture
+{
+    unsigned int id;
+    int width, height;
+} GobuTexture;
 
-GobuContext *GobuContextGet();
-void GobuContext_init(void);
-void GobuContext_free(void);
+typedef struct GobuRectangle
+{
+    float x, y, w, h;
+} GobuRectangle;
+
+typedef struct GobuVec2
+{
+    float x, y;
+} GobuVec2;
+
+typedef struct GobuCamera
+{
+    GobuVec2 scale;
+    GobuVec2 pos;
+    GobuVec2 target;
+    GobuVec2 offset;
+    float rotation;
+    float zoom;
+} GobuCamera;
+
+const char *GobuJsonStringify(binn *b);
+binn *GobuJsonParse(char *json_string);
+binn *GobuJsonLoadFromFile(const char *filename);
+gboolean GobuJsonSaveToFile(binn *b, const char *filename);
+
+gboolean GobuProjectLoad(const gchar *path);
+const char *GobuProjectGetPath(void);
+const char *GobuProjectGetName(void);
+
+void GobuRenderInit(void);
+void GobuRenderShutdown(void);
+void GobuRenderFrameBegin(int width, int height, GobuColor color);
+void GobuRenderFrameEnd(int width, int height);
+void GobuRenderViewport(int x, int y, int width, int height);
+void GobuRenderProject(float left, float right, float top, float bottom);
+void GobuRenderClearColor(GobuColor color);
+void GobuRenderClear(void);
+void GobuRenderSetColor(GobuColor color);
+void GobuRenderResetColor(void);
+void GobuRenderSetRotate(float theta, float x, float y);
+void GobuRenderSetScale(float sx, float sy, float x, float y);
+void GobuRenderSetTranslate(float x, float y);
+
+void GobuShapeDrawFilledRect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color);
+void GobuShapeDrawCheckboard(int width, int height, int screen_width, int screen_height);
+
+void GobuTextureDrawTexture(GobuTexture texture, GobuRectangle source, GobuRectangle dest, GobuColor tint);
+GobuTexture GobuTextureLoadFile(const char *filename);
+void GobuTextureFree(GobuTexture texture);
+
+GobuColor GobuColorRGBToFloat(uint8_t r, uint8_t g, uint8_t b);
+
+GobuEcsWorld *GobuEcsWorldInit(void);
+void GobuEcsWorldFree(GobuEcsWorld *world);
+GobuEcsEntity GobuEcsEntityNew(const char *name);
 
 #endif // __GOBU_H__

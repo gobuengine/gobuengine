@@ -1,5 +1,5 @@
 #include "GobuContentBrowser.h"
-#include "gobu/gobu.h"
+#include "gobu/gobu-gobu.h"
 
 struct _GobuBrowserContent
 {
@@ -15,12 +15,11 @@ static void gobu_browser_content_class_init(GobuBrowserContentClass *klass)
 
 static void gobu_browser_content_init(GobuBrowserContent *self)
 {
-    GobuContext *ctx = GobuContextGet();
     GobuBrowserContentPrivate *private = gobu_browser_content_get_instance_private(self);
 
     private->path_back = g_ptr_array_new();
     private->path_forward = g_ptr_array_new();
-    private->path_current = g_strdup(g_build_filename(ctx->project.path,"Content", NULL));
+    private->path_current = g_strdup(g_build_filename(GobuProjectGetPath(),"Content", NULL));
     private->path_default = g_strdup(private->path_current);
 }
 

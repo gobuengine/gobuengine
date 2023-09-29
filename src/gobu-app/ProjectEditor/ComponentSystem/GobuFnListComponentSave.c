@@ -15,6 +15,9 @@ void GobuFnListComponentSave(GobuComponentSystem *component)
         binn_free(obj);
     }
 
-    GobuContextGet()->JSON.stringify_from_file(list, GobuContextGet()->project.component);
+    gchar *gcomponent = g_build_filename(GobuProjectGetPath(), "Scripts", "game.gcomponent", NULL);
+    GobuJsonSaveToFile(list, gcomponent);
+    g_free(gcomponent);
+    
     binn_free(list);    
 }

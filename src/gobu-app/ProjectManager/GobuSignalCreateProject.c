@@ -1,7 +1,7 @@
 #include "GobuSignalCreateProject.h"
 #include "GobuFnCreateProject.h"
 #include "ProjectEditor/GobuProjectEditor.h"
-#include "gobu/gobu.h"
+#include "gobu/gobu-gobu.h"
 
 void GobuSignalCreateProject(GtkWidget *widget, GobuProjectManager *ctx)
 {
@@ -10,10 +10,8 @@ void GobuSignalCreateProject(GtkWidget *widget, GobuProjectManager *ctx)
 
     if (GobuFnCreateProject(name, path))
     {
-        GobuContext *gobu = GobuContextGet();
-
         gchar *path_str = g_build_filename(path, name, NULL);
-        if (gobu->project.load(path_str))
+        if (GobuProjectLoad(path_str))
         {
             GobuProjectEditorInit(gtk_window_get_application(ctx->window));
         }

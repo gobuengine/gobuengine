@@ -4,6 +4,7 @@
 #include "GobuWidgets.h"
 
 #include "ContentBrowser/GobuUiContentBrowser.h"
+#include "WorlrdViewport/WorlrdViewport.h"
 
 /* Local function */
 
@@ -112,7 +113,7 @@ static GtkWidget *DockedModuleInit(void)
             gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook_docked_center), FALSE);
             gtk_paned_set_start_child(GTK_PANED(docked_right), notebook_docked_center);
             {
-                GtkWidget *scene_viewport = gtk_label_new("Viewport");
+                GtkWidget *scene_viewport = GobuWorldViewportNew();
                 gtk_notebook_append_page(GTK_NOTEBOOK(notebook_docked_center), scene_viewport, gtk_label_new("Viewport"));
             }
 

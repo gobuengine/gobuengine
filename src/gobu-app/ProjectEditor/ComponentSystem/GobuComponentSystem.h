@@ -29,7 +29,7 @@
 #define __GOBU_COMPONENT_SYSTEM_H__
 #include <gtk/gtk.h>
 #include "../GobuProjectEditor.h"
-#include "gobu/gobu.h"
+#include "gobu/gobu-gobu.h"
 
 #define MAX_COMPONENTS 100
 

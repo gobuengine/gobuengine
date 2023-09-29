@@ -1,6 +1,6 @@
 #include "GobuSignalOpenProject.h"
 #include "ProjectEditor/GobuProjectEditor.h"
-#include "gobu/gobu.h"
+#include "gobu/gobu-gobu.h"
 
 static void GobuSignalRadyOpenProject(GObject *source, GAsyncResult *res, GobuProjectManager *ctx)
 {
@@ -15,10 +15,8 @@ static void GobuSignalRadyOpenProject(GObject *source, GAsyncResult *res, GobuPr
         g_return_if_fail(file);
     }
 
-    GobuContext *gobu = GobuContextGet();
-
     char *path_str = g_file_get_path(file);
-    if (gobu->project.load(path_str))
+    if (GobuProjectLoad(path_str))
     {
         GobuProjectEditorInit(gtk_window_get_application(ctx->window));
     }

@@ -1,6 +1,6 @@
 #include "GobuProjectEditor.h"
 #include "GobuUiProjectEditor.h"
-#include "gobu/gobu.h"
+#include "gobu/gobu-gobu.h"
 
 static GobuProjectEditor *ctx;
 
@@ -12,7 +12,9 @@ void GobuProjectEditorInit(GtkApplication *app)
     GobuProjectEditorResourceInit();
     
     // de-serialize el game.gcomponent
-    ctx->components = GobuContextGet()->JSON.parse_from_file(GobuContextGet()->project.component);
+    gchar *gcomponent = g_build_filename(GobuProjectGetPath(), "Scripts", "game.gcomponent", NULL);
+    ctx->components = GobuJsonParse(gcomponent);
+    g_free(gcomponent);
 
     GobuUiProjectEditor(app, ctx);
 }
