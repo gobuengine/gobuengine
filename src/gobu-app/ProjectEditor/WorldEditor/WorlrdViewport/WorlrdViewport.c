@@ -2,86 +2,29 @@
 #include "Widget/GobuEmbedStage.h"
 #include "GobuWidgets.h"
 
-// static ErmineScene *scene_main;
-
-/**
- * gtk_list_item_get_position: (attributes org.gtk.Method.get_property=position)
- * @self: a `GtkListItem`
- *
- * Gets the position in the model that @self currently displays.
- *
- * If @self is unbound, %GTK_INVALID_LIST_POSITION is returned.
- *
- * Returns: The position of this item
- */
-
 static void on_update(GtkWidget *viewport)
 {
     // ermine_scene__update(scene_main);
 }
 
-/**
- * gtk_list_item_get_position: (attributes org.gtk.Method.get_property=position)
- * @self: a `GtkListItem`
- *
- * Gets the position in the model that @self currently displays.
- *
- * If @self is unbound, %GTK_INVALID_LIST_POSITION is returned.
- *
- * Returns: The position of this item
- */
-
 float angle = 0;
 static void on_draw(GtkWidget *viewport)
 {
     // ermine_scene__draw(scene_main);
-    GobuShapeDrawFilledRect((GobuRectangle){100, 100, 50, 50},(GobuVec2){1.0f, 1.0f},(GobuVec2){0.5f, 0.5f}, angle, GobuColorRGBToFloat(255, 0, 0));
+    GobuShapeDrawFilledRect((GobuRectangle){100, 100, 50, 50}, (GobuVec2){1.0f, 1.0f}, (GobuVec2){0.5f, 0.5f}, angle, GobuColorRGBToFloat(255, 0, 0));
     angle += 0.05f;
 }
-
-/**
- * gtk_list_item_get_position: (attributes org.gtk.Method.get_property=position)
- * @self: a `GtkListItem`
- *
- * Gets the position in the model that @self currently displays.
- *
- * If @self is unbound, %GTK_INVALID_LIST_POSITION is returned.
- *
- * Returns: The position of this item
- */
 
 static void on_start(GtkWidget *viewport)
 {
     // scene_main = ermine_scene_new();
 }
 
-/**
- * gtk_list_item_get_position: (attributes org.gtk.Method.get_property=position)
- * @self: a `GtkListItem`
- *
- * Gets the position in the model that @self currently displays.
- *
- * If @self is unbound, %GTK_INVALID_LIST_POSITION is returned.
- *
- * Returns: The position of this item
- */
-
 static gboolean drag_drop(GtkDropTarget *target, const GValue *value, double x, double y)
 {
     printf("Drop target: %f, %f\n", x, y);
     return TRUE;
 }
-
-/**
- * gtk_list_item_get_position: (attributes org.gtk.Method.get_property=position)
- * @self: a `GtkListItem`
- *
- * Gets the position in the model that @self currently displays.
- *
- * If @self is unbound, %GTK_INVALID_LIST_POSITION is returned.
- *
- * Returns: The position of this item
- */
 
 GtkWidget *GobuWorldViewportNew(void)
 {

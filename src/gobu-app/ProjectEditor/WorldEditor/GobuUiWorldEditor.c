@@ -5,6 +5,7 @@
 
 #include "ContentBrowser/GobuUiContentBrowser.h"
 #include "WorlrdViewport/WorlrdViewport.h"
+#include "WorldOutliner/GobuWorldOutliner.h"
 
 /* Local function */
 
@@ -84,7 +85,7 @@ static GtkWidget *DockedModuleInit(void)
         gtk_widget_set_size_request(GTK_WIDGET(notebook_docked_left_top), DOCK_R_MIN_SIZE, -1);
         gtk_paned_set_start_child(GTK_PANED(docked_left_top), notebook_docked_left_top);
         {
-            GtkWidget *outliner = gtk_label_new("World Outliner");
+            GtkWidget *outliner = GobuWorldOutliner();
             gtk_notebook_append_page(GTK_NOTEBOOK(notebook_docked_left_top), outliner, gtk_label_new("World Outliner"));
         }
 

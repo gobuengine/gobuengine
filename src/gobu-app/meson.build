@@ -36,6 +36,8 @@ gobuapp_src = [
     'ProjectEditor/WorldEditor/GobuWorldEditor.c',
     'ProjectEditor/WorldEditor/GobuUiWorldEditor.c',
     'ProjectEditor/WorldEditor/GobuUiMenuBar.c',
+    # MODULE WORLD EDITOR:WorldEditor->WorldOutliner
+    'ProjectEditor/WorldEditor/WorldOutliner/GobuWorldOutliner.c',
     # MODULE WORLD EDITOR:WorldEditor->ContentBrowser
     'ProjectEditor/WorldEditor/ContentBrowser/GobuContentBrowser.c',
     'ProjectEditor/WorldEditor/ContentBrowser/GobuFnContentBrowserGetIconFile.c',

@@ -98,7 +98,9 @@
         "gobu-project.h": "c",
         "thread": "c",
         "gobuembedstage.h": "c",
-        "worlrdviewport.h": "c"
+        "worlrdviewport.h": "c",
+        "stdbool.h": "c",
+        "gobuworldoutliner.h": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

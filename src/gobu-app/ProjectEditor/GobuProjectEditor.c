@@ -13,7 +13,7 @@ void GobuProjectEditorInit(GtkApplication *app)
     
     // de-serialize el game.gcomponent
     gchar *gcomponent = g_build_filename(GobuProjectGetPath(), "Scripts", "game.gcomponent", NULL);
-    ctx->components = GobuJsonParse(gcomponent);
+    ctx->components = GobuJsonLoadFromFile(gcomponent);
     g_free(gcomponent);
 
     GobuUiProjectEditor(app, ctx);

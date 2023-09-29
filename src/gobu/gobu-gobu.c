@@ -32,6 +32,17 @@ typedef struct GobuCoreData
     {
         GobuEcsWorld *world;
         GobuEcsEntity Root;
+
+        struct
+        {
+            GobuEcsEntity Vec2;
+            GobuEcsEntity Color;
+            GobuEcsEntity Rect;
+            GobuEcsEntity Texture;
+            GobuEcsEntity Sprite;
+            GobuEcsEntity Camera;
+            GobuEcsEntity Entity;
+        } Component;
     } Ecs;
 } GobuCoreData;
 
@@ -91,7 +102,7 @@ binn *GobuJsonLoadFromFile(const char *filename)
  * @param filename El nombre del archivo en el que se va a guardar el objeto JSON.
  * @return TRUE si la operación de guardado se realizó con éxito, FALSE si falla.
  */
-gboolean GobuJsonSaveToFile(binn *b, const char *filename)
+bool GobuJsonSaveToFile(binn *b, const char *filename)
 {
     return binn_deserialize_from_file(b, filename);
 }
@@ -150,8 +161,9 @@ void GobuRenderInit(void)
     sg_setup(&(sg_desc){0});
     sgp_setup(&(sgp_desc){0});
 
-    CORE.CameraManager.main.pos = (GobuVec2){0.0f, 0.0f};
-    CORE.CameraManager.main.scale = (GobuVec2){1.0f, 1.0f};
+    CORE.CameraManager.main.target = (GobuVec2){0.0f, 0.0f};
+    CORE.CameraManager.main.offset = (GobuVec2){1.0f, 1.0f};
+    CORE.CameraManager.main.zoom = 1.0f;
     CORE.CameraManager.main.rotation = 0.0f;
 
     CORE.Ecs.world = GobuEcsWorldInit();
@@ -184,8 +196,8 @@ void GobuRenderFrameBegin(int width, int height, GobuColor color)
     sgp_begin(width, height);
     GobuRenderViewport(0, 0, width, height);
     // GobuRenderProject(width * -0.5f, width * 0.5f, height * 0.5f, height * -0.5f);
-    GobuRenderSetScale(CORE.CameraManager.main.scale.x, CORE.CameraManager.main.scale.y, 0, 0);
-    GobuRenderSetTranslate(CORE.CameraManager.main.pos.x, CORE.CameraManager.main.pos.y);
+    GobuRenderSetScale(CORE.CameraManager.main.zoom, CORE.CameraManager.main.zoom, 0, 0);
+    GobuRenderSetTranslate(CORE.CameraManager.main.target.x, CORE.CameraManager.main.target.y);
     GobuRenderSetRotate(CORE.CameraManager.main.rotation, 0, 0);
     GobuRenderClearColor(color);
 }
@@ -476,6 +488,16 @@ void GobuEcsWorldFree(GobuEcsWorld *world)
     ecs_fini(world);
 }
 
+void GobuEcsWorldFrame(void)
+{
+    ecs_progress(CORE.Ecs.world, 0);
+}
+
+GobuEcsEntity GobuEcsWorldGetEntityRoot(void)
+{
+    return CORE.Ecs.Root;
+}
+
 GobuEcsEntity GobuEcsEntityNew(const char *name)
 {
     GobuEcsEntity e = ecs_new_id(CORE.Ecs.world);
@@ -483,53 +505,125 @@ GobuEcsEntity GobuEcsEntityNew(const char *name)
     return e;
 }
 
-static void _GobuEcsComponentDefaultInit(void)
+GobuEcsIter GobuEcsEntityGetChildren(GobuEcsEntity entity)
 {
-    GobuEcsEntity e_GobuVec2 = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-        .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuVec2"}),
-        .type.size = ECS_SIZEOF(GobuVec2),
-        .type.alignment = ECS_ALIGNOF(GobuVec2)
-    });
-
-    ecs_struct(CORE.Ecs.world, {
-        .entity = e_GobuVec2, 
-        .members = {
-            {.name = "x", .type = ecs_id(ecs_f32_t)},
-            {.name = "y", .type = ecs_id(ecs_f32_t)},
-        }
-    });
-
-    GobuEcsEntity e_GobuColor= ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-        .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuColor"}),
-        .type.size = ECS_SIZEOF(GobuColor),
-        .type.alignment = ECS_ALIGNOF(GobuColor)
-    });
-
-    ecs_struct(CORE.Ecs.world, {
-        .entity = e_GobuColor, 
-        .members = {
-            {.name = "r", .type = ecs_id(ecs_f32_t)},
-            {.name = "g", .type = ecs_id(ecs_f32_t)},
-            {.name = "b", .type = ecs_id(ecs_f32_t)},
-            {.name = "a", .type = ecs_id(ecs_f32_t)},
-        }
-    });
-
-    GobuEcsEntity e_GobuRectangle= ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-        .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuRectangle"}),
-        .type.size = ECS_SIZEOF(GobuRectangle),
-        .type.alignment = ECS_ALIGNOF(GobuRectangle)
-    });
-
-    ecs_struct(CORE.Ecs.world, {
-        .entity = e_GobuRectangle, 
-        .members = {
-            {.name = "x", .type = ecs_id(ecs_f32_t)},
-            {.name = "y", .type = ecs_id(ecs_f32_t)},
-            {.name = "w", .type = ecs_id(ecs_f32_t)},
-            {.name = "h", .type = ecs_id(ecs_f32_t)},
-        }
-    });
-
+    return ecs_children(CORE.Ecs.world, entity);
 }
 
+bool GobuEcsEntityChildrenNext(GobuEcsIter *iter)
+{
+    return ecs_children_next(iter);
+}
+
+const char *GobuEcsEntityGetName(GobuEcsEntity entity)
+{
+    GobuEntity info = *(GobuEntity *)ecs_get_id(CORE.Ecs.world, entity, CORE.Ecs.Component.Entity);
+    return g_strdup(info.name);
+}
+
+/*
+
+*/
+
+static void _GobuEcsComponentDefaultInit(void)
+{
+    // Struct GobuVec2
+    CORE.Ecs.Component.Vec2 = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
+                                                                     .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuVec2"}),
+                                                                     .type.size = ECS_SIZEOF(GobuVec2),
+                                                                     .type.alignment = ECS_ALIGNOF(GobuVec2)});
+
+    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Vec2,
+                                .members = {
+                                    {.name = "x", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "y", .type = ecs_id(ecs_f32_t)},
+                                }});
+
+    // Struct GobuColor
+    CORE.Ecs.Component.Color = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
+                                                                      .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuColor"}),
+                                                                      .type.size = ECS_SIZEOF(GobuColor),
+                                                                      .type.alignment = ECS_ALIGNOF(GobuColor)});
+
+    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Color,
+                                .members = {
+                                    {.name = "r", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "g", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "b", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "a", .type = ecs_id(ecs_f32_t)},
+                                }});
+
+    // Struct GobuRectangle
+    CORE.Ecs.Component.Rect = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
+                                                                     .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuRectangle"}),
+                                                                     .type.size = ECS_SIZEOF(GobuRectangle),
+                                                                     .type.alignment = ECS_ALIGNOF(GobuRectangle)});
+
+    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Rect,
+                                .members = {
+                                    {.name = "x", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "y", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "w", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "h", .type = ecs_id(ecs_f32_t)},
+                                }});
+
+    // Struct GobuTexture
+    CORE.Ecs.Component.Texture = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
+                                                                        .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuTexture"}),
+                                                                        .type.size = ECS_SIZEOF(GobuTexture),
+                                                                        .type.alignment = ECS_ALIGNOF(GobuTexture)});
+
+    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Texture,
+                                .members = {
+                                    {.name = "id", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "width", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "height", .type = ecs_id(ecs_f32_t)},
+                                }});
+
+    // Struct GobuCamera
+    CORE.Ecs.Component.Camera = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
+                                                                       .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuCamera"}),
+                                                                       .type.size = ECS_SIZEOF(GobuCamera),
+                                                                       .type.alignment = ECS_ALIGNOF(GobuCamera)});
+
+    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Camera,
+                                .members = {
+                                    {.name = "target", .type = CORE.Ecs.Component.Vec2},
+                                    {.name = "offset", .type = CORE.Ecs.Component.Vec2},
+                                    {.name = "rotation", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "zoom", .type = ecs_id(ecs_f32_t)},
+                                }});
+
+    // Struct GobuSprite
+    CORE.Ecs.Component.Sprite = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
+                                                                       .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuSprite"}),
+                                                                       .type.size = ECS_SIZEOF(GobuSprite),
+                                                                       .type.alignment = ECS_ALIGNOF(GobuSprite)});
+
+    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Sprite,
+                                .members = {
+                                    {.name = "Texture", .type = CORE.Ecs.Component.Texture},
+                                    {.name = "Color", .type = CORE.Ecs.Component.Color},
+                                    {.name = "Opacity", .type = ecs_id(ecs_f32_t)},
+                                    {.name = "FlipX", .type = ecs_id(ecs_bool_t)},
+                                    {.name = "FlipY", .type = ecs_id(ecs_bool_t)},
+                                    {.name = "Hframes", .type = ecs_id(ecs_i32_t)},
+                                    {.name = "Vframes", .type = ecs_id(ecs_i32_t)},
+                                    {.name = "frame", .type = ecs_id(ecs_i32_t)},
+                                }});
+
+    // Struct GobuEntity
+    CORE.Ecs.Component.Entity = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
+                                                                       .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuEntity"}),
+                                                                       .type.size = ECS_SIZEOF(GobuEntity),
+                                                                       .type.alignment = ECS_ALIGNOF(GobuEntity)});
+
+    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Entity,
+                                .members = {
+                                    {.name = "enable", .type = ecs_id(ecs_bool_t)},
+                                    {.name = "name", .type = ecs_id(ecs_string_t)},
+                                    {.name = "position", .type = CORE.Ecs.Component.Vec2},
+                                    {.name = "scale", .type = CORE.Ecs.Component.Vec2},
+                                    {.name = "rotation", .type = ecs_id(ecs_f32_t)},
+                                }});
+}

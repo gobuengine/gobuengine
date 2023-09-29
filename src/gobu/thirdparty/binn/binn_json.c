@@ -215,10 +215,10 @@ binn *APIENTRY binn_serialize_from_file(const char *filename)
   return json_obj_to_binn(json_parser_get_root(parser));
 }
 
-gboolean APIENTRY binn_deserialize_from_file(binn *base, const char *filename)
+bool APIENTRY binn_deserialize_from_file(binn *base, const char *filename)
 {
   char *buffer = binn_serialize(base);
-  return g_file_set_contents(filename, buffer, strlen(buffer), NULL);
+  return (bool)g_file_set_contents(filename, buffer, strlen(buffer), NULL);
 }
 
 binn *APIENTRY binn_serialize_load(char *str)

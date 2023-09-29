@@ -29,11 +29,13 @@
 #define __GOBU_H__
 #include <glib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include "thirdparty/binn/binn.h"
 #include "thirdparty/flecs/flecs.h"
 
 #define GobuEcsEntity ecs_entity_t
 #define GobuEcsWorld ecs_world_t
+#define GobuEcsIter ecs_iter_t
 
 typedef struct GobuColor
 {
@@ -58,18 +60,41 @@ typedef struct GobuVec2
 
 typedef struct GobuCamera
 {
-    GobuVec2 scale;
-    GobuVec2 pos;
     GobuVec2 target;
     GobuVec2 offset;
     float rotation;
     float zoom;
 } GobuCamera;
 
+typedef struct
+{
+    GobuTexture texture;
+    GobuColor color;
+    float opacity;
+    bool flipX;
+    bool flipY;
+    // config spriteSheet
+    uint32_t Hframes;
+    uint32_t Vframes;
+    uint32_t frame;
+    // hide params
+    GobuRectangle dest_rect;
+    GobuRectangle src_rect;
+} GobuSprite;
+
+typedef struct GobuEntity
+{
+    bool enable;
+    char *name;
+    GobuVec2 position;
+    GobuVec2 scale;
+    float rotation;
+} GobuEntity;
+
 const char *GobuJsonStringify(binn *b);
 binn *GobuJsonParse(char *json_string);
 binn *GobuJsonLoadFromFile(const char *filename);
-gboolean GobuJsonSaveToFile(binn *b, const char *filename);
+bool GobuJsonSaveToFile(binn *b, const char *filename);
 
 gboolean GobuProjectLoad(const gchar *path);
 const char *GobuProjectGetPath(void);
@@ -100,6 +125,11 @@ GobuColor GobuColorRGBToFloat(uint8_t r, uint8_t g, uint8_t b);
 
 GobuEcsWorld *GobuEcsWorldInit(void);
 void GobuEcsWorldFree(GobuEcsWorld *world);
+void GobuEcsWorldFrame(void);
+GobuEcsEntity GobuEcsWorldGetEntityRoot(void);
 GobuEcsEntity GobuEcsEntityNew(const char *name);
+const char *GobuEcsEntityGetName(GobuEcsEntity entity);
+GobuEcsIter GobuEcsEntityGetChildren(GobuEcsEntity entity);
+bool GobuEcsEntityChildrenNext(GobuEcsIter *iter);
 
 #endif // __GOBU_H__
