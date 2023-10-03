@@ -16,7 +16,7 @@ static void GobuSignalRadyOpenProject(GObject *source, GAsyncResult *res, GobuPr
     }
 
     char *path_str = g_file_get_path(file);
-    if (GobuProjectLoad(path_str))
+    if (gobu_project_load(path_str))
     {
         GobuProjectEditorInit(gtk_window_get_application(ctx->window));
     }

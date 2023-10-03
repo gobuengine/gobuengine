@@ -30,44 +30,54 @@
 #include <glib.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 #include "thirdparty/binn/binn.h"
 #include "thirdparty/flecs/flecs.h"
+
+#define GOBU_API
+
+#undef ECS_META_IMPL
+#ifndef FLECS_GAME_IMPL
+#define ECS_META_IMPL EXTERN // Ensure meta symbols are only defined once
+#endif
 
 #define GobuEcsEntity ecs_entity_t
 #define GobuEcsWorld ecs_world_t
 #define GobuEcsIter ecs_iter_t
 
-typedef struct GobuColor
-{
-    float r, g, b, a;
-} GobuColor;
+GOBU_API ECS_STRUCT(GobuColor, {
+    float r;
+    float g;
+    float b;
+    float a;
+});
 
-typedef struct GobuTexture
-{
+GOBU_API ECS_STRUCT(GobuTexture, {
     unsigned int id;
-    int width, height;
-} GobuTexture;
+    int width;
+    int height;
+});
 
-typedef struct GobuRectangle
-{
-    float x, y, w, h;
-} GobuRectangle;
+GOBU_API ECS_STRUCT(GobuRectangle, {
+    float x;
+    float y;
+    float w;
+    float h;
+});
 
-typedef struct GobuVec2
-{
-    float x, y;
-} GobuVec2;
+GOBU_API ECS_STRUCT(GobuVec2, {
+    float x;
+    float y;
+});
 
-typedef struct GobuCamera
-{
+GOBU_API ECS_STRUCT(GobuCamera, {
     GobuVec2 target;
     GobuVec2 offset;
     float rotation;
     float zoom;
-} GobuCamera;
+});
 
-typedef struct
-{
+GOBU_API ECS_STRUCT(GobuSprite, {
     GobuTexture texture;
     GobuColor color;
     float opacity;
@@ -80,56 +90,90 @@ typedef struct
     // hide params
     GobuRectangle dest_rect;
     GobuRectangle src_rect;
-} GobuSprite;
+});
 
-typedef struct GobuEntity
-{
+GOBU_API ECS_STRUCT(GobuEcsComponentRender, {
     bool enable;
     char *name;
     GobuVec2 position;
     GobuVec2 scale;
     float rotation;
-} GobuEntity;
+});
 
-const char *GobuJsonStringify(binn *b);
-binn *GobuJsonParse(char *json_string);
-binn *GobuJsonLoadFromFile(const char *filename);
-bool GobuJsonSaveToFile(binn *b, const char *filename);
+//----------------------------------------------------------------------------------
+// Global Variables Definition
+//----------------------------------------------------------------------------------
 
-gboolean GobuProjectLoad(const gchar *path);
-const char *GobuProjectGetPath(void);
-const char *GobuProjectGetName(void);
+/**
+ * Variable externa que representa la entidad de actualización de escenario.
+ *
+ * Esta variable externa se utiliza para acceder a la entidad que controla la actualización
+ * del escenario en el contexto de Gobu. La entidad puede estar definida en otro archivo.
+ */
+extern GobuEcsEntity GobuEcsOnEvent;
+extern GobuEcsEntity GobuEcsOnUpdate;
+extern GobuEcsEntity GobuEcsOnPreRender;
+extern GobuEcsEntity GobuEcsOnUiRender;
+extern GobuEcsEntity GobuEcsOnRender;
+extern GobuEcsEntity GobuEcsOnPostRender;
+extern GobuEcsEntity GobuEcsEntityWorldRoot;
 
-void GobuRenderInit(void);
-void GobuRenderShutdown(void);
-void GobuRenderFrameBegin(int width, int height, GobuColor color);
-void GobuRenderFrameEnd(int width, int height);
-void GobuRenderViewport(int x, int y, int width, int height);
-void GobuRenderProject(float left, float right, float top, float bottom);
-void GobuRenderClearColor(GobuColor color);
-void GobuRenderClear(void);
-void GobuRenderSetColor(GobuColor color);
-void GobuRenderResetColor(void);
-void GobuRenderSetRotate(float theta, float x, float y);
-void GobuRenderSetScale(float sx, float sy, float x, float y);
-void GobuRenderSetTranslate(float x, float y);
+//----------------------------------------------------------------------------------
+// Module specific Functions Declaration
+//----------------------------------------------------------------------------------
 
-void GobuShapeDrawFilledRect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color);
-void GobuShapeDrawCheckboard(int width, int height, int screen_width, int screen_height);
+GOBU_API const char *gobu_json_stringify(binn *b);
+GOBU_API binn *gobu_json_parse(char *json_string);
+GOBU_API binn *gobu_json_load_from_file(const char *filename);
+GOBU_API bool gobu_json_save_to_file(binn *b, const char *filename);
 
-void GobuTextureDrawTexture(GobuTexture texture, GobuRectangle source, GobuRectangle dest, GobuColor tint);
-GobuTexture GobuTextureLoadFile(const char *filename);
-void GobuTextureFree(GobuTexture texture);
+GOBU_API gboolean gobu_project_load(const gchar *path);
+GOBU_API const char *gobu_project_get_path(void);
+GOBU_API const char *gobu_project_get_name(void);
 
-GobuColor GobuColorRGBToFloat(uint8_t r, uint8_t g, uint8_t b);
+GOBU_API GobuCamera gobu_camera_new(void);
+GOBU_API void gobu_camera_set_main(GobuCamera *camera);
+GOBU_API void gobu_camera_set_position(GobuCamera camera, float x, float y);
+GOBU_API void gobu_camera_set_offset(GobuCamera camera, float x, float y);
+GOBU_API void gobu_camera_set_rotation(GobuCamera camera, float rotation);
+GOBU_API void gobu_camera_set_zoom(GobuCamera camera, float zoom);
 
-GobuEcsWorld *GobuEcsWorldInit(void);
-void GobuEcsWorldFree(GobuEcsWorld *world);
-void GobuEcsWorldFrame(void);
-GobuEcsEntity GobuEcsWorldGetEntityRoot(void);
-GobuEcsEntity GobuEcsEntityNew(const char *name);
-const char *GobuEcsEntityGetName(GobuEcsEntity entity);
-GobuEcsIter GobuEcsEntityGetChildren(GobuEcsEntity entity);
-bool GobuEcsEntityChildrenNext(GobuEcsIter *iter);
+GOBU_API void gobu_render_init(void);
+GOBU_API void gobu_render_shutdown(void);
+GOBU_API void gobu_render_frame_begin(int width, int height, GobuColor color);
+GOBU_API void gobu_render_frame_end(int width, int height);
+GOBU_API void gobu_render_viewport(int x, int y, int width, int height);
+GOBU_API void gobu_render_project(float left, float right, float top, float bottom);
+GOBU_API void gobu_render_clear_color(GobuColor color);
+GOBU_API void gobu_render_clear(void);
+GOBU_API void gobu_render_reset_color(void);
+GOBU_API void gobu_render_set_color(GobuColor color);
+GOBU_API void gobu_render_set_rotate(float theta, float x, float y);
+GOBU_API void gobu_render_set_scale(float sx, float sy, float x, float y);
+GOBU_API void gobu_render_set_translate(float x, float y);
+
+GOBU_API void gobu_shape_draw_filled_rect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color);
+GOBU_API void gobu_shape_draw_checkboard(int width, int height, int screen_width, int screen_height);
+
+GOBU_API void gobu_texture_draw_texture(GobuTexture texture, GobuRectangle source, GobuRectangle dest, GobuColor tint);
+GOBU_API GobuTexture gobu_texture_load_file(const char *filename);
+GOBU_API void gobu_texture_free(GobuTexture texture);
+
+GOBU_API GobuColor gobu_color_rgb_to_color(uint8_t r, uint8_t g, uint8_t b);
+GOBU_API GobuColor gobu_color_rgba_to_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+GOBU_API GobuColor gobu_color_random_rgb(uint8_t r, uint8_t g, uint8_t b);
+
+GOBU_API float gobu_math_random(float number);
+
+GOBU_API void gobu_ecs_world_init(void);
+GOBU_API GobuEcsWorld *gobu_ecs_world_get(void);
+GOBU_API void gobu_ecs_world_free(void);
+GOBU_API void gobu_ecs_world_progress(void);
+GOBU_API void gobu_ecs_world_run(GobuEcsEntity system, float delta);
+GOBU_API GobuEcsEntity gobu_ecs_entity_new(const char *name);
+GOBU_API GobuEcsIter gobu_ecs_entity_get_children(GobuEcsEntity entity);
+GOBU_API const char *gobu_ecs_entity_get_name(GobuEcsEntity entity);
+GOBU_API void gobu_ecs_entity_delete(GobuEcsEntity entity);
+GOBU_API bool gobu_ecs_iter_next(GobuEcsIter *iter);
 
 #endif // __GOBU_H__

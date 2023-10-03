@@ -10,7 +10,7 @@
 #include "thirdparty/sokol/sokol_glue.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb/stb_image.h"
+#include "thirdparty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -28,22 +28,7 @@ typedef struct GobuCoreData
         GobuCamera main;
     } CameraManager;
 
-    struct
-    {
-        GobuEcsWorld *world;
-        GobuEcsEntity Root;
-
-        struct
-        {
-            GobuEcsEntity Vec2;
-            GobuEcsEntity Color;
-            GobuEcsEntity Rect;
-            GobuEcsEntity Texture;
-            GobuEcsEntity Sprite;
-            GobuEcsEntity Camera;
-            GobuEcsEntity Entity;
-        } Component;
-    } Ecs;
+    GobuEcsWorld *world;
 } GobuCoreData;
 
 //----------------------------------------------------------------------------------
@@ -56,53 +41,70 @@ static GobuCoreData CORE = {0};
 // Module specific Functions Declaration
 //----------------------------------------------------------------------------------
 
-static void _GobuEcsComponentDefaultInit(void);
-
 /*
 
 */
 
 /**
- * Convierte un objeto binn en una cadena JSON.
+ * Convierte un objeto binario binn en una cadena JSON.
  *
- * @param b Puntero al objeto binn que se va a convertir.
- * @return Una cadena JSON que representa el objeto binn, o NULL si falla.
+ * Esta función toma un objeto binario (binn) y lo convierte en una cadena JSON,
+ * devolviendo un puntero a la cadena resultante.
+ *
+ * @param b  El objeto binario binn que se va a convertir en JSON.
+ *
+ * @return   Un puntero a la cadena JSON resultante. Esta cadena debe ser liberada
+ *           por el llamador cuando ya no sea necesaria.
  */
-const char *GobuJsonStringify(binn *b)
+const char *gobu_json_stringify(binn *b)
 {
     return binn_serialize(b);
 }
 
 /**
- * Parsea una cadena JSON y la convierte en un objeto binn.
+ * Analiza una cadena JSON y crea un objeto binario binn.
  *
- * @param json_string La cadena JSON que se va a parsear.
- * @return Un puntero al objeto binn creado a partir de la cadena JSON, o NULL si falla.
+ * Esta función toma una cadena JSON como entrada y la analiza para crear
+ * un objeto binario (binn) equivalente, devolviendo un puntero al objeto binario resultante.
+ *
+ * @param json_string  La cadena JSON que se va a analizar.
+ *
+ * @return   Un puntero al objeto binario binn resultante, o NULL en caso de error.
+ *           El objeto binario debe ser liberado por el llamador cuando ya no sea necesario.
  */
-binn *GobuJsonParse(char *json_string)
+binn *gobu_json_parse(char *json_string)
 {
     return binn_serialize_load(json_string);
 }
 
 /**
- * Carga un objeto binn desde un archivo en formato JSON.
+ * Carga un objeto binario binn desde un archivo JSON.
  *
- * @param filename El nombre del archivo desde el que se va a cargar el objeto JSON.
- * @return Un puntero al objeto binn cargado desde el archivo, o NULL si falla.
+ * Esta función carga un archivo JSON desde la ubicación especificada por "filename"
+ * y crea un objeto binario (binn) equivalente, devolviendo un puntero al objeto binario resultante.
+ *
+ * @param filename  La ruta al archivo JSON que se va a cargar.
+ *
+ * @return   Un puntero al objeto binario binn resultante, o NULL en caso de error.
+ *           El objeto binario debe ser liberado por el llamador cuando ya no sea necesario.
  */
-binn *GobuJsonLoadFromFile(const char *filename)
+binn *gobu_json_load_from_file(const char *filename)
 {
     return binn_serialize_from_file(filename);
 }
 
 /**
- * Guarda un objeto binn en un archivo en formato JSON.
+ * Guarda un objeto binario binn como un archivo JSON.
  *
- * @param b Puntero al objeto binn que se va a guardar.
- * @param filename El nombre del archivo en el que se va a guardar el objeto JSON.
- * @return TRUE si la operación de guardado se realizó con éxito, FALSE si falla.
+ * Esta función toma un objeto binario (binn) y lo guarda como un archivo JSON
+ * en la ubicación especificada por "filename".
+ *
+ * @param b         El objeto binario binn que se va a guardar como JSON.
+ * @param filename  La ruta donde se guardará el archivo JSON.
+ *
+ * @return   true si la operación de guardado fue exitosa, false en caso de error.
  */
-bool GobuJsonSaveToFile(binn *b, const char *filename)
+bool gobu_json_save_to_file(binn *b, const char *filename)
 {
     return binn_deserialize_from_file(b, filename);
 }
@@ -112,12 +114,16 @@ bool GobuJsonSaveToFile(binn *b, const char *filename)
 */
 
 /**
- * Carga un proyecto Gobu desde la ruta especificada.
+ * Carga un proyecto Gobu desde una ubicación especificada.
  *
- * @param path La ruta al directorio del proyecto Gobu que se va a cargar.
- * @return TRUE si la carga del proyecto se realizó con éxito, FALSE si falla.
+ * Esta función se encarga de cargar un proyecto Gobu desde la ubicación especificada
+ * por la ruta "path".
+ *
+ * @param path  La ruta al proyecto Gobu que se va a cargar.
+ *
+ * @return   TRUE si la operación de carga fue exitosa, FALSE en caso de error.
  */
-gboolean GobuProjectLoad(const gchar *path)
+gboolean gobu_project_load(const gchar *path)
 {
     gboolean test = g_file_test(path, G_FILE_TEST_EXISTS);
     if (test == TRUE)
@@ -130,23 +136,65 @@ gboolean GobuProjectLoad(const gchar *path)
 }
 
 /**
- * Obtiene la ruta actual del proyecto Gobu cargado.
+ * Obtiene la ruta del proyecto actual de Gobu.
  *
- * @return Una cadena que representa la ruta del proyecto Gobu cargado, o NULL si no hay un proyecto cargado.
+ * Esta función se encarga de obtener la ruta del proyecto actual de Gobu,
+ * devolviendo un puntero a la cadena que representa la ruta.
+ *
+ * @return   Un puntero a la cadena que contiene la ruta del proyecto actual de Gobu.
  */
-const char *GobuProjectGetPath(void)
+const char *gobu_project_get_path(void)
 {
     return g_strdup(CORE.project.path);
 }
 
 /**
- * Obtiene el nombre del proyecto Gobu cargado.
+ * Obtiene el nombre del proyecto actual de Gobu.
  *
- * @return Una cadena que representa el nombre del proyecto Gobu cargado, o NULL si no hay un proyecto cargado.
+ * Esta función se encarga de obtener el nombre del proyecto actual de Gobu,
+ * devolviendo un puntero a la cadena que representa el nombre.
+ *
+ * @return   Un puntero a la cadena que contiene el nombre del proyecto actual de Gobu.
  */
-const char *GobuProjectGetName(void)
+const char *gobu_project_get_name(void)
 {
     return g_strdup(CORE.project.name);
+}
+
+GobuCamera gobu_camera_new(void)
+{
+    return (GobuCamera){
+        .zoom = 1,
+        .rotation = 0.0f,
+        .offset = (GobuVec2){0.0f, 0.0f},
+        .target = (GobuVec2){0.0f, 0.0f},
+    };
+}
+
+void gobu_camera_set_main(GobuCamera *camera)
+{
+    CORE.CameraManager.main = *camera;
+}
+
+void gobu_camera_set_position(GobuCamera camera, float x, float y)
+{
+    camera.target = (GobuVec2){x, y};
+}
+
+void gobu_camera_set_offset(GobuCamera camera, float x, float y)
+{
+    camera.offset = (GobuVec2){x, y};
+}
+
+void gobu_camera_set_rotation(GobuCamera camera, float rotation)
+{
+    camera.rotation = rotation;
+}
+
+void gobu_camera_set_zoom(GobuCamera camera, float zoom)
+{
+    zoom = (zoom <= 0 ? 0.1 : zoom);
+    camera.zoom = zoom;
 }
 
 /*
@@ -154,10 +202,15 @@ const char *GobuProjectGetName(void)
 */
 
 /**
- * Inicializa el sistema de renderizado de Gobu.
+ * Inicializa el subsistema de renderización en Gobu.
+ *
+ * Esta función se encarga de realizar la inicialización necesaria para el subsistema
+ * de renderización en Gobu, preparando el entorno para la renderización.
  */
-void GobuRenderInit(void)
+void gobu_render_init(void)
 {
+    srand((unsigned int)time(NULL));
+
     sg_setup(&(sg_desc){0});
     sgp_setup(&(sgp_desc){0});
 
@@ -165,50 +218,55 @@ void GobuRenderInit(void)
     CORE.CameraManager.main.offset = (GobuVec2){1.0f, 1.0f};
     CORE.CameraManager.main.zoom = 1.0f;
     CORE.CameraManager.main.rotation = 0.0f;
-
-    CORE.Ecs.world = GobuEcsWorldInit();
-    _GobuEcsComponentDefaultInit();
-
-    CORE.Ecs.Root = GobuEcsEntityNew("Root");
 }
 
 /**
- * Apaga y libera los recursos del sistema de renderizado de Gobu.
+ * Apaga el subsistema de renderización en Gobu de manera segura.
+ *
+ * Esta función se encarga de realizar el apagado adecuado del subsistema de
+ * renderización en Gobu, liberando recursos y cerrando conexiones de manera segura.
  */
-void GobuRenderShutdown(void)
+void gobu_render_shutdown(void)
 {
-    GobuEcsWorldFree(CORE.Ecs.world);
+    gobu_ecs_world_free();
     sgp_shutdown();
     sg_shutdown();
 }
 
 /**
- * Inicia un nuevo frame de renderizado con las dimensiones y color de fondo especificados.
+ * Inicia un nuevo frame de renderización en Gobu.
  *
- * @param width Ancho del frame en píxeles.
- * @param height Alto del frame en píxeles.
- * @param color Color de fondo del frame.
+ * Esta función se encarga de iniciar un nuevo frame de renderización en Gobu
+ * con las dimensiones especificadas y el color de fondo dado.
+ *
+ * @param width   El ancho del frame de renderización en píxeles.
+ * @param height  El alto del frame de renderización en píxeles.
+ * @param color   El color de fondo del frame de renderización.
  */
-void GobuRenderFrameBegin(int width, int height, GobuColor color)
+void gobu_render_frame_begin(int width, int height, GobuColor color)
 {
     float ratio = width / (float)height;
 
     sgp_begin(width, height);
-    GobuRenderViewport(0, 0, width, height);
-    // GobuRenderProject(width * -0.5f, width * 0.5f, height * 0.5f, height * -0.5f);
-    GobuRenderSetScale(CORE.CameraManager.main.zoom, CORE.CameraManager.main.zoom, 0, 0);
-    GobuRenderSetTranslate(CORE.CameraManager.main.target.x, CORE.CameraManager.main.target.y);
-    GobuRenderSetRotate(CORE.CameraManager.main.rotation, 0, 0);
-    GobuRenderClearColor(color);
+    gobu_render_viewport(0, 0, width, height);
+    sgp_project(-ratio, ratio, 1.0f, -1.0f);
+
+    gobu_render_set_scale(CORE.CameraManager.main.zoom, CORE.CameraManager.main.zoom, 0, 0);
+    gobu_render_set_translate(CORE.CameraManager.main.target.x, CORE.CameraManager.main.target.y);
+    gobu_render_set_rotate(CORE.CameraManager.main.rotation, 0, 0);
+    gobu_render_clear_color(color);
 }
 
 /**
- * Finaliza el frame de renderizado actual con las dimensiones especificadas.
+ * Finaliza el frame de renderización actual en Gobu.
  *
- * @param width Ancho del frame en píxeles.
- * @param height Alto del frame en píxeles.
+ * Esta función se encarga de finalizar el frame de renderización actual en Gobu
+ * con las dimensiones especificadas.
+ *
+ * @param width   El ancho del frame de renderización en píxeles.
+ * @param height  El alto del frame de renderización en píxeles.
  */
-void GobuRenderFrameEnd(int width, int height)
+void gobu_render_frame_end(int width, int height)
 {
     sg_pass_action pass_action = {0};
     sg_begin_default_pass(&pass_action, width, height);
@@ -219,101 +277,129 @@ void GobuRenderFrameEnd(int width, int height)
 }
 
 /**
- * Establece la vista del renderizado en una región específica de la pantalla.
+ * Renderiza un viewport en Gobu con las dimensiones y posición especificadas.
  *
- * @param x Coordenada X de la esquina superior izquierda de la región de la vista.
- * @param y Coordenada Y de la esquina superior izquierda de la región de la vista.
- * @param width Ancho de la región de la vista en píxeles.
- * @param height Alto de la región de la vista en píxeles.
+ * Esta función se encarga de renderizar un viewport en Gobu en la posición y
+ * dimensiones especificadas.
+ *
+ * @param x       La coordenada X de la esquina superior izquierda del viewport.
+ * @param y       La coordenada Y de la esquina superior izquierda del viewport.
+ * @param width   El ancho del viewport en píxeles.
+ * @param height  El alto del viewport en píxeles.
  */
-void GobuRenderViewport(int x, int y, int width, int height)
+void gobu_render_viewport(int x, int y, int width, int height)
 {
     sgp_viewport(x, y, width, height);
 }
 
 /**
- * Establece la proyección del renderizado con coordenadas de vista especificadas.
+ * Renderiza un proyecto en Gobu con límites de visualización especificados.
  *
- * @param left Coordenada X izquierda de la vista.
- * @param right Coordenada X derecha de la vista.
- * @param top Coordenada Y superior de la vista.
- * @param bottom Coordenada Y inferior de la vista.
+ * Esta función se encarga de renderizar un proyecto en Gobu con los límites de
+ * visualización especificados, definiendo el área visible en el mundo del proyecto.
+ *
+ * @param left    El límite izquierdo del área de visualización.
+ * @param right   El límite derecho del área de visualización.
+ * @param top     El límite superior del área de visualización.
+ * @param bottom  El límite inferior del área de visualización.
  */
-void GobuRenderProject(float left, float right, float top, float bottom)
+void gobu_render_project(float left, float right, float top, float bottom)
 {
     sgp_project(left, right, top, bottom);
 }
 
 /**
- * Establece el color de fondo para limpiar el frame.
+ * Establece el color de fondo para la renderización en Gobu.
  *
- * @param color Color de fondo.
+ * Esta función se encarga de establecer el color de fondo que se utilizará
+ * para limpiar el buffer de renderización en Gobu antes de renderizar.
+ *
+ * @param color  El color de fondo deseado.
  */
-void GobuRenderClearColor(GobuColor color)
+void gobu_render_clear_color(GobuColor color)
 {
-    sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
-    GobuRenderSetColor(color);
-    GobuRenderClear();
+    // sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
+    gobu_render_set_color(color);
+    gobu_render_clear();
 }
 
 /**
- * Limpia el frame con el color de fondo actual.
+ * Limpia el buffer de renderización en Gobu.
+ *
+ * Esta función se encarga de limpiar el buffer de renderización en Gobu, utilizando
+ * el color de fondo previamente configurado.
  */
-void GobuRenderClear(void)
+void gobu_render_clear(void)
 {
     sgp_clear();
 }
 
 /**
- * Restablece el color de dibujo a su valor predeterminado.
+ * Restablece el color de renderización en Gobu al valor predeterminado.
+ *
+ * Esta función se encarga de restablecer el color de renderización en Gobu
+ * al valor predeterminado, eliminando cualquier modificación previa.
  */
-void GobuRenderResetColor(void)
+void gobu_render_reset_color(void)
 {
     sgp_reset_color();
 }
 
 /**
- * Establece el color de dibujo actual para las operaciones de renderizado.
+ * Establece el color de renderización en Gobu.
  *
- * @param color El color a utilizar en las operaciones de dibujo.
+ * Esta función se encarga de establecer el color que se utilizará para renderizar
+ * elementos en Gobu, como líneas, formas o rellenos.
+ *
+ * @param color  El color deseado para la renderización.
  */
-void GobuRenderSetColor(GobuColor color)
+void gobu_render_set_color(GobuColor color)
 {
     sgp_set_color(color.r, color.g, color.b, color.a);
 }
 
 /**
- * Establece una rotación para las transformaciones de renderizado.
+ * Configura la rotación en Gobu alrededor de un punto específico.
  *
- * @param theta Ángulo de rotación en radianes.
- * @param x Coordenada X del punto de origen de la rotación.
- * @param y Coordenada Y del punto de origen de la rotación.
+ * Esta función se encarga de configurar la rotación en Gobu alrededor de un punto
+ * específico definido por las coordenadas (x, y), utilizando un ángulo de rotación
+ * de theta en radianes.
+ *
+ * @param theta  El ángulo de rotación en radianes.
+ * @param x      La coordenada X del punto de rotación.
+ * @param y      La coordenada Y del punto de rotación.
  */
-void GobuRenderSetRotate(float theta, float x, float y)
+void gobu_render_set_rotate(float theta, float x, float y)
 {
     sgp_rotate_at(theta, x, y);
 }
 
 /**
- * Establece una escala para las transformaciones de renderizado.
+ * Configura la escala en Gobu en un punto específico.
  *
- * @param sx Factor de escala en el eje X.
- * @param sy Factor de escala en el eje Y.
- * @param x Coordenada X del punto de origen de la escala.
- * @param y Coordenada Y del punto de origen de la escala.
+ * Esta función se encarga de configurar la escala en Gobu utilizando los factores de escala
+ * sx y sy en el punto de origen definido por las coordenadas (x, y).
+ *
+ * @param sx  El factor de escala en el eje X.
+ * @param sy  El factor de escala en el eje Y.
+ * @param x   La coordenada X del punto de origen de la escala.
+ * @param y   La coordenada Y del punto de origen de la escala.
  */
-void GobuRenderSetScale(float sx, float sy, float x, float y)
+void gobu_render_set_scale(float sx, float sy, float x, float y)
 {
     sgp_scale_at(sx, sy, x, y);
 }
 
 /**
- * Establece una traslación para las transformaciones de renderizado.
+ * Configura una traslación en Gobu en las coordenadas (x, y).
  *
- * @param x Cantidad de traslación en el eje X.
- * @param y Cantidad de traslación en el eje Y.
+ * Esta función se encarga de configurar una traslación en Gobu para mover los elementos
+ * gráficos en las coordenadas (x, y).
+ *
+ * @param x  La coordenada X de la traslación.
+ * @param y  La coordenada Y de la traslación.
  */
-void GobuRenderSetTranslate(float x, float y)
+void gobu_render_set_translate(float x, float y)
 {
     sgp_translate(x, y);
 }
@@ -323,49 +409,60 @@ void GobuRenderSetTranslate(float x, float y)
 */
 
 /**
- * Dibuja un rectángulo relleno en el sistema de renderizado de Gobu.
+ * Dibuja un rectángulo relleno con transformaciones en Gobu.
  *
- * @param rect Las dimensiones y posición del rectángulo.
- * @param scale Escala a aplicar al rectángulo (ancho y alto).
- * @param origin Punto de origen para la transformación.
- * @param rotation Ángulo de rotación en radianes.
- * @param color El color con el que se rellena el rectángulo.
+ * Esta función se encarga de dibujar un rectángulo relleno en Gobu, con la posibilidad de
+ * aplicar transformaciones como escala, origen, rotación y color personalizado.
+ *
+ * @param rect      El rectángulo a dibujar (coordenadas y dimensiones).
+ * @param scale     Los factores de escala en los ejes X e Y.
+ * @param origin    El punto de origen para las transformaciones.
+ * @param rotation  El ángulo de rotación en radianes.
+ * @param color     El color de relleno del rectángulo.
  */
-void GobuShapeDrawFilledRect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color)
+void gobu_shape_draw_filled_rect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color)
 {
-    float ox = origin.x <= 0 ? 1.0f : origin.x;
-    float oy = origin.y <= 0 ? 1.0f : origin.y;
+    // float ox = origin.x <= 0 ? 1.0f : origin.x;
+    // float oy = origin.y <= 0 ? 1.0f : origin.y;
 
-    GobuVec2 pivot = (GobuVec2){rect.w * ox, rect.h * oy};
+    // GobuVec2 pivot = (GobuVec2){rect.w * ox, rect.h * oy};
 
-    GobuRenderSetColor(color);
-    sgp_push_transform();
-    GobuRenderSetTranslate(rect.x, rect.y);
-    GobuRenderSetScale(scale.x, scale.y, pivot.x, pivot.y);
-    GobuRenderSetRotate(rotation, pivot.x, pivot.y);
-    sgp_draw_filled_rect(0, 0, rect.w, rect.h);
-    sgp_pop_transform();
-    GobuRenderResetColor();
+    // sgp_push_transform();
+    // {
+    //     gobu_render_set_translate(rect.x, rect.y);
+    //     gobu_render_set_scale(scale.x, scale.y, pivot.x, pivot.y);
+    //     gobu_render_set_rotate(rotation, pivot.x, pivot.y);
+    //     gobu_render_set_color(color);
+    //     sgp_draw_filled_rect(0, 0, rect.w, rect.h);
+    // }
+    // sgp_pop_transform();
+
+    float r = sinf(rotation) * 0.5 + 0.5, g = cosf(rotation) * 0.5 + 0.5;
+    sgp_set_color(r, g, 0.3f, 1.0f);
+    sgp_rotate_at(rotation, 0.0f, 0.0f);
+    sgp_draw_filled_rect(-0.5f, -0.5f, 1.0f, 1.0f);
 }
 
 /**
- * Dibuja un tablero de ajedrez en el sistema de renderizado de Gobu.
+ * Dibuja un tablero de ajedrez en Gobu con dimensiones personalizadas.
  *
- * @param width Ancho de una casilla del tablero.
- * @param height Alto de una casilla del tablero.
- * @param screen_width Ancho total de la pantalla.
- * @param screen_height Alto total de la pantalla.
+ * Esta función se encarga de dibujar un tablero de ajedrez en Gobu con las dimensiones
+ * especificadas, considerando el ancho y alto del tablero, así como el ancho y alto de la pantalla.
+ *
+ * @param width          El ancho del tablero de ajedrez.
+ * @param height         El alto del tablero de ajedrez.
+ * @param screen_width   El ancho de la pantalla en la que se dibujará el tablero.
+ * @param screen_height  El alto de la pantalla en la que se dibujará el tablero.
  */
-void GobuShapeDrawCheckboard(int width, int height, int screen_width, int screen_height)
+void gobu_shape_draw_checkboard(int width, int height, int screen_width, int screen_height)
 {
-    GobuRenderSetColor(GobuColorRGBToFloat(13, 10, 14));
-    GobuRenderClear();
+    gobu_render_clear_color(gobu_color_rgb_to_color(13, 10, 14));
 
     for (int y = 0; y < screen_height / height + 1; y++)
         for (int x = 0; x < screen_width / width + 1; x++)
             if ((x + y) % 2 == 0)
-                GobuShapeDrawFilledRect((GobuRectangle){x * width, y * height, width, height}, (GobuVec2){1.0f, 1.0f}, (GobuVec2){0.0f, 0.0f}, 0.0f, GobuColorRGBToFloat(17, 14, 18));
-    GobuRenderResetColor();
+                gobu_shape_draw_filled_rect((GobuRectangle){x * width, y * height, width, height}, (GobuVec2){1.0f, 1.0f}, (GobuVec2){0.0f, 0.0f}, 0.0f, gobu_color_rgb_to_color(17, 14, 18));
+    gobu_render_reset_color();
 }
 
 /*
@@ -373,33 +470,41 @@ void GobuShapeDrawCheckboard(int width, int height, int screen_width, int screen
 */
 
 /**
- * Dibuja una textura en el sistema de renderizado de Gobu.
+ * Dibuja una textura en Gobu con propiedades personalizadas.
  *
- * @param texture La textura que se va a dibujar.
- * @param source El área de la textura a utilizar como fuente.
- * @param dest El área de destino en la que se dibujará la textura.
- * @param tint El color de tintado que se aplicará a la textura (color multiplicativo).
+ * Esta función se encarga de dibujar una textura en Gobu, utilizando las propiedades
+ * especificadas, como la región de origen (source), la región de destino (dest), y un
+ * color de tintado opcional.
+ *
+ * @param texture  La textura que se va a dibujar.
+ * @param source   La región de origen en la textura (coordenadas y dimensiones).
+ * @param dest     La región de destino en el renderizado (coordenadas y dimensiones).
+ * @param tint     El color de tintado opcional para la textura.
  */
-void GobuTextureDrawTexture(GobuTexture texture, GobuRectangle source, GobuRectangle dest, GobuColor tint)
+void gobu_texture_draw_texture(GobuTexture texture, GobuRectangle source, GobuRectangle dest, GobuColor tint)
 {
     if (texture.id > 0)
     {
         sgp_set_image(0, (sg_image){.id = texture.id});
         sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
-        GobuRenderSetColor(tint);
-        sgp_draw_textured_rect_ex(0, (sgp_rect){dest.x, dest.y, dest.w, dest.h}, (sgp_rect){source.x, source.y, source.w, source.h});
+        gobu_render_set_color(tint);
+        sgp_draw_textured_rect(0, (sgp_rect){dest.x, dest.y, dest.w, dest.h}, (sgp_rect){source.x, source.y, source.w, source.h});
         sgp_reset_blend_mode();
         sgp_unset_image(0);
     }
 }
 
 /**
- * Carga una textura desde un archivo y la devuelve como un objeto GobuTexture.
+ * Carga una textura desde un archivo en Gobu.
  *
- * @param filename El nombre del archivo de imagen desde el que se va a cargar la textura.
- * @return Un objeto GobuTexture que representa la textura cargada, o NULL si falla la carga.
+ * Esta función se encarga de cargar una textura desde un archivo en Gobu, utilizando
+ * la ruta especificada por "filename".
+ *
+ * @param filename  La ruta al archivo de la textura que se va a cargar.
+ *
+ * @return   Una instancia de GobuTexture que representa la textura cargada.
  */
-GobuTexture GobuTextureLoadFile(const char *filename)
+GobuTexture gobu_texture_load_file(const char *filename)
 {
     GobuTexture texture = {0};
 
@@ -425,11 +530,14 @@ GobuTexture GobuTextureLoadFile(const char *filename)
 }
 
 /**
- * Libera la memoria asociada a una textura GobuTexture previamente cargada.
+ * Libera la memoria de una textura en Gobu.
  *
- * @param texture El objeto GobuTexture que se va a liberar.
+ * Esta función se encarga de liberar la memoria y recursos asociados a una textura
+ * en Gobu, permitiendo su eliminación segura.
+ *
+ * @param texture  La textura que se va a liberar de memoria.
  */
-void GobuTextureFree(GobuTexture texture)
+void gobu_texture_free(GobuTexture texture)
 {
     sg_image d = (sg_image){.id = texture.id};
     sg_destroy_image(d);
@@ -440,190 +548,225 @@ void GobuTextureFree(GobuTexture texture)
 */
 
 /**
- * Convierte valores RGB de 8 bits en un objeto GobuColor con componentes de punto flotante.
+ * Convierte valores RGB de 8 bits en un objeto GobuColor.
  *
- * @param r Valor de componente rojo (0-255).
- * @param g Valor de componente verde (0-255).
- * @param b Valor de componente azul (0-255).
- * @return Un objeto GobuColor con componentes de punto flotante normalizados en el rango [0.0, 1.0].
+ * Esta función toma los componentes de color en formato de 8 bits (r, g, b) y los
+ * convierte en un objeto GobuColor que representa el color especificado.
+ *
+ * @param r  El componente rojo (red) de 8 bits.
+ * @param g  El componente verde (green) de 8 bits.
+ * @param b  El componente azul (blue) de 8 bits.
+ *
+ * @return   Un objeto GobuColor que representa el color especificado.
  */
-GobuColor GobuColorRGBToFloat(uint8_t r, uint8_t g, uint8_t b)
+GobuColor gobu_color_rgb_to_color(uint8_t r, uint8_t g, uint8_t b)
 {
-    float fr = (float)((float)r / 255);
-    float fg = (float)((float)g / 255);
-    float fb = (float)((float)b / 255);
-    return (GobuColor){fr, fg, fb, 1.0f};
+    return gobu_color_rgba_to_color(r, g, b, 255);
 }
 
 /**
- * Convierte valores RGBA de 8 bits en un objeto GobuColor con componentes de punto flotante.
+ * Convierte valores RGBA de 8 bits en un objeto GobuColor.
  *
- * @param r Valor de componente rojo (0-255).
- * @param g Valor de componente verde (0-255).
- * @param b Valor de componente azul (0-255).
- * @param a Valor de componente alfa (0-255).
- * @return Un objeto GobuColor con componentes de punto flotante normalizados en el rango [0.0, 1.0].
+ * Esta función toma los componentes de color en formato de 8 bits (r, g, b, a) y los
+ * convierte en un objeto GobuColor que representa el color especificado.
+ *
+ * @param r  El componente rojo (red) de 8 bits.
+ * @param g  El componente verde (green) de 8 bits.
+ * @param b  El componente azul (blue) de 8 bits.
+ * @param a  El componente alfa (alpha) de 8 bits que representa la transparencia.
+ *
+ * @return   Un objeto GobuColor que representa el color especificado.
  */
-GobuColor GobuColorRGBAToFloat(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+GobuColor gobu_color_rgba_to_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    float fr = (float)((float)r / 255);
-    float fg = (float)((float)g / 255);
-    float fb = (float)((float)b / 255);
-    float fa = (float)((float)a / 255);
+    float fr = (float)((float)r / 255.0f);
+    float fg = (float)((float)g / 255.0f);
+    float fb = (float)((float)b / 255.0f);
+    float fa = (float)((float)a / 255.0f);
     return (GobuColor){fr, fg, fb, fa};
+}
+
+/**
+ * Genera un color aleatorio en formato RGB.
+ *
+ * Esta función genera un color aleatorio en formato RGB (Red, Green, Blue) con componentes
+ * en el rango de 0 a 255 (8 bits por componente).
+ *
+ * @param r  Puntero a una variable que almacenará el componente rojo generado.
+ * @param g  Puntero a una variable que almacenará el componente verde generado.
+ * @param b  Puntero a una variable que almacenará el componente azul generado.
+ *
+ * @return   Una instancia de GobuColor que representa el color aleatorio generado.
+ */
+GobuColor gobu_color_random_rgb(uint8_t r, uint8_t g, uint8_t b)
+{
+    float fr = gobu_math_random((float)r) / 255.0f;
+    float fg = gobu_math_random((float)g) / 255.0f;
+    float fb = gobu_math_random((float)b) / 255.0f;
+    return (GobuColor){fr, fg, fb, 1.0f};
 }
 
 /*
 
 */
 
-GobuEcsWorld *GobuEcsWorldInit(void)
+/**
+ * Genera un número aleatorio en el rango [0, number) en Gobu.
+ *
+ * Esta función genera un número aleatorio en el rango [0, number) utilizando el generador
+ * de números aleatorios en Gobu. El valor "number" especifica el límite superior del rango,
+ * y el número generado estará en el intervalo [0, number).
+ *
+ * @param number  El límite superior del rango para la generación aleatoria.
+ *
+ * @return   Un número aleatorio en el rango [0, number).
+ */
+float gobu_math_random(float number)
 {
-    GobuEcsWorld *world = ecs_init();
-    return world;
+    return (((float)rand() / (float)(RAND_MAX)) * number);
 }
 
-void GobuEcsWorldFree(GobuEcsWorld *world)
+/*
+
+*/
+
+/**
+ * Inicializa un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de crear y configurar un mundo de entidades y componentes
+ * en Gobu, proporcionando una instancia de GobuEcsWorld lista para su uso.
+ *
+ * @return   Una instancia de GobuEcsWorld inicializada y lista para su uso.
+ */
+void gobu_ecs_world_init(void)
 {
-    ecs_fini(world);
+    CORE.world = ecs_init();
 }
 
-void GobuEcsWorldFrame(void)
+/**
+ * Obtiene el mundo de entidades y componentes actual en Gobu.
+ *
+ * Esta función se encarga de obtener el mundo de entidades y componentes actual en el contexto
+ * de Gobu, permitiendo acceder y manipular las entidades y sistemas en el mundo.
+ *
+ * @return   Una instancia de GobuEcsWorld que representa el mundo actual de entidades y componentes en Gobu.
+ */
+GobuEcsWorld *gobu_ecs_world_get(void)
 {
-    ecs_progress(CORE.Ecs.world, 0);
+    return CORE.world;
 }
 
-GobuEcsEntity GobuEcsWorldGetEntityRoot(void)
+/**
+ * Libera la memoria y recursos de un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de liberar la memoria y recursos asociados a un mundo de
+ * entidades y componentes en Gobu, permitiendo su eliminación segura.
+ *
+ */
+void gobu_ecs_world_free(void)
 {
-    return CORE.Ecs.Root;
+    ecs_fini(CORE.world);
 }
 
-GobuEcsEntity GobuEcsEntityNew(const char *name)
+/**
+ * Avanza el progreso en un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de avanzar el progreso en un mundo de entidades y componentes
+ * en Gobu, lo que puede implicar la actualización de la lógica del juego y sistemas asociados.
+ *
+ */
+void gobu_ecs_world_progress(void)
 {
-    GobuEcsEntity e = ecs_new_id(CORE.Ecs.world);
-    ecs_set_name(CORE.Ecs.world, e, name);
+    ecs_progress(CORE.world, 0);
+}
+
+/**
+ * Ejecuta un sistema en un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de ejecutar un sistema especificado en el mundo de entidades y componentes
+ * proporcionado. El sistema puede realizar operaciones y actualizaciones basadas en el delta de tiempo
+ * proporcionado.
+ *
+ * @param system  El sistema que se va a ejecutar en el mundo.
+ * @param delta   El delta de tiempo que indica el intervalo entre fotogramas para actualizaciones basadas en tiempo.
+ */
+void gobu_ecs_world_run(GobuEcsEntity system, float delta)
+{
+    ecs_run(CORE.world, system, delta, NULL);
+}
+
+/**
+ * Crea una nueva entidad en un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de crear una nueva entidad en el mundo de entidades y componentes
+ * proporcionado, y opcionalmente le asigna un nombre descriptivo.
+ *
+ * @param name   El nombre opcional de la entidad para referencia.
+ *
+ * @return   Una instancia de GobuEcsEntity que representa la entidad creada.
+ */
+GobuEcsEntity gobu_ecs_entity_new(const char *name)
+{
+    GobuEcsEntity e = ecs_new_id(CORE.world);
+    ecs_set_name(CORE.world, e, name);
     return e;
 }
 
-GobuEcsIter GobuEcsEntityGetChildren(GobuEcsEntity entity)
+/**
+ * Obtiene un iterador para los hijos de una entidad en un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de obtener un iterador que permite acceder a los hijos de la entidad
+ * especificada en el mundo de entidades y componentes proporcionado.
+ *
+ * @param entity  La entidad de la cual se obtienen los hijos.
+ *
+ * @return   Un iterador (GobuEcsIter) que permite acceder a los hijos de la entidad.
+ */
+GobuEcsIter gobu_ecs_entity_get_children(GobuEcsEntity entity)
 {
-    return ecs_children(CORE.Ecs.world, entity);
+    return ecs_children(CORE.world, entity);
 }
 
-bool GobuEcsEntityChildrenNext(GobuEcsIter *iter)
+/**
+ * Avanza al siguiente elemento utilizando un iterador en un contexto de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de avanzar al siguiente elemento utilizando el iterador proporcionado,
+ * permitiendo iterar a través de los elementos en un contexto de entidades y componentes en Gobu.
+ *
+ * @param iter  El iterador (GobuEcsIter) que se va a avanzar.
+ *
+ * @return   Devuelve `true` si se pudo avanzar al siguiente elemento, o `false` si no hay más elementos disponibles.
+ */
+bool gobu_ecs_iter_next(GobuEcsIter *iter)
 {
     return ecs_children_next(iter);
 }
 
-const char *GobuEcsEntityGetName(GobuEcsEntity entity)
+/**
+ * Obtiene el nombre de una entidad en un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de obtener el nombre de la entidad especificada en el mundo de
+ * entidades y componentes proporcionado.
+ *
+ * @param entity  La entidad de la cual se obtiene el nombre.
+ *
+ * @return   Un puntero a una cadena de caracteres (const char *) que representa el nombre de la entidad.
+ *           Si la entidad no tiene un nombre asignado, se devuelve un puntero nulo (NULL).
+ */
+const char *gobu_ecs_entity_get_name(GobuEcsEntity entity)
 {
-    GobuEntity info = *(GobuEntity *)ecs_get_id(CORE.Ecs.world, entity, CORE.Ecs.Component.Entity);
-    return g_strdup(info.name);
+    return ecs_get_name(CORE.world, entity);
 }
 
-/*
-
-*/
-
-static void _GobuEcsComponentDefaultInit(void)
+/**
+ * Elimina una entidad de un mundo de entidades y componentes en Gobu.
+ *
+ * Esta función se encarga de eliminar la entidad especificada del mundo de entidades y componentes,
+ * lo que implica la liberación de recursos y la eliminación de la entidad de manera segura.
+ *
+ * @param entity  La entidad que se va a eliminar del mundo.
+ */
+void gobu_ecs_entity_delete(GobuEcsEntity entity)
 {
-    // Struct GobuVec2
-    CORE.Ecs.Component.Vec2 = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-                                                                     .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuVec2"}),
-                                                                     .type.size = ECS_SIZEOF(GobuVec2),
-                                                                     .type.alignment = ECS_ALIGNOF(GobuVec2)});
-
-    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Vec2,
-                                .members = {
-                                    {.name = "x", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "y", .type = ecs_id(ecs_f32_t)},
-                                }});
-
-    // Struct GobuColor
-    CORE.Ecs.Component.Color = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-                                                                      .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuColor"}),
-                                                                      .type.size = ECS_SIZEOF(GobuColor),
-                                                                      .type.alignment = ECS_ALIGNOF(GobuColor)});
-
-    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Color,
-                                .members = {
-                                    {.name = "r", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "g", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "b", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "a", .type = ecs_id(ecs_f32_t)},
-                                }});
-
-    // Struct GobuRectangle
-    CORE.Ecs.Component.Rect = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-                                                                     .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuRectangle"}),
-                                                                     .type.size = ECS_SIZEOF(GobuRectangle),
-                                                                     .type.alignment = ECS_ALIGNOF(GobuRectangle)});
-
-    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Rect,
-                                .members = {
-                                    {.name = "x", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "y", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "w", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "h", .type = ecs_id(ecs_f32_t)},
-                                }});
-
-    // Struct GobuTexture
-    CORE.Ecs.Component.Texture = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-                                                                        .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuTexture"}),
-                                                                        .type.size = ECS_SIZEOF(GobuTexture),
-                                                                        .type.alignment = ECS_ALIGNOF(GobuTexture)});
-
-    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Texture,
-                                .members = {
-                                    {.name = "id", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "width", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "height", .type = ecs_id(ecs_f32_t)},
-                                }});
-
-    // Struct GobuCamera
-    CORE.Ecs.Component.Camera = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-                                                                       .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuCamera"}),
-                                                                       .type.size = ECS_SIZEOF(GobuCamera),
-                                                                       .type.alignment = ECS_ALIGNOF(GobuCamera)});
-
-    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Camera,
-                                .members = {
-                                    {.name = "target", .type = CORE.Ecs.Component.Vec2},
-                                    {.name = "offset", .type = CORE.Ecs.Component.Vec2},
-                                    {.name = "rotation", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "zoom", .type = ecs_id(ecs_f32_t)},
-                                }});
-
-    // Struct GobuSprite
-    CORE.Ecs.Component.Sprite = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-                                                                       .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuSprite"}),
-                                                                       .type.size = ECS_SIZEOF(GobuSprite),
-                                                                       .type.alignment = ECS_ALIGNOF(GobuSprite)});
-
-    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Sprite,
-                                .members = {
-                                    {.name = "Texture", .type = CORE.Ecs.Component.Texture},
-                                    {.name = "Color", .type = CORE.Ecs.Component.Color},
-                                    {.name = "Opacity", .type = ecs_id(ecs_f32_t)},
-                                    {.name = "FlipX", .type = ecs_id(ecs_bool_t)},
-                                    {.name = "FlipY", .type = ecs_id(ecs_bool_t)},
-                                    {.name = "Hframes", .type = ecs_id(ecs_i32_t)},
-                                    {.name = "Vframes", .type = ecs_id(ecs_i32_t)},
-                                    {.name = "frame", .type = ecs_id(ecs_i32_t)},
-                                }});
-
-    // Struct GobuEntity
-    CORE.Ecs.Component.Entity = ecs_component_init(CORE.Ecs.world, &(ecs_component_desc_t){
-                                                                       .entity = ecs_entity(CORE.Ecs.world, {.name = "GobuEntity"}),
-                                                                       .type.size = ECS_SIZEOF(GobuEntity),
-                                                                       .type.alignment = ECS_ALIGNOF(GobuEntity)});
-
-    ecs_struct(CORE.Ecs.world, {.entity = CORE.Ecs.Component.Entity,
-                                .members = {
-                                    {.name = "enable", .type = ecs_id(ecs_bool_t)},
-                                    {.name = "name", .type = ecs_id(ecs_string_t)},
-                                    {.name = "position", .type = CORE.Ecs.Component.Vec2},
-                                    {.name = "scale", .type = CORE.Ecs.Component.Vec2},
-                                    {.name = "rotation", .type = ecs_id(ecs_f32_t)},
-                                }});
+    ecs_delete(CORE.world, entity);
 }

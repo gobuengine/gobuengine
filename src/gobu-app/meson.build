@@ -14,7 +14,7 @@ gobuapp_src = [
     'ProjectManager/GobuFnCreateProject.c',
 
     # MODULE WIDGETS-GTK
-    'ProjectEditor/Widget/GobuEmbedStage.c',
+    # 'ProjectEditor/Widget/gobu_widget_embed_stage.c',
 
     # MODULE COMPONENTSYSTEM
     'ProjectEditor/ComponentSystem/GobuComponentSystem.c',
@@ -32,12 +32,14 @@ gobuapp_src = [
     'ProjectEditor/GobuProjectEditor.c',
     'ProjectEditor/GobuUiProjectEditor.c',
     'ProjectEditor/GobuProjectEditorResource.c',
+    'ProjectEditor/gobu_ecs_object.c',
     # MODULE WORLD EDITOR:WorldEditor
     'ProjectEditor/WorldEditor/GobuWorldEditor.c',
     'ProjectEditor/WorldEditor/GobuUiWorldEditor.c',
     'ProjectEditor/WorldEditor/GobuUiMenuBar.c',
     # MODULE WORLD EDITOR:WorldEditor->WorldOutliner
-    'ProjectEditor/WorldEditor/WorldOutliner/GobuWorldOutliner.c',
+    'ProjectEditor/WorldEditor/WorldOutliner/gobu_world_outliner.c',
+    'ProjectEditor/WorldEditor/WorldOutliner/gobu_type_factory_item_view_column.c',
     # MODULE WORLD EDITOR:WorldEditor->ContentBrowser
     'ProjectEditor/WorldEditor/ContentBrowser/GobuContentBrowser.c',
     'ProjectEditor/WorldEditor/ContentBrowser/GobuFnContentBrowserGetIconFile.c',
@@ -60,7 +62,7 @@ gobuapp_src = [
     'ProjectEditor/WorldEditor/ContentBrowser/GobuUiContentBrowserToolbar.c',
     'ProjectEditor/WorldEditor/ContentBrowser/GobuUiContentBrowserViewFile.c',
     # MODULE WORLD EDITOR:WorldEditor->WorlrdViewport
-    'ProjectEditor/WorldEditor/WorlrdViewport/WorlrdViewport.c',
+    'ProjectEditor/WorldEditor/WorlrdViewport/gobu_world_viewport.c',
     # MAIN
     'GobuWidgets.c',
     # 'ProjectEditor/gobu-editor-menubar.c', 

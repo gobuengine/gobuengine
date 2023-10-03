@@ -12,8 +12,8 @@ void GobuProjectEditorInit(GtkApplication *app)
     GobuProjectEditorResourceInit();
     
     // de-serialize el game.gcomponent
-    gchar *gcomponent = g_build_filename(GobuProjectGetPath(), "Scripts", "game.gcomponent", NULL);
-    ctx->components = GobuJsonLoadFromFile(gcomponent);
+    gchar *gcomponent = g_build_filename(gobu_project_get_path(), "Scripts", "game.gcomponent", NULL);
+    ctx->components = gobu_json_load_from_file(gcomponent);
     g_free(gcomponent);
 
     GobuUiProjectEditor(app, ctx);

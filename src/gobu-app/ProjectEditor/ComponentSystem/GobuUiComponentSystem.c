@@ -167,9 +167,10 @@ static GtkWidget *GobuUiComponentSystem_ListComponent(void)
         gtk_box_append(self, scroll);
 
         selection = gtk_single_selection_new(G_LIST_MODEL(component->components));
+        // gtk_single_selection_set_autoselect(selection, TRUE);
         // gtk_single_selection_set_can_unselect(selection, FALSE);
-        // gtk_single_selection_set_autoselect(selection, FALSE);
-        gtk_single_selection_set_selected(selection, GTK_INVALID_LIST_POSITION);
+        // gtk_single_selection_set_selected(selection, GTK_INVALID_LIST_POSITION);
+        // g_signal_connect(selection, "notify::selected", G_CALLBACK(GobuSignalListComponentSelectedChanged), component);
 
         factory = gtk_signal_list_item_factory_new();
         g_signal_connect(factory, "setup", G_CALLBACK(GobuSignalListComponentSetup), NULL);

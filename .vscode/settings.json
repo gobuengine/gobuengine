@@ -100,7 +100,13 @@
         "gobuembedstage.h": "c",
         "worlrdviewport.h": "c",
         "stdbool.h": "c",
-        "gobuworldoutliner.h": "c"
+        "gobuworldoutliner.h": "c",
+        "gobusignalfactorycolumns.h": "c",
+        "gobutypefactoryitemviewcolumn.h": "c",
+        "gobu_world_outliner.h": "c",
+        "gobu_type_factory_item_view_column.h": "c",
+        "gobu_ecs_object.h": "c",
+        "gobu_widget_embed_stage.h": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

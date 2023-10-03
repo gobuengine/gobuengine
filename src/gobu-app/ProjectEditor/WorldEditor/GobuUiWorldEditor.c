@@ -4,8 +4,8 @@
 #include "GobuWidgets.h"
 
 #include "ContentBrowser/GobuUiContentBrowser.h"
-#include "WorlrdViewport/WorlrdViewport.h"
-#include "WorldOutliner/GobuWorldOutliner.h"
+#include "WorlrdViewport/gobu_world_viewport.h"
+#include "WorldOutliner/gobu_world_outliner.h"
 
 /* Local function */
 
@@ -85,7 +85,7 @@ static GtkWidget *DockedModuleInit(void)
         gtk_widget_set_size_request(GTK_WIDGET(notebook_docked_left_top), DOCK_R_MIN_SIZE, -1);
         gtk_paned_set_start_child(GTK_PANED(docked_left_top), notebook_docked_left_top);
         {
-            GtkWidget *outliner = GobuWorldOutliner();
+            GtkWidget *outliner = gobu_world_outliner_new();
             gtk_notebook_append_page(GTK_NOTEBOOK(notebook_docked_left_top), outliner, gtk_label_new("World Outliner"));
         }
 
@@ -114,7 +114,7 @@ static GtkWidget *DockedModuleInit(void)
             gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook_docked_center), FALSE);
             gtk_paned_set_start_child(GTK_PANED(docked_right), notebook_docked_center);
             {
-                GtkWidget *scene_viewport = GobuWorldViewportNew();
+                GtkWidget *scene_viewport = gobu_world_viewport_new();
                 gtk_notebook_append_page(GTK_NOTEBOOK(notebook_docked_center), scene_viewport, gtk_label_new("Viewport"));
             }
 

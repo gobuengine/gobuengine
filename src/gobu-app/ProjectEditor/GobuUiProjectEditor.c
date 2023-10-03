@@ -6,7 +6,7 @@
 void GobuUiProjectEditor(GtkApplication *app, GobuProjectEditor *ctx)
 {
     ctx->window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(ctx->window), g_strdup_printf("GobuEngine - %s", GobuProjectGetName()));
+    gtk_window_set_title(GTK_WINDOW(ctx->window), g_strdup_printf("GobuEngine - %s", gobu_project_get_name()));
     gtk_window_set_default_size(GTK_WINDOW(ctx->window), 1280, 720);
 
     ctx->notebook = gtk_notebook_new();
