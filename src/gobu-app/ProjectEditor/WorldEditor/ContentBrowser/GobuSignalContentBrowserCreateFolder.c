@@ -1,5 +1,5 @@
 #include "GobuSignalContentBrowserCreateFolder.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 
 static void GobuSignalContentBrowserCreateFolderResponse(GtkDialog *dialog, int response, gpointer data)
 {

@@ -106,7 +106,14 @@
         "gobu_world_outliner.h": "c",
         "gobu_type_factory_item_view_column.h": "c",
         "gobu_ecs_object.h": "c",
-        "gobu_widget_embed_stage.h": "c"
+        "gobu_widget_embed_stage.h": "c",
+        "gobufnlistcomponentcreate.h": "c",
+        "stdio.h": "c",
+        "gobu_world_editor.h": "c",
+        "gobu_project_editor.h": "c",
+        "gobu_script.h": "c",
+        "gobu_script_editor.h": "c",
+        "gobu-app.h": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu-project-manager-dialog.h                                                          *
+ * project_manager.h                                                          *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,11 +25,10 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GOBU_SIGNAL_OPEN_PROJECT_H__
-#define __GOBU_SIGNAL_OPEN_PROJECT_H__
+#ifndef __GOBU_UI_PROJECT_MANAGER_H__
+#define __GOBU_UI_PROJECT_MANAGER_H__
 #include <gtk/gtk.h>
-#include "GobuProjectManager.h"
 
-void GobuSignalOpenProject(GtkWidget *widget, GobuProjectManager *ctx);
+void gobu_project_manager_window_new(GtkApplication *app);
 
-#endif // __GOBU_SIGNAL_OPEN_PROJECT_H__
+#endif // GOBU_PROJECT_MANAGER_DIALOG

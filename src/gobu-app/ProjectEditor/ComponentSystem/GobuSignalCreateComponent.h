@@ -29,6 +29,6 @@
 #define __GOBU_SIGNAL_CREATE_COMPONENT_H__
 #include "GobuComponentSystem.h"
 
-void GobuSignalCreateComponent(GtkWidget *button, gpointer data);
+void GobuSignalCreateComponent(GtkWidget *button, GobuComponentSystem *component);
 
 #endif // __GOBU_SIGNAL_CREATE_COMPONENT_H__

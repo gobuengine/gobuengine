@@ -1,17 +1,13 @@
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 #include "config.h"
-/**
- * GobuWidgetThemeInit:
- *
- * Cambia el tema a dark y cargamos un .css
- * para realizar algunos cambios en los Widgets.
- *
- * Returns: Void
- */
 
-void GobuWidgetThemeInit(void)
+/**
+ * Inicializa el tema de widgets en Gobu.
+ */
+void gobu_widget_theme_init(gboolean dark_mode)
 {
-    // g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE, NULL);
+    if (dark_mode)
+        g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE, NULL);
 
     GtkCssProvider *provider = gtk_css_provider_new();
     gtk_css_provider_load_from_path(provider, "resource/theme/default.css");
@@ -21,14 +17,12 @@ void GobuWidgetThemeInit(void)
 }
 
 /**
- * GobuWidgetAlert:
+ * Muestra una alerta de widget en Gobu.
  *
- * Mostramos un mensaje de alert
- *
- * Returns: Void
+ * @param parent   El widget padre al que se asociará la alerta.
+ * @param message  El mensaje de la alerta a mostrar.
  */
-
-void GobuWidgetAlert(GtkWidget *parent, const gchar *message)
+void gobu_widget_alert(GtkWidget *parent, const gchar *message)
 {
     GtkAlertDialog *alert = gtk_alert_dialog_new(message);
     gtk_alert_dialog_set_modal(alert, TRUE);
@@ -36,48 +30,46 @@ void GobuWidgetAlert(GtkWidget *parent, const gchar *message)
 }
 
 /**
- * GobuWidgetDialogConfirmDelete:
+ * Muestra un diálogo de confirmación de eliminación en Gobu.
  *
- * Mostramos un tipo de confirmacion para borrar un archivo.
- *
- * Returns: Void
+ * @param parent     El widget padre al que se asociará el diálogo.
+ * @param name       El nombre del elemento que se desea eliminar.
+ * @param data       Datos adicionales relacionados con la eliminación.
+ * @param c_handler  El manejador de callback a invocar cuando se confirma la eliminación.
  */
-
-void GobuWidgetDialogConfirmDelete(GtkWidget *parent, GFile *file, GCallback c_handler)
+void gobu_widget_dialog_confirm_delete(GtkWidget *parent, const gchar *name, gpointer *data, GCallback c_handler)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons("Delete Assets", GTK_WINDOW(gtk_widget_get_root(parent)), GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR, "Delete", GTK_RESPONSE_OK, NULL);
     gtk_window_set_resizable(dialog, FALSE);
 
     GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    GobuWidgetSetMargin(GTK_WIDGET(box), 18);
+    gobu_widget_set_margin(GTK_WIDGET(box), 18);
 
-    GtkWidget *label = gtk_label_new(g_strdup_printf("Esta seguro que desea eliminar este archivo <b>%s</b> ?", g_file_get_basename(file)));
+    GtkWidget *label = gtk_label_new(g_strdup_printf("Esta seguro que desea eliminar <b>%s</b> ?", name));
     gtk_label_set_use_markup(label, TRUE);
     gtk_box_append(GTK_BOX(box), label);
 
-    g_signal_connect(dialog, "response", G_CALLBACK(c_handler), file);
+    g_signal_connect(dialog, "response", G_CALLBACK(c_handler), data);
 
     gtk_window_present(dialog);
 }
 
 /**
- * GobuWidgetDialogInput:
+ * Muestra un diálogo de entrada de texto en Gobu.
  *
- * Mostramos dialog con un input para escribir, se requiere una señal
- * tipo response para recibir la informacion.
+ * @param parent         El widget padre al que se asociará el diálogo.
+ * @param title          El título del diálogo.
+ * @param text_default   El texto por defecto que se mostrará en el campo de entrada.
  *
- * Para leer el input-text utilizar GobuWidgetDialogInputGet
- *
- * Returns: GtkWidget
+ * @return Un widget que representa el diálogo de entrada de texto.
  */
-
-GtkWidget *GobuWidgetDialogInput(GtkWidget *parent, const gchar *title, const gchar *text_default)
+GtkWidget *gobu_widget_dialog_input(GtkWidget *parent, const gchar *title, const gchar *text_default)
 {
     GtkWidget *dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(gtk_widget_get_root(parent)), GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR, "Create", GTK_RESPONSE_OK, NULL);
     gtk_window_set_resizable(dialog, FALSE);
 
     GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
-    GobuWidgetSetMargin(GTK_WIDGET(box), 18);
+    gobu_widget_set_margin(GTK_WIDGET(box), 18);
 
     GtkWidget *entry = gtk_entry_new_with_buffer(gtk_entry_buffer_new(text_default, -1));
     gtk_box_append(GTK_BOX(box), entry);
@@ -89,44 +81,40 @@ GtkWidget *GobuWidgetDialogInput(GtkWidget *parent, const gchar *title, const gc
 }
 
 /**
- * GobuWidgetDialogInputGet:
+ * Obtiene el texto ingresado en un diálogo de entrada de texto en Gobu.
  *
- * Utilizamos para recibir el texto escrito
- * en el input del GobuWidgetDialogInput
+ * @param dialog  El widget que representa el diálogo de entrada de texto.
  *
- * Returns: gchar
+ * @return El texto ingresado en el diálogo de entrada de texto.
  */
-
-const gchar *GobuWidgetDialogInputGetText(GtkWidget *dialog)
+const gchar *gobu_widget_dialog_input_get_text(GtkWidget *dialog)
 {
     return gtk_editable_get_text(GTK_EDITABLE(g_object_get_data(dialog, "entry")));
 }
 
 /**
- * GobuWidgetSetMargin:
+ * Establece el margen de un widget en Gobu.
  *
- * Aplicamos un margin en todas las direcciones
- *
- * Returns: Void
+ * @param widget  El widget al que se aplicará el margen.
+ * @param margin  El valor del margen que se desea establecer.
  */
-
-void GobuWidgetSetMargin(GtkWidget *widget, gint margin)
+void gobu_widget_set_margin(GtkWidget *widget, gint margin)
 {
-    GobuWidgetSetMarginStart(widget, margin);
-    GobuWidgetSetMarginEnd(widget, margin);
-    GobuWidgetSetMarginTop(widget, margin);
-    GobuWidgetSetMarginBottom(widget, margin);
+    gobu_widget_set_margin_start(widget, margin);
+    gobu_widget_set_margin_end(widget, margin);
+    gobu_widget_set_margin_top(widget, margin);
+    gobu_widget_set_margin_bottom(widget, margin);
 }
 
 /**
- * GobuWidgetButtonIconLabelNew:
+ * Crea un nuevo widget de botón con icono y etiqueta en Gobu.
  *
- * Creamos un button con un icono y un texto
+ * @param icon_name  El nombre del icono a mostrar en el botón.
+ * @param label      El texto de la etiqueta del botón.
  *
- * Returns: GtkWidget
+ * @return Un nuevo widget de botón con icono y etiqueta.
  */
-
-GtkWidget *GobuWidgetButtonIconLabelNew(const gchar *icon_name, const gchar *label)
+GtkWidget *gobu_widget_button_new_icon_with_label(const gchar *icon_name, const gchar *label)
 {
     GtkWidget *button = gtk_button_new();
     gtk_button_set_has_frame(button, FALSE);
@@ -146,14 +134,14 @@ GtkWidget *GobuWidgetButtonIconLabelNew(const gchar *icon_name, const gchar *lab
 }
 
 /**
- * GobuWidgetButtonInfoNew:
+ * Crea un nuevo widget de botón de información en Gobu.
  *
- * Creamos un button con un icono de informacion, titulo y una desc
+ * @param title  El título de la información a mostrar en el botón.
+ * @param desc   La descripción de la información a mostrar en el botón.
  *
- * Returns: GtkWidget
+ * @return Un nuevo widget de botón de información.
  */
-
-GtkWidget *GobuWidgetButtonInfoNew(const gchar *title, const gchar *desc)
+GtkWidget *gobu_widget_button_new_info(const gchar *title, const gchar *desc)
 {
     GtkWidget *button = gtk_button_new();
     gtk_button_set_has_frame(button, FALSE);
@@ -182,15 +170,14 @@ GtkWidget *GobuWidgetButtonInfoNew(const gchar *title, const gchar *desc)
 }
 
 /**
- * GobuWidgetPanedNew:
+ * Crea un nuevo widget de paneles (paned) en Gobu.
  *
- * Creamos un GtkPaned con una configuracion que se
- * utiliza mucho.
+ * @param orientation  La orientación de los paneles (GtkOrientation).
+ * @param start        TRUE si se debe colocar el widget en el inicio, FALSE en caso contrario.
  *
- * Returns: GtkWidget
+ * @return Un nuevo widget de paneles (paned).
  */
-
-GtkWidget *GobuWidgetPanedNew(GtkOrientation orientation, gboolean start)
+GtkWidget *gobu_widget_paned_new(GtkOrientation orientation, gboolean start)
 {
     GtkWidget *paned;
 
@@ -212,11 +199,23 @@ GtkWidget *GobuWidgetPanedNew(GtkOrientation orientation, gboolean start)
     return paned;
 }
 
-GtkWidget *GobuWidgetPanedNotebookNew(GtkOrientation orientation, gboolean rink_start, GtkWidget *label_start, GtkWidget *start, GtkWidget *label_end, GtkWidget *end)
+/**
+ * Crea un nuevo widget de paneles con pestañas en Gobu.
+ *
+ * @param orientation  La orientación de los paneles (GtkOrientation).
+ * @param rink_start   TRUE si se deben mostrar las pestañas al inicio, FALSE en caso contrario.
+ * @param label_start  El widget de etiqueta para el panel de inicio.
+ * @param start        El contenido del panel de inicio.
+ * @param label_end    El widget de etiqueta para el panel de fin.
+ * @param end          El contenido del panel de fin.
+ *
+ * @return Un nuevo widget de paneles con pestañas.
+ */
+GtkWidget *gobu_widget_paned_new_with_notebook(GtkOrientation orientation, gboolean rink_start, GtkWidget *label_start, GtkWidget *start, GtkWidget *label_end, GtkWidget *end)
 {
     GtkWidget *paned, *notebook;
 
-    paned = GobuWidgetPanedNew(orientation, rink_start);
+    paned = gobu_widget_paned_new(orientation, rink_start);
 
     notebook = gtk_notebook_new();
     gtk_notebook_set_show_border(GTK_NOTEBOOK(notebook), FALSE);
@@ -239,61 +238,50 @@ GtkWidget *GobuWidgetPanedNotebookNew(GtkOrientation orientation, gboolean rink_
 }
 
 /**
- * GobuWidgetToolbarNew:
+ * Crea una nueva barra de herramientas en Gobu.
  *
- * Creamos un toolbar
- *
- * Returns: GtkWidget
+ * @return Una nueva barra de herramientas.
  */
-
-GtkWidget *GobuWidgetToolbarNew(void)
+GtkWidget *gobu_widget_toolbar_new(void)
 {
     GtkWidget *self;
     self = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     gtk_widget_add_css_class(self, "toolbar");
-    GobuWidgetSetMargin(self, 3);
+    gobu_widget_set_margin(self, 3);
     return self;
 }
 
-/**
- * GobuWidgetToolbarSeparatorWidget:
- *
- * Un separador con una configuracion para un toolbar
- *
- * Returns: GtkWidget
- */
 
-void GobuWidgetToolbarSeparatorW(GtkWidget *toolbar)
+/**
+ * Agrega un separador en una barra de herramientas en Gobu.
+ *
+ * @param toolbar  La barra de herramientas a la que se agregará el separador.
+ */
+void gobu_widget_toolbar_separator_new(GtkWidget *toolbar)
 {
     GtkWidget *self;
     self = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    GobuWidgetSetMarginEnd(self, 5);
-    GobuWidgetSetMarginStart(self, 5);
+    gobu_widget_set_margin_end(self, 5);
+    gobu_widget_set_margin_start(self, 5);
     gtk_box_append(toolbar, self);
 }
 
 /**
- * GobuWidgetSeparatorV:
+ * Crea un separador vertical en Gobu.
  *
- * Creamos un separador para un toolbar
- *
- * Returns: GtkWidget
+ * @return Un nuevo separador vertical.
  */
-
-GtkWidget *GobuWidgetSeparatorV(void)
+GtkWidget *gobu_widget_separator_v(void)
 {
     return gtk_separator_new(GTK_ORIENTATION_VERTICAL);
 }
 
 /**
- * GobuWidgetSeparatorH:
+ * Crea un separador horizontal en Gobu.
  *
- * Creamos un separador Horizontal
- *
- * Returns: GtkWidget
+ * @return Un nuevo separador horizontal.
  */
-
-GtkWidget *GobuWidgetSeparatorH(void)
+GtkWidget *gobu_widget_separator_h(void)
 {
     return gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
 }

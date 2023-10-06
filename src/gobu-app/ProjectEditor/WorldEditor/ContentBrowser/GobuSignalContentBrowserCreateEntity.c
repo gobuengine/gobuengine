@@ -1,5 +1,5 @@
 #include "GobuSignalContentBrowserCreateEntity.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 
 static void GobuSignalContentBrowserCreateEntityResponse(GtkDialog *dialog, int response, gpointer data)
 {

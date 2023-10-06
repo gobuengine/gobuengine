@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu-project-manager-dialog.h                                                          *
+ * gobu_project_editor.h                                                          *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,19 +25,10 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GOBU_PROJECT_MANAGER_H__
-#define __GOBU_PROJECT_MANAGER_H__
+#ifndef __GOBU_PROJECT_EDITOR_H__
+#define __GOBU_PROJECT_EDITOR_H__
 #include <gtk/gtk.h>
 
-typedef struct _GobuProjectManager
-{
-    GtkWidget *btn_create;
-    GtkWidget *btn_file_chooser;
-    GtkWidget *entry_name;
-    GtkWidget *window;
-} GobuProjectManager;
+void gobu_project_editor_init(GtkApplication *app);
 
-void GobuProjectManagerInit(GtkApplication *app);
-void GobuProjectManagerFree(void);
-
-#endif // GOBU_PROJECT_MANAGER_DIALOG
+#endif // __GOBU_PROJECT_EDITOR_H__

@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu-project-manager-dialog.h                                                          *
+ * GobuFnListComponentCreate.h                                                      *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,11 +25,10 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GOBU_SIGNAL_CHANGE_PATH_H__
-#define __GOBU_SIGNAL_CHANGE_PATH_H__
-#include <gtk/gtk.h>
-#include "GobuProjectManager.h"
+#ifndef __GOBU_FN_LIST_COMPONENT_CREATE_H__
+#define __GOBU_FN_LIST_COMPONENT_CREATE_H__
+#include "GobuComponentSystem.h"
 
-void GobuSignalChangePath(GtkWidget *widget, GobuProjectManager *ctx);
+void GobuFnListComponentCreate(GobuComponentSystem *component, const char *name);
 
-#endif // GOBU_PROJECT_MANAGER_DIALOG
+#endif // __GOBU_FN_LIST_COMPONENT_CREATE_H__

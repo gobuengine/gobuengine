@@ -1,6 +1,6 @@
 #include "GobuUiContentBrowserToolbar.h"
 #include "GobuSignalContentBrowserPopover.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 
 GtkWidget *GobuUiContentBrowserToolbar(GobuBrowserContent *browser)
 {

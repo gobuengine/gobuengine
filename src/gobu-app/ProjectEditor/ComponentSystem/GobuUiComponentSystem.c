@@ -1,7 +1,7 @@
 #include "GobuUiComponentSystem.h"
 #include <gtksourceview/gtksource.h>
 #include "config.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 #include "GobuSignalListComponent.h"
 #include "GobuSignalCreateComponent.h"
 #include "GobuSignalListComponentSelected.h"

@@ -1,5 +1,5 @@
 #include "gobu_world_viewport.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 #include "gobu/gobu-gobu.h"
 
 struct _GobuWorldViewport
@@ -184,16 +184,12 @@ static gboolean gobu_world_viewport_signal_render(GobuWorldViewport *viewport, g
         priv->bInit = TRUE;
     }
 
-    static float angle;
-    angle += 0.05f;
     gobu_render_frame_begin(priv->width, priv->height, (GobuColor){0.0f, 0.0f, 0.0f, 1.0f});
     {
         if (priv->show_grid == TRUE)
         {
             gobu_shape_draw_checkboard(24, 24, priv->width, priv->height);
         }
-
-        gobu_shape_draw_filled_rect((GobuRectangle){100, 100, 50, 50}, (GobuVec2){1.0f, 1.0f}, (GobuVec2){0.5f, 0.5f}, angle, gobu_color_random_rgb(255, 0, 0));
     }
     gobu_render_frame_end(priv->width, priv->height);
 

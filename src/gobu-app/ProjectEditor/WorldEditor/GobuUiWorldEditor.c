@@ -1,7 +1,7 @@
-#include "config.h"
 #include "GobuUiWorldEditor.h"
 #include "GobuUiMenuBar.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
+#include "config.h"
 
 #include "ContentBrowser/GobuUiContentBrowser.h"
 #include "WorlrdViewport/gobu_world_viewport.h"
@@ -137,26 +137,3 @@ static GtkWidget *DockedModuleInit(void)
 
     return docked;
 }
-
-/* Public function */
-
-// gboolean gobu_project_editor_load(const gchar *path)
-// {
-//     GobuEditorContext *ctx = gobu_editor_get_context();
-//     g_return_if_fail(ctx);
-
-//     const gchar *folder = g_dirname(path);
-
-//     ctx->project.path = g_strdup(folder);
-//     ctx->project.name = g_strdup(g_basename(folder));
-//     ctx->browser.path_current = g_strdup(g_build_filename(ctx->project.path, "Content", NULL));
-//     ctx->browser.path_default = g_strdup(ctx->browser.path_current);
-
-//     GtkWidget *main = editor_project_init(ctx);
-//     gtk_notebook_append_page(GTK_NOTEBOOK(ctx->notebook), main, gtk_label_new(ctx->project.name));
-
-//     GtkWidget *components = gobu_component_editor_new();
-//     gtk_notebook_append_page(GTK_NOTEBOOK(ctx->notebook), components, gtk_label_new("Components"));
-
-//     return TRUE;
-// }

@@ -1,9 +1,9 @@
 /**********************************************************************************
- * Widgets.h                                                          *
- **********************************************************************************
+ * gobu_script_editor.h                                                           *
+ * ********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
- **********************************************************************************
+ * ********************************************************************************
  * Copyright (c) 2023 Jhonson Ozuna Mejia                                         *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -25,28 +25,10 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GOBU_WIDGETS_H__
-#define __GOBU_WIDGETS_H__
-#include <gtk/gtk.h>
+#ifndef __GOBU_SCRIPT_EDITOR_H__
+#define __GOBU_SCRIPT_EDITOR_H__
+#include "gobu_project_editor.h"
 
-#define GobuWidgetSetMarginStart gtk_widget_set_margin_start
-#define GobuWidgetSetMarginEnd gtk_widget_set_margin_end
-#define GobuWidgetSetMarginTop gtk_widget_set_margin_top
-#define GobuWidgetSetMarginBottom gtk_widget_set_margin_bottom
+GtkWidget *gobu_script_editor_new(void);
 
-void GobuWidgetThemeInit(void);
-void GobuWidgetAlert(GtkWidget *parent, const gchar *message);
-void GobuWidgetDialogConfirmDelete(GtkWidget *parent, GFile *file, GCallback c_handler);
-GtkWidget *GobuWidgetDialogInput(GtkWidget *parent, const gchar *title, const gchar *text_default);
-const gchar *GobuWidgetDialogInputGetText(GtkWidget *dialog);
-void GobuWidgetSetMargin(GtkWidget *widget, gint margin);
-GtkWidget *GobuWidgetButtonIconLabelNew(const gchar *icon_name, const gchar *label);
-GtkWidget *GobuWidgetButtonInfoNew(const gchar *title, const gchar *desc);
-GtkWidget *GobuWidgetPanedNew(GtkOrientation orientation, gboolean start);
-GtkWidget *GobuWidgetPanedNotebookNew(GtkOrientation orientation, gboolean rink_start, GtkWidget *label_start, GtkWidget *start, GtkWidget *label_end, GtkWidget *end);
-GtkWidget *GobuWidgetToolbarNew(void);
-void GobuWidgetToolbarSeparatorW(GtkWidget *toolbar);
-GtkWidget *GobuWidgetSeparatorH(void);
-GtkWidget *GobuWidgetSeparatorV(void);
-
-#endif // __GOBU_WIDGETS_H__
+#endif // __GOBU_SCRIPT_EDITOR_H__

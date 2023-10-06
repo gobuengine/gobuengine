@@ -2,7 +2,7 @@
 #include "GobuSignalContentBrowserNavHome.h"
 #include "GobuSignalContentBrowserNavBack.h"
 #include "GobuSignalContentBrowserNavForward.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 
 GtkWidget *GobuUiContentBrowserNavToolbar(GobuBrowserContent *browser)
 {

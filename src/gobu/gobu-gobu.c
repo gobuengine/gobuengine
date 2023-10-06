@@ -249,7 +249,7 @@ void gobu_render_frame_begin(int width, int height, GobuColor color)
 
     sgp_begin(width, height);
     gobu_render_viewport(0, 0, width, height);
-    sgp_project(-ratio, ratio, 1.0f, -1.0f);
+    // sgp_project(-ratio, ratio, 1.0f, -1.0f);
 
     gobu_render_set_scale(CORE.CameraManager.main.zoom, CORE.CameraManager.main.zoom, 0, 0);
     gobu_render_set_translate(CORE.CameraManager.main.target.x, CORE.CameraManager.main.target.y);
@@ -422,25 +422,21 @@ void gobu_render_set_translate(float x, float y)
  */
 void gobu_shape_draw_filled_rect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color)
 {
-    // float ox = origin.x <= 0 ? 1.0f : origin.x;
-    // float oy = origin.y <= 0 ? 1.0f : origin.y;
+    float ox = origin.x <= 0 ? 1.0f : origin.x;
+    float oy = origin.y <= 0 ? 1.0f : origin.y;
 
-    // GobuVec2 pivot = (GobuVec2){rect.w * ox, rect.h * oy};
+    GobuVec2 pivot = (GobuVec2){rect.w * ox, rect.h * oy};
 
-    // sgp_push_transform();
-    // {
-    //     gobu_render_set_translate(rect.x, rect.y);
-    //     gobu_render_set_scale(scale.x, scale.y, pivot.x, pivot.y);
-    //     gobu_render_set_rotate(rotation, pivot.x, pivot.y);
-    //     gobu_render_set_color(color);
-    //     sgp_draw_filled_rect(0, 0, rect.w, rect.h);
-    // }
-    // sgp_pop_transform();
-
-    float r = sinf(rotation) * 0.5 + 0.5, g = cosf(rotation) * 0.5 + 0.5;
-    sgp_set_color(r, g, 0.3f, 1.0f);
-    sgp_rotate_at(rotation, 0.0f, 0.0f);
-    sgp_draw_filled_rect(-0.5f, -0.5f, 1.0f, 1.0f);
+    sgp_push_transform();
+    {
+        gobu_render_set_color(color);
+        gobu_render_set_translate(rect.x, rect.y);
+        gobu_render_set_scale(scale.x, scale.y, pivot.x, pivot.y);
+        gobu_render_set_rotate(rotation, pivot.x, pivot.y);
+        sgp_draw_filled_rect(0, 0, rect.w, rect.h);
+        gobu_render_reset_color();
+    }
+    sgp_pop_transform();
 }
 
 /**
@@ -456,12 +452,13 @@ void gobu_shape_draw_filled_rect(GobuRectangle rect, GobuVec2 scale, GobuVec2 or
  */
 void gobu_shape_draw_checkboard(int width, int height, int screen_width, int screen_height)
 {
-    gobu_render_clear_color(gobu_color_rgb_to_color(13, 10, 14));
+    gobu_render_clear_color(gobu_color_rgb_to_color(50, 50, 50));
 
     for (int y = 0; y < screen_height / height + 1; y++)
         for (int x = 0; x < screen_width / width + 1; x++)
             if ((x + y) % 2 == 0)
-                gobu_shape_draw_filled_rect((GobuRectangle){x * width, y * height, width, height}, (GobuVec2){1.0f, 1.0f}, (GobuVec2){0.0f, 0.0f}, 0.0f, gobu_color_rgb_to_color(17, 14, 18));
+                gobu_shape_draw_filled_rect((GobuRectangle){x * width, y * height, width, height}, 
+                (GobuVec2){1.0f, 1.0f}, (GobuVec2){0.0f, 0.0f}, 0.0f, gobu_color_rgb_to_color(60, 60, 60));
     gobu_render_reset_color();
 }
 

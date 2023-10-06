@@ -1,5 +1,5 @@
 #include "GobuSignalContentBrowserCreateLevel.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 
 static void GobuSignalContentBrowserCreateLevelResponse(GtkDialog *dialog, int response, gpointer data)
 {

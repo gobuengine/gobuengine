@@ -1,9 +1,9 @@
 /**********************************************************************************
- * gobu-project-manager-dialog.h                                                          *
- **********************************************************************************
+ * gobu-app.h                                                           *
+ * ********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
- **********************************************************************************
+ * ********************************************************************************
  * Copyright (c) 2023 Jhonson Ozuna Mejia                                         *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -25,11 +25,53 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GOBU_SIGNAL_CHECK_NAME_PROJECT_H__
-#define __GOBU_SIGNAL_CHECK_NAME_PROJECT_H__
+#ifndef __GOBU_APP_H__
+#define __GOBU_APP_H__
 #include <gtk/gtk.h>
-#include "GobuProjectManager.h"
+#include <gtksourceview/gtksource.h>
+#include "config.h"
+#include "gobu/gobu-gobu.h"
 
-void GobuSignalCheckNameProject(GtkWidget *widget, GobuProjectManager *ctx);
+typedef enum
+{
+    GOBU_RESOURCE_ICON_COMPONENT = 0,
+    GOBU_RESOURCE_ICON_LEVEL,
+    GOBU_RESOURCE_ICON_ENTITY,
+    GOBU_RESOURCE_ICON_FOLDER,
+    GOBU_RESOURCE_ICON_ANIM2D,
+    GOBU_RESOURCE_ICONS
+} GobuAppResourceIcon;
 
-#endif // GOBU_PROJECT_MANAGER_DIALOG
+typedef struct _GobuApp
+{
+    GtkWidget *window;
+
+    struct
+    {
+        struct
+        {
+            GtkStringList *list;
+            GHashTable *table;
+            binn *data;
+        } Script;
+    } Module;
+
+    struct
+    {
+        GdkPixbuf *icons[GOBU_RESOURCE_ICONS];
+    } resource;
+
+    struct
+    {
+        struct
+        {
+            GtkSourceLanguage *source_language;
+            GtkSourceStyleScheme *style_scheme;
+        } scripts;
+
+        binn *data;
+    } setting;
+
+} GobuApp;
+
+#endif // __GOBU_APP_H__

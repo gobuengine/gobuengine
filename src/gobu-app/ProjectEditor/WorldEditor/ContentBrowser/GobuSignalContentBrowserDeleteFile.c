@@ -1,5 +1,5 @@
 #include "GobuSignalContentBrowserDeleteFile.h"
-#include "GobuWidgets.h"
+#include "gobu_widget.h"
 
 static void GobuSignalContentBrowserDeleteFileResponse(GtkWidget *widget, int response, gpointer data)
 {

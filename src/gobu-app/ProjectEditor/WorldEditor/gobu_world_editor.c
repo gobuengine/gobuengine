@@ -1,6 +1,6 @@
-#include "GobuWorldEditor.h"
-#include "GobuUiWorldEditor.h"
+#include "gobu_world_editor.h"
 #include "GobuUiProjectEditor.h"
+#include "WorldEditor/GobuUiWorldEditor.h"
 #include "gobu/gobu-gobu.h"
 
 void GobuWorldEditorInit(GobuProjectEditor *ctx)
