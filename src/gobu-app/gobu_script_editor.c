@@ -2,12 +2,86 @@
 #include "config.h"
 #include "gobu-app.h"
 #include "gobu_widget.h"
+#include "gobu_script_node_viewport.h"
 
 static GtkWidget *view_source_buffer, *view_source;
-static GtkSingleSelection *list_component_selection;
+static GtkSingleSelection *selectionComponent;
 static guint script_selected_i = 0;
 
 extern GobuApp *APP;
+
+/**
+ * Maneja la señal de construcción de un script en Gobu.
+ *
+ * @param widget  El widget que desencadenó la señal de construcción.
+ * @param data    Datos relacionados con la señal de construcción del script.
+ */
+static void gobu_script_signal_build(GtkWidget *widget, gpointer data)
+{
+    guint id = gtk_single_selection_get_selected(selectionComponent);
+    gchar *key = gtk_string_list_get_string(APP->Module.Script.cmp_list, id);
+    gchar *script_buffer = g_hash_table_lookup(APP->Module.Script.cmp_table, key);
+
+    // ---------------------
+    GString *code_code = g_string_new(NULL);
+    code_code = g_string_append(code_code, "#include <stdio.h>\n");
+    code_code = g_string_append(code_code, "#include <stdbool.h>\n");
+    code_code = g_string_append(code_code, "#include \"include/flecs.h\"\n");
+    code_code = g_string_append(code_code, "#include \"include/gobuscript.h\"\n");
+    // code_code = g_string_append(code_code, "#define fn static void\n");
+    code_code = g_string_append(code_code, script_buffer);
+    // code_code = g_string_append(code_code, "GOBUAPI void ExportMainGame(){");
+    // g_string_append_printf(code_code, "%s_ready(gobu_ecs_world_get());", key);
+    // code_code = g_string_append(code_code, "}");
+    // g_string_replace(code_code, "fn", "static void", 0);
+    // g_string_replace(code_code, "ecs_struct", "ECS_STRUCT", 0);
+    // g_string_replace(code_code, "ecs_system", "ECS_SYSTEM", 0);
+    // g_string_replace(code_code, "::", "_", 0);
+    // g_string_replace(code_code, "self.", g_strdup_printf("%s_", key), 0);
+    gchar *out_buffer = g_string_free(code_code, FALSE);
+
+    // gchar *file_gcomponent_path = g_build_filename(gobu_project_get_path(), "Build", g_strdup_printf("%s.c", gobu_project_get_name()), NULL);
+    // g_file_set_contents(file_gcomponent_path, out_buffer, strlen(out_buffer), NULL);
+
+    // gchar *command = g_strdup_printf("D:/549GS/Projects/GobuProject/gobu/bin/tools/tcc -shared %s -o %s -L%s -lgobu", file_gcomponent_path, g_build_filename(g_dirname(file_gcomponent_path), g_strdup_printf("%s.dll", gobu_project_get_name()), NULL), g_dirname(file_gcomponent_path));
+
+    // g_free(file_gcomponent_path);
+    // printf("Command: %s\n", command);
+    // system(command);
+    // g_free(command);
+}
+
+/**
+ * Maneja la señal de guardado de un script en Gobu.
+ *
+ * @param widget  El widget que desencadenó la señal de guardado.
+ * @param data    Datos relacionados con la señal de guardado del script.
+ */
+static void gobu_script_signal_save(GtkWidget *widget, gpointer data)
+{
+    binn *list = binn_list();
+
+    for (int i = 0;; i++)
+    {
+        gchar *keys = gtk_string_list_get_string(APP->Module.Script.cmp_list, i);
+        if (keys == NULL)
+            break;
+
+        binn *obj = binn_object();
+        binn_object_set_str(obj, "name", keys);
+        binn_object_set_str(obj, "code", g_hash_table_lookup(APP->Module.Script.cmp_table, keys));
+        binn_list_add_object(list, obj);
+        binn_free(obj);
+    }
+
+    gchar *file_gcomponent_path = g_build_filename(gobu_project_get_path(), "Scripts", FILE_GAME_COMPONENT, NULL);
+    gobu_json_save_to_file(list, file_gcomponent_path);
+    g_free(file_gcomponent_path);
+
+    binn_free(list);
+
+    g_print("GOBU: Module-Script = Save Scripts\n");
+}
 
 /**
  * Maneja la respuesta a la señal de eliminación de un componente en una lista de scripts en Gobu.
@@ -18,18 +92,18 @@ extern GobuApp *APP;
  */
 static void gobu_script_list_component_signal_remove_response(GtkDialog *dialog, int response, gpointer data)
 {
-    g_assert(APP->Module.Script.list);
-    g_assert(APP->Module.Script.table);
-    g_assert(list_component_selection);
+    g_assert(APP->Module.Script.cmp_list);
+    g_assert(APP->Module.Script.cmp_table);
+    g_assert(selectionComponent);
 
     if (response == GTK_RESPONSE_OK)
     {
-        const gchar *key = gtk_string_list_get_string(APP->Module.Script.list, script_selected_i);
-        g_return_if_fail(g_hash_table_remove(APP->Module.Script.table, key));
+        const gchar *key = gtk_string_list_get_string(APP->Module.Script.cmp_list, script_selected_i);
+        g_return_if_fail(g_hash_table_remove(APP->Module.Script.cmp_table, key));
 
         const id = (script_selected_i - 1) == -1 ? 0 : (script_selected_i - 1);
-        gtk_string_list_remove(APP->Module.Script.list, script_selected_i);
-        gtk_single_selection_set_selected(list_component_selection, id);
+        gtk_string_list_remove(APP->Module.Script.cmp_list, script_selected_i);
+        gtk_single_selection_set_selected(selectionComponent, id);
 
         g_print("GOBU: Module-Script = RemoveScript::[ %s ]\n", key);
     }
@@ -44,7 +118,7 @@ static void gobu_script_list_component_signal_remove_response(GtkDialog *dialog,
  */
 static void gobu_script_list_component_signal_remove(GtkWidget *button, gpointer data)
 {
-    const gchar *key = gtk_string_list_get_string(APP->Module.Script.list, script_selected_i);
+    const gchar *key = gtk_string_list_get_string(APP->Module.Script.cmp_list, script_selected_i);
     gobu_widget_dialog_confirm_delete(button, key, NULL, gobu_script_list_component_signal_remove_response);
 }
 
@@ -60,9 +134,9 @@ static void gobu_script_list_component_signal_create_response(GtkDialog *dialog,
     if (response == GTK_RESPONSE_OK)
     {
         const gchar *key = gobu_widget_dialog_input_get_text(dialog);
-        g_return_if_fail(!g_hash_table_contains(APP->Module.Script.table, key));
-        gtk_string_list_append(APP->Module.Script.list, key);
-        g_hash_table_insert(APP->Module.Script.table, key, "");
+        g_return_if_fail(!g_hash_table_contains(APP->Module.Script.cmp_table, key));
+        gtk_string_list_append(APP->Module.Script.cmp_list, key);
+        g_hash_table_insert(APP->Module.Script.cmp_table, key, "");
 
         g_print("GOBU: Module-Script = CreateScript::[ %s ]\n", key);
     }
@@ -95,8 +169,8 @@ static void gobu_script_list_component_signal_save_virtual(GtkTextBuffer *self, 
 
         gtk_text_buffer_get_bounds(view_source_buffer, &start, &end);
         gchar *buffer = gtk_text_buffer_get_text(view_source_buffer, &start, &end, TRUE);
-        gchar *key = gtk_string_list_get_string(APP->Module.Script.list, script_selected_i);
-        g_hash_table_replace(APP->Module.Script.table, key, buffer);
+        gchar *key = gtk_string_list_get_string(APP->Module.Script.cmp_list, script_selected_i);
+        g_hash_table_replace(APP->Module.Script.cmp_table, key, buffer);
     }
 }
 
@@ -114,12 +188,12 @@ static void gobu_script_list_component_signal_selected(GtkSingleSelection *self,
 
     if (script_selected_i == -1)
     {
-        gtk_text_buffer_set_text(view_source_buffer, "", 0);
+        gtk_text_buffer_set_text(view_source_buffer, "", -1);
         return;
     }
 
-    gchar *key = gtk_string_list_get_string(APP->Module.Script.list, script_selected_i);
-    gchar *script_buffer = g_hash_table_lookup(APP->Module.Script.table, key);
+    gchar *key = gtk_string_list_get_string(APP->Module.Script.cmp_list, script_selected_i);
+    gchar *script_buffer = g_hash_table_lookup(APP->Module.Script.cmp_table, key);
     gtk_text_buffer_set_text(view_source_buffer, script_buffer, strlen(script_buffer));
     g_print("GOBU: Module-Script = SelectedScript::[ %s:%d ]\n", key, script_selected_i);
 }
@@ -170,12 +244,12 @@ static void gobu_script_list_component_load(void)
 {
     g_print("GOBU: List Component init\n");
 
-    gchar *file_gcomponent_path = g_build_filename(gobu_project_get_path(), "Scripts", "game.gcomponent", NULL);
+    gchar *file_gcomponent_path = g_build_filename(gobu_project_get_path(), "Scripts", FILE_GAME_COMPONENT, NULL);
     APP->Module.Script.data = gobu_json_load_from_file(file_gcomponent_path);
     g_free(file_gcomponent_path);
 
-    APP->Module.Script.list = gtk_string_list_new(NULL);
-    APP->Module.Script.table = g_hash_table_new(g_str_hash, g_str_equal);
+    APP->Module.Script.cmp_list = gtk_string_list_new(NULL);
+    APP->Module.Script.cmp_table = g_hash_table_new(g_str_hash, g_str_equal);
 
     int count = binn_count(APP->Module.Script.data);
     for (int i = 1; i <= count; i++)
@@ -184,8 +258,8 @@ static void gobu_script_list_component_load(void)
         char *keys = binn_object_str(cmp, "name");
         char *code = binn_object_str(cmp, "code");
 
-        gtk_string_list_append(APP->Module.Script.list, keys);
-        g_hash_table_insert(APP->Module.Script.table, keys, code);
+        gtk_string_list_append(APP->Module.Script.cmp_list, keys);
+        g_hash_table_insert(APP->Module.Script.cmp_table, keys, code);
     }
 }
 
@@ -196,53 +270,39 @@ static void gobu_script_list_component_load(void)
  */
 static GtkWidget *gobu_script_list_component(void)
 {
-    GtkWidget *vbox;
-    GtkWidget *view, *toolbar, *scroll, *item;
+    GtkWidget *expand, *vbox_content;
+    GtkWidget *view, *scroll, *button;
     GtkListItemFactory *factory;
-    GListStore *store;
 
-    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    scroll = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_widget_set_vexpand(scroll, TRUE);
+    gtk_widget_set_size_request(GTK_WIDGET(scroll), DOCK_L_MIN_SIZE, -1);
     {
-        toolbar = gobu_widget_toolbar_new();
-        gtk_box_append(vbox, toolbar);
+        button = gtk_button_new_from_icon_name("list-add-symbolic");
+        expand = gobu_widget_expander_with_widget("<b>Components</b>", button);
+        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), expand);
         {
-            item = gobu_widget_button_new_icon_with_label("list-add-symbolic", "Add");
-            gtk_box_append(GTK_BOX(toolbar), item);
-            g_signal_connect(item, "clicked", G_CALLBACK(gobu_script_list_component_signal_create), NULL);
+            selectionComponent = gtk_single_selection_new(G_LIST_MODEL(APP->Module.Script.cmp_list));
+            gtk_single_selection_set_autoselect(selectionComponent, FALSE);
+            gtk_single_selection_set_can_unselect(selectionComponent, TRUE);
+            gtk_single_selection_set_selected(selectionComponent, GTK_INVALID_LIST_POSITION);
 
-            gobu_widget_toolbar_separator_new(toolbar);
+            factory = gtk_signal_list_item_factory_new();
 
-            item = gobu_widget_button_new_icon_with_label("user-trash-full-symbolic", "Remove");
-            gtk_box_append(GTK_BOX(toolbar), item);
-            g_signal_connect(item, "clicked", G_CALLBACK(gobu_script_list_component_signal_remove), NULL);
+            view = gtk_list_view_new(selectionComponent, factory);
+            gtk_list_view_set_show_separators(view, TRUE);
+            gtk_widget_add_css_class(view, "navigation-sidebar");
+            gtk_expander_set_child(expand, view);
+
+            g_signal_connect(factory, "setup", G_CALLBACK(gobu_script_list_component_signal_setup), NULL);
+            g_signal_connect(factory, "bind", G_CALLBACK(gobu_script_list_component_signal_bind), NULL);
+            g_signal_connect(selectionComponent, "notify::selected", G_CALLBACK(gobu_script_list_component_signal_selected), NULL);
+            g_signal_connect(button, "clicked", G_CALLBACK(gobu_script_list_component_signal_create), NULL);
         }
     }
 
-    {
-        scroll = gtk_scrolled_window_new();
-        gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-        gtk_widget_set_vexpand(scroll, TRUE);
-        gtk_widget_set_size_request(GTK_WIDGET(scroll), DOCK_L_MIN_SIZE, -1);
-        gtk_box_append(vbox, scroll);
-
-        list_component_selection = gtk_single_selection_new(G_LIST_MODEL(APP->Module.Script.list));
-        gtk_single_selection_set_autoselect(list_component_selection, FALSE);
-        gtk_single_selection_set_can_unselect(list_component_selection, TRUE);
-        gtk_single_selection_set_selected(list_component_selection, GTK_INVALID_LIST_POSITION);
-        g_signal_connect(list_component_selection, "notify::selected", G_CALLBACK(gobu_script_list_component_signal_selected), NULL);
-
-        factory = gtk_signal_list_item_factory_new();
-        g_signal_connect(factory, "setup", G_CALLBACK(gobu_script_list_component_signal_setup), NULL);
-        g_signal_connect(factory, "bind", G_CALLBACK(gobu_script_list_component_signal_bind), NULL);
-
-        view = gtk_list_view_new(list_component_selection, factory);
-        // gtk_list_view_set_single_click_activate(view, TRUE);
-        // gtk_list_view_set_show_separators(view, TRUE);
-        gtk_widget_add_css_class(view, "navigation-sidebar");
-        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), view);
-    }
-
-    return vbox;
+    return scroll;
 }
 
 /**
@@ -264,6 +324,7 @@ static GtkWidget *gobu_script_view_source(void)
         gtk_source_view_set_show_line_numbers(view_source, TRUE);
         gtk_text_view_set_left_margin(GTK_TEXT_VIEW(view_source), 10);
         gtk_text_view_set_top_margin(GTK_TEXT_VIEW(view_source), 10);
+        gtk_widget_set_sensitive(view_source, FALSE);
 
         view_source_buffer = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(view_source)));
         gtk_source_buffer_set_style_scheme(view_source_buffer, APP->setting.scripts.style_scheme);
@@ -293,11 +354,13 @@ static GtkWidget *gobu_script_editor_init(void)
         {
             item = gobu_widget_button_new_icon_with_label("media-removable-symbolic", "Save");
             gtk_box_append(toolbar, item);
+            g_signal_connect(item, "clicked", G_CALLBACK(gobu_script_signal_save), NULL);
 
             gobu_widget_toolbar_separator_new(toolbar);
 
             item = gobu_widget_button_new_icon_with_label("media-view-subtitles-symbolic", "Build");
             gtk_box_append(toolbar, item);
+            g_signal_connect(item, "clicked", G_CALLBACK(gobu_script_signal_build), NULL);
 
             gobu_widget_toolbar_separator_new(toolbar);
 
@@ -305,16 +368,19 @@ static GtkWidget *gobu_script_editor_init(void)
             gtk_box_append(toolbar, item);
         }
 
+        gtk_box_append(vbox, gobu_widget_separator_h());
+
         hpaned = gobu_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, TRUE);
         gtk_box_append(vbox, hpaned);
         {
             vpaned_start = gobu_widget_paned_new_with_notebook(GTK_ORIENTATION_VERTICAL, TRUE,
-                                                               gtk_label_new("Components"), gobu_script_list_component(),
+                                                               gtk_label_new("My Data"), gobu_script_list_component(),
                                                                NULL, NULL);
             gtk_paned_set_start_child(GTK_PANED(hpaned), vpaned_start);
 
-            vpaned_end = gobu_widget_paned_new_with_notebook(GTK_ORIENTATION_VERTICAL, TRUE,
-                                                             gtk_label_new("View"), gobu_script_view_source(), NULL, NULL);
+            vpaned_end = gobu_widget_paned_new_with_notebook(GTK_ORIENTATION_HORIZONTAL, FALSE,
+                                                             gtk_label_new("View"), gobu_script_node_viewport_new(),
+                                                             NULL, NULL);
             gtk_paned_set_end_child(GTK_PANED(hpaned), vpaned_end);
         }
     }
@@ -328,8 +394,8 @@ static GtkWidget *gobu_script_editor_init(void)
 static void gobu_script_editor_free(void)
 {
     g_print("GOBU: List Component free\n");
-    g_hash_table_destroy(APP->Module.Script.table);
-    g_object_unref(APP->Module.Script.list);
+    g_hash_table_destroy(APP->Module.Script.cmp_table);
+    g_object_unref(APP->Module.Script.cmp_list);
     binn_free(APP->Module.Script.data);
 }
 

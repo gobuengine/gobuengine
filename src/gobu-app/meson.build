@@ -7,6 +7,20 @@ gobuapp_src = [
     'project_manager.c',
     'gobu_project_editor.c',
     'gobu_script_editor.c',
+    'gobu_script_node_viewport.c',
+
+    'gobu_editor_world_outliner_item_column.c',
+
+    'gobu_editor_world.c',
+    'gobu_editor_world_browser.c',
+    'gobu_editor_world_inspector.c',
+    'gobu_editor_world_outliner.c',
+    'gobu_editor_world_spriteanim.c',
+    'gobu_editor_world_tileeditor.c',
+    'gobu_editor_world_timeline.c',
+    'gobu_editor_world_viewport.c',
+    
+    'gobu_gobu_embed.c',
     'gobu_widget.c',
     'gobu-app.c'
 ]
@@ -14,9 +28,9 @@ gobuapp_src = [
 executable('gobueditor',
     gobuapp_src,
     dependencies: gobu_app_deps,
-    link_with: [libgobu],
+    link_with: [libgobu, libgobuscript],
     include_directories:['../.','ProjectEditor','.'],
     install : true,
     install_dir:base_dir+'/bin/',
-    cpp_args : '-W -g -w'
+    c_args : ['-W','-g','-w']
 )

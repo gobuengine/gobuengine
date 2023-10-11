@@ -1,16 +1,5 @@
 #include "gobu-gobu.h"
-
 #include "thirdparty/binn/binn_json.h"
-
-#define SOKOL_GLCORE33
-#define SOKOL_IMPL
-#define SOKOL_NO_ENTRY
-#include "thirdparty/sokol/sokol_gfx.h"
-#include "thirdparty/sokol/sokol_gp.h"
-#include "thirdparty/sokol/sokol_glue.h"
-
-#define STB_IMAGE_IMPLEMENTATION
-#include "thirdparty/stb/stb_image.h"
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -25,7 +14,7 @@ typedef struct GobuCoreData
 
     struct
     {
-        GobuCamera main;
+        Camera2D camera;
     } CameraManager;
 
     GobuEcsWorld *world;
@@ -161,40 +150,14 @@ const char *gobu_project_get_name(void)
     return g_strdup(CORE.project.name);
 }
 
-GobuCamera gobu_camera_new(void)
+void gobu_camera_begin(void)
 {
-    return (GobuCamera){
-        .zoom = 1,
-        .rotation = 0.0f,
-        .offset = (GobuVec2){0.0f, 0.0f},
-        .target = (GobuVec2){0.0f, 0.0f},
-    };
+    BeginMode2D(CORE.CameraManager.camera);
 }
 
-void gobu_camera_set_main(GobuCamera *camera)
+void gobu_camera_end(void)
 {
-    CORE.CameraManager.main = *camera;
-}
-
-void gobu_camera_set_position(GobuCamera camera, float x, float y)
-{
-    camera.target = (GobuVec2){x, y};
-}
-
-void gobu_camera_set_offset(GobuCamera camera, float x, float y)
-{
-    camera.offset = (GobuVec2){x, y};
-}
-
-void gobu_camera_set_rotation(GobuCamera camera, float rotation)
-{
-    camera.rotation = rotation;
-}
-
-void gobu_camera_set_zoom(GobuCamera camera, float zoom)
-{
-    zoom = (zoom <= 0 ? 0.1 : zoom);
-    camera.zoom = zoom;
+    EndMode2D();
 }
 
 /*
@@ -207,17 +170,19 @@ void gobu_camera_set_zoom(GobuCamera camera, float zoom)
  * Esta función se encarga de realizar la inicialización necesaria para el subsistema
  * de renderización en Gobu, preparando el entorno para la renderización.
  */
-void gobu_render_init(void)
+void gobu_render_init(int width, int height)
 {
     srand((unsigned int)time(NULL));
 
-    sg_setup(&(sg_desc){0});
-    sgp_setup(&(sgp_desc){0});
+    // sg_setup(&(sg_desc){0});
+    // sgp_setup(&(sgp_desc){0});
 
-    CORE.CameraManager.main.target = (GobuVec2){0.0f, 0.0f};
-    CORE.CameraManager.main.offset = (GobuVec2){1.0f, 1.0f};
-    CORE.CameraManager.main.zoom = 1.0f;
-    CORE.CameraManager.main.rotation = 0.0f;
+    InitWindow(width, height, NULL);
+
+    CORE.CameraManager.camera.target = (Vector2){0.0f, 0.0f};
+    CORE.CameraManager.camera.offset = (Vector2){width/2.0f, height/2.0f};
+    CORE.CameraManager.camera.zoom = 1.0f;
+    CORE.CameraManager.camera.rotation = 0.0f;
 }
 
 /**
@@ -229,8 +194,9 @@ void gobu_render_init(void)
 void gobu_render_shutdown(void)
 {
     gobu_ecs_world_free();
-    sgp_shutdown();
-    sg_shutdown();
+    // sgp_shutdown();
+    // sg_shutdown();
+    CloseWindow();
 }
 
 /**
@@ -243,18 +209,10 @@ void gobu_render_shutdown(void)
  * @param height  El alto del frame de renderización en píxeles.
  * @param color   El color de fondo del frame de renderización.
  */
-void gobu_render_frame_begin(int width, int height, GobuColor color)
+void gobu_render_frame_begin(Color color)
 {
-    float ratio = width / (float)height;
-
-    sgp_begin(width, height);
-    gobu_render_viewport(0, 0, width, height);
-    // sgp_project(-ratio, ratio, 1.0f, -1.0f);
-
-    gobu_render_set_scale(CORE.CameraManager.main.zoom, CORE.CameraManager.main.zoom, 0, 0);
-    gobu_render_set_translate(CORE.CameraManager.main.target.x, CORE.CameraManager.main.target.y);
-    gobu_render_set_rotate(CORE.CameraManager.main.rotation, 0, 0);
-    gobu_render_clear_color(color);
+    BeginDrawing();
+    gobu_render_clear_color((Color){0.0f, 0.0f, 0.0f, 1.0f});
 }
 
 /**
@@ -268,12 +226,7 @@ void gobu_render_frame_begin(int width, int height, GobuColor color)
  */
 void gobu_render_frame_end(int width, int height)
 {
-    sg_pass_action pass_action = {0};
-    sg_begin_default_pass(&pass_action, width, height);
-    sgp_flush();
-    sgp_end();
-    sg_end_pass();
-    sg_commit();
+    EndDrawing();
 }
 
 /**
@@ -289,7 +242,6 @@ void gobu_render_frame_end(int width, int height)
  */
 void gobu_render_viewport(int x, int y, int width, int height)
 {
-    sgp_viewport(x, y, width, height);
 }
 
 /**
@@ -305,7 +257,6 @@ void gobu_render_viewport(int x, int y, int width, int height)
  */
 void gobu_render_project(float left, float right, float top, float bottom)
 {
-    sgp_project(left, right, top, bottom);
 }
 
 /**
@@ -316,11 +267,9 @@ void gobu_render_project(float left, float right, float top, float bottom)
  *
  * @param color  El color de fondo deseado.
  */
-void gobu_render_clear_color(GobuColor color)
+void gobu_render_clear_color(Color color)
 {
-    // sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
-    gobu_render_set_color(color);
-    gobu_render_clear();
+    ClearBackground(RAYWHITE);
 }
 
 /**
@@ -331,7 +280,6 @@ void gobu_render_clear_color(GobuColor color)
  */
 void gobu_render_clear(void)
 {
-    sgp_clear();
 }
 
 /**
@@ -342,7 +290,6 @@ void gobu_render_clear(void)
  */
 void gobu_render_reset_color(void)
 {
-    sgp_reset_color();
 }
 
 /**
@@ -353,9 +300,8 @@ void gobu_render_reset_color(void)
  *
  * @param color  El color deseado para la renderización.
  */
-void gobu_render_set_color(GobuColor color)
+void gobu_render_set_color(Color color)
 {
-    sgp_set_color(color.r, color.g, color.b, color.a);
 }
 
 /**
@@ -371,7 +317,6 @@ void gobu_render_set_color(GobuColor color)
  */
 void gobu_render_set_rotate(float theta, float x, float y)
 {
-    sgp_rotate_at(theta, x, y);
 }
 
 /**
@@ -387,7 +332,6 @@ void gobu_render_set_rotate(float theta, float x, float y)
  */
 void gobu_render_set_scale(float sx, float sy, float x, float y)
 {
-    sgp_scale_at(sx, sy, x, y);
 }
 
 /**
@@ -401,7 +345,6 @@ void gobu_render_set_scale(float sx, float sy, float x, float y)
  */
 void gobu_render_set_translate(float x, float y)
 {
-    sgp_translate(x, y);
 }
 
 /*
@@ -420,23 +363,12 @@ void gobu_render_set_translate(float x, float y)
  * @param rotation  El ángulo de rotación en radianes.
  * @param color     El color de relleno del rectángulo.
  */
-void gobu_shape_draw_filled_rect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color)
+void gobu_shape_draw_filled_rect(Rectangle rect, Vector2 scale, Vector2 origin, float rotation, Color color)
 {
     float ox = origin.x <= 0 ? 1.0f : origin.x;
     float oy = origin.y <= 0 ? 1.0f : origin.y;
-
-    GobuVec2 pivot = (GobuVec2){rect.w * ox, rect.h * oy};
-
-    sgp_push_transform();
-    {
-        gobu_render_set_color(color);
-        gobu_render_set_translate(rect.x, rect.y);
-        gobu_render_set_scale(scale.x, scale.y, pivot.x, pivot.y);
-        gobu_render_set_rotate(rotation, pivot.x, pivot.y);
-        sgp_draw_filled_rect(0, 0, rect.w, rect.h);
-        gobu_render_reset_color();
-    }
-    sgp_pop_transform();
+    Vector2 pivot = (Vector2){rect.width * ox, rect.height * oy};
+    DrawRectanglePro(rect, pivot, rotation, color);
 }
 
 /**
@@ -452,14 +384,11 @@ void gobu_shape_draw_filled_rect(GobuRectangle rect, GobuVec2 scale, GobuVec2 or
  */
 void gobu_shape_draw_checkboard(int width, int height, int screen_width, int screen_height)
 {
-    gobu_render_clear_color(gobu_color_rgb_to_color(50, 50, 50));
-
     for (int y = 0; y < screen_height / height + 1; y++)
         for (int x = 0; x < screen_width / width + 1; x++)
             if ((x + y) % 2 == 0)
-                gobu_shape_draw_filled_rect((GobuRectangle){x * width, y * height, width, height}, 
-                (GobuVec2){1.0f, 1.0f}, (GobuVec2){0.0f, 0.0f}, 0.0f, gobu_color_rgb_to_color(60, 60, 60));
-    gobu_render_reset_color();
+                gobu_shape_draw_filled_rect((Rectangle){x * width, y * height, width, height},
+                (Vector2){1.0f, 1.0f}, (Vector2){0.0f, 0.0f}, 0.0f, gobu_color_rgb_to_color(60, 60, 60));
 }
 
 /*
@@ -478,16 +407,11 @@ void gobu_shape_draw_checkboard(int width, int height, int screen_width, int scr
  * @param dest     La región de destino en el renderizado (coordenadas y dimensiones).
  * @param tint     El color de tintado opcional para la textura.
  */
-void gobu_texture_draw_texture(GobuTexture texture, GobuRectangle source, GobuRectangle dest, GobuColor tint)
+void gobu_texture_draw_texture(Texture texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint)
 {
     if (texture.id > 0)
     {
-        sgp_set_image(0, (sg_image){.id = texture.id});
-        sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
-        gobu_render_set_color(tint);
-        sgp_draw_textured_rect(0, (sgp_rect){dest.x, dest.y, dest.w, dest.h}, (sgp_rect){source.x, source.y, source.w, source.h});
-        sgp_reset_blend_mode();
-        sgp_unset_image(0);
+        DrawTexturePro(texture, source, dest, origin, rotation, tint);
     }
 }
 
@@ -499,31 +423,11 @@ void gobu_texture_draw_texture(GobuTexture texture, GobuRectangle source, GobuRe
  *
  * @param filename  La ruta al archivo de la textura que se va a cargar.
  *
- * @return   Una instancia de GobuTexture que representa la textura cargada.
+ * @return   Una instancia de Texture que representa la textura cargada.
  */
-GobuTexture gobu_texture_load_file(const char *filename)
+Texture gobu_texture_load_file(const char *filename)
 {
-    GobuTexture texture = {0};
-
-    int comp;
-    stbi_uc *data = stbi_load(filename, &texture.width, &texture.height, &comp, STBI_rgb_alpha);
-
-    if (data != NULL)
-    {
-        sg_image d = sg_make_image(&(sg_image_desc){
-            .width = texture.width,
-            .height = texture.height,
-            .data.subimage[0][0] = {
-                .ptr = data,
-                .size = (size_t){texture.width * texture.height * 4},
-            },
-        });
-        texture.id = d.id;
-
-        stbi_image_free(data);
-    }
-
-    return texture;
+    return LoadTexture(filename);
 }
 
 /**
@@ -534,10 +438,9 @@ GobuTexture gobu_texture_load_file(const char *filename)
  *
  * @param texture  La textura que se va a liberar de memoria.
  */
-void gobu_texture_free(GobuTexture texture)
+void gobu_texture_free(Texture texture)
 {
-    sg_image d = (sg_image){.id = texture.id};
-    sg_destroy_image(d);
+    UnloadTexture(texture);
 }
 
 /*
@@ -545,42 +448,38 @@ void gobu_texture_free(GobuTexture texture)
 */
 
 /**
- * Convierte valores RGB de 8 bits en un objeto GobuColor.
+ * Convierte valores RGB de 8 bits en un objeto Color.
  *
  * Esta función toma los componentes de color en formato de 8 bits (r, g, b) y los
- * convierte en un objeto GobuColor que representa el color especificado.
+ * convierte en un objeto Color que representa el color especificado.
  *
  * @param r  El componente rojo (red) de 8 bits.
  * @param g  El componente verde (green) de 8 bits.
  * @param b  El componente azul (blue) de 8 bits.
  *
- * @return   Un objeto GobuColor que representa el color especificado.
+ * @return   Un objeto Color que representa el color especificado.
  */
-GobuColor gobu_color_rgb_to_color(uint8_t r, uint8_t g, uint8_t b)
+Color gobu_color_rgb_to_color(uint8_t r, uint8_t g, uint8_t b)
 {
     return gobu_color_rgba_to_color(r, g, b, 255);
 }
 
 /**
- * Convierte valores RGBA de 8 bits en un objeto GobuColor.
+ * Convierte valores RGBA de 8 bits en un objeto Color.
  *
  * Esta función toma los componentes de color en formato de 8 bits (r, g, b, a) y los
- * convierte en un objeto GobuColor que representa el color especificado.
+ * convierte en un objeto Color que representa el color especificado.
  *
  * @param r  El componente rojo (red) de 8 bits.
  * @param g  El componente verde (green) de 8 bits.
  * @param b  El componente azul (blue) de 8 bits.
  * @param a  El componente alfa (alpha) de 8 bits que representa la transparencia.
  *
- * @return   Un objeto GobuColor que representa el color especificado.
+ * @return   Un objeto Color que representa el color especificado.
  */
-GobuColor gobu_color_rgba_to_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+Color gobu_color_rgba_to_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    float fr = (float)((float)r / 255.0f);
-    float fg = (float)((float)g / 255.0f);
-    float fb = (float)((float)b / 255.0f);
-    float fa = (float)((float)a / 255.0f);
-    return (GobuColor){fr, fg, fb, fa};
+    return (Color){r, g, b, a};
 }
 
 /**
@@ -593,14 +492,14 @@ GobuColor gobu_color_rgba_to_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
  * @param g  Puntero a una variable que almacenará el componente verde generado.
  * @param b  Puntero a una variable que almacenará el componente azul generado.
  *
- * @return   Una instancia de GobuColor que representa el color aleatorio generado.
+ * @return   Una instancia de Color que representa el color aleatorio generado.
  */
-GobuColor gobu_color_random_rgb(uint8_t r, uint8_t g, uint8_t b)
+Color gobu_color_random_rgb(uint8_t r, uint8_t g, uint8_t b)
 {
-    float fr = gobu_math_random((float)r) / 255.0f;
-    float fg = gobu_math_random((float)g) / 255.0f;
-    float fb = gobu_math_random((float)b) / 255.0f;
-    return (GobuColor){fr, fg, fb, 1.0f};
+    uint8_t fr = (uint8_t)gobu_math_random((float)r);
+    uint8_t fg = (uint8_t)gobu_math_random((float)g);
+    uint8_t fb = (uint8_t)gobu_math_random((float)b);
+    return gobu_color_rgb_to_color(fr, fg, fb);
 }
 
 /*

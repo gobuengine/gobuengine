@@ -33,8 +33,23 @@
 #include <time.h>
 #include "thirdparty/binn/binn.h"
 #include "thirdparty/flecs/flecs.h"
+#include "thirdparty/raybu/raylib.h"
 
-#define GOBU_API
+#if defined(_WIN32)
+    #if defined(BUILD_LIBTYPE_SHARED)
+        #if defined(__TINYC__)
+            #define __declspec(x) __attribute__((x))
+        #endif
+        #define GOBU_API __declspec(dllexport)     // We are building the library as a Win32 shared library (.dll)
+    #elif defined(USE_LIBTYPE_SHARED)
+        #define GOBU_API __declspec(dllimport)     // We are using the library as a Win32 shared library (.dll)
+    #endif
+#endif
+
+#ifndef GOBU_API
+    #define GOBU_API       // Functions defined as 'extern' by default (implicit specifiers)
+#endif
+
 
 #undef ECS_META_IMPL
 #ifndef FLECS_GAME_IMPL
@@ -45,60 +60,60 @@
 #define GobuEcsWorld ecs_world_t
 #define GobuEcsIter ecs_iter_t
 
-GOBU_API ECS_STRUCT(GobuColor, {
-    float r;
-    float g;
-    float b;
-    float a;
-});
+// GOBU_API ECS_STRUCT(Color, {
+//     float r;
+//     float g;
+//     float b;
+//     float a;
+// });
 
-GOBU_API ECS_STRUCT(GobuTexture, {
-    unsigned int id;
-    int width;
-    int height;
-});
+// GOBU_API ECS_STRUCT(Texture, {
+//     unsigned int id;
+//     int width;
+//     int height;
+// });
 
-GOBU_API ECS_STRUCT(GobuRectangle, {
-    float x;
-    float y;
-    float w;
-    float h;
-});
+// GOBU_API ECS_STRUCT(Rectangle, {
+//     float x;
+//     float y;
+//     float w;
+//     float h;
+// });
 
-GOBU_API ECS_STRUCT(GobuVec2, {
-    float x;
-    float y;
-});
+// GOBU_API ECS_STRUCT(Vector2, {
+//     float x;
+//     float y;
+// });
 
-GOBU_API ECS_STRUCT(GobuCamera, {
-    GobuVec2 target;
-    GobuVec2 offset;
-    float rotation;
-    float zoom;
-});
+// GOBU_API ECS_STRUCT(Camera, {
+//     Vector2 target;
+//     Vector2 offset;
+//     float rotation;
+//     float zoom;
+// });
 
-GOBU_API ECS_STRUCT(GobuSprite, {
-    GobuTexture texture;
-    GobuColor color;
-    float opacity;
-    bool flipX;
-    bool flipY;
-    // config spriteSheet
-    uint32_t Hframes;
-    uint32_t Vframes;
-    uint32_t frame;
-    // hide params
-    GobuRectangle dest_rect;
-    GobuRectangle src_rect;
-});
+// GOBU_API ECS_STRUCT(GobuSprite, {
+//     Texture texture;
+//     Color color;
+//     float opacity;
+//     bool flipX;
+//     bool flipY;
+//     // config spriteSheet
+//     uint32_t Hframes;
+//     uint32_t Vframes;
+//     uint32_t frame;
+//     // hide params
+//     Rectangle dest_rect;
+//     Rectangle src_rect;
+// });
 
-GOBU_API ECS_STRUCT(GobuEcsComponentRender, {
-    bool enable;
-    char *name;
-    GobuVec2 position;
-    GobuVec2 scale;
-    float rotation;
-});
+// GOBU_API ECS_STRUCT(GobuEcsComponentRender, {
+//     bool enable;
+//     char *name;
+//     Vector2 position;
+//     Vector2 scale;
+//     float rotation;
+// });
 
 //----------------------------------------------------------------------------------
 // Global Variables Definition
@@ -131,37 +146,33 @@ GOBU_API gboolean gobu_project_load(const gchar *path);
 GOBU_API const char *gobu_project_get_path(void);
 GOBU_API const char *gobu_project_get_name(void);
 
-GOBU_API GobuCamera gobu_camera_new(void);
-GOBU_API void gobu_camera_set_main(GobuCamera *camera);
-GOBU_API void gobu_camera_set_position(GobuCamera camera, float x, float y);
-GOBU_API void gobu_camera_set_offset(GobuCamera camera, float x, float y);
-GOBU_API void gobu_camera_set_rotation(GobuCamera camera, float rotation);
-GOBU_API void gobu_camera_set_zoom(GobuCamera camera, float zoom);
+GOBU_API void gobu_camera_begin(void);
+GOBU_API void gobu_camera_end(void);
 
-GOBU_API void gobu_render_init(void);
+GOBU_API void gobu_render_init(int width, int height);
 GOBU_API void gobu_render_shutdown(void);
-GOBU_API void gobu_render_frame_begin(int width, int height, GobuColor color);
-GOBU_API void gobu_render_frame_end(int width, int height);
+GOBU_API void gobu_render_frame_begin(Color color);
+GOBU_API void gobu_render_frame_end();
 GOBU_API void gobu_render_viewport(int x, int y, int width, int height);
 GOBU_API void gobu_render_project(float left, float right, float top, float bottom);
-GOBU_API void gobu_render_clear_color(GobuColor color);
+GOBU_API void gobu_render_clear_color(Color color);
 GOBU_API void gobu_render_clear(void);
 GOBU_API void gobu_render_reset_color(void);
-GOBU_API void gobu_render_set_color(GobuColor color);
+GOBU_API void gobu_render_set_color(Color color);
 GOBU_API void gobu_render_set_rotate(float theta, float x, float y);
 GOBU_API void gobu_render_set_scale(float sx, float sy, float x, float y);
 GOBU_API void gobu_render_set_translate(float x, float y);
 
-GOBU_API void gobu_shape_draw_filled_rect(GobuRectangle rect, GobuVec2 scale, GobuVec2 origin, float rotation, GobuColor color);
+GOBU_API void gobu_shape_draw_filled_rect(Rectangle rect, Vector2 scale, Vector2 origin, float rotation, Color color);
 GOBU_API void gobu_shape_draw_checkboard(int width, int height, int screen_width, int screen_height);
 
-GOBU_API void gobu_texture_draw_texture(GobuTexture texture, GobuRectangle source, GobuRectangle dest, GobuColor tint);
-GOBU_API GobuTexture gobu_texture_load_file(const char *filename);
-GOBU_API void gobu_texture_free(GobuTexture texture);
+GOBU_API void gobu_texture_draw_texture(Texture texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint);
+GOBU_API Texture gobu_texture_load_file(const char *filename);
+GOBU_API void gobu_texture_free(Texture texture);
 
-GOBU_API GobuColor gobu_color_rgb_to_color(uint8_t r, uint8_t g, uint8_t b);
-GOBU_API GobuColor gobu_color_rgba_to_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
-GOBU_API GobuColor gobu_color_random_rgb(uint8_t r, uint8_t g, uint8_t b);
+GOBU_API Color gobu_color_rgb_to_color(uint8_t r, uint8_t g, uint8_t b);
+GOBU_API Color gobu_color_rgba_to_color(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+GOBU_API Color gobu_color_random_rgb(uint8_t r, uint8_t g, uint8_t b);
 
 GOBU_API float gobu_math_random(float number);
 

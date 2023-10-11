@@ -53,4 +53,6 @@ GtkWidget *gobu_widget_separator_h(void);
 GtkWidget *gobu_widget_toolbar_new(void);
 void gobu_widget_toolbar_separator_new(GtkWidget *toolbar);
 
+GtkWidget *gobu_widget_expander_with_widget(const gchar *title, GtkWidget *widget);
+
 #endif // __GOBU_WIDGET_H__

@@ -50,8 +50,10 @@ typedef struct _GobuApp
     {
         struct
         {
-            GtkStringList *list;
-            GHashTable *table;
+            GtkStringList *cmp_list;
+            GHashTable *cmp_table;
+            GtkStringList *sys_list;
+            GHashTable *sys_table;
             binn *data;
         } Script;
     } Module;

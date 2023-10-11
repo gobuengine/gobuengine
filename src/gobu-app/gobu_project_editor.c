@@ -3,6 +3,7 @@
 #include "gobu/gobu-gobu.h"
 #include "gobu_project_editor.h"
 #include "gobu_script_editor.h"
+#include "gobu_editor_world.h"
 #include "gobu-app.h"
 
 extern GobuApp *APP;
@@ -72,8 +73,8 @@ void gobu_project_editor_init(GtkApplication *app)
     gtk_stack_set_transition_type(stack, GTK_STACK_TRANSITION_TYPE_NONE);
     gtk_window_set_child(GTK_WINDOW(APP->window), stack);
 
-    gtk_stack_add_titled(stack, gtk_label_new("Child1"), "Child1", gobu_project_get_name());
-    gtk_stack_add_titled(stack, gobu_script_editor_new(), "JOJO2", "Scripts");
+    gtk_stack_add_titled(stack, gobu_editor_world_new(), "world", gobu_project_get_name());
+    gtk_stack_add_titled(stack, gobu_script_editor_new(), "code", "Scripts");
 
     gtk_window_present(GTK_WINDOW(APP->window));
 }

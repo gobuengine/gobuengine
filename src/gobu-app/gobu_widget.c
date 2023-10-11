@@ -123,7 +123,7 @@ GtkWidget *gobu_widget_button_new_icon_with_label(const gchar *icon_name, const 
         gtk_button_set_child(button, hbox_parent);
 
         GtkWidget *image_icon = gtk_image_new_from_icon_name(icon_name);
-        // gtk_image_set_icon_size(image_icon, GTK_ICON_SIZE_LARGE);
+        gtk_image_set_icon_size(image_icon, GTK_ICON_SIZE_NORMAL);
         gtk_box_append(GTK_BOX(hbox_parent), image_icon);
 
         if (label != NULL)
@@ -251,7 +251,6 @@ GtkWidget *gobu_widget_toolbar_new(void)
     return self;
 }
 
-
 /**
  * Agrega un separador en una barra de herramientas en Gobu.
  *
@@ -261,8 +260,8 @@ void gobu_widget_toolbar_separator_new(GtkWidget *toolbar)
 {
     GtkWidget *self;
     self = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
-    gobu_widget_set_margin_end(self, 5);
-    gobu_widget_set_margin_start(self, 5);
+    // gobu_widget_set_margin_end(self, 2);
+    // gobu_widget_set_margin_start(self, 2);
     gtk_box_append(toolbar, self);
 }
 
@@ -284,4 +283,39 @@ GtkWidget *gobu_widget_separator_v(void)
 GtkWidget *gobu_widget_separator_h(void)
 {
     return gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+}
+
+/**
+ * Crea un nuevo expansor con un widget interno en Gobu.
+ *
+ * @param title   El título del expansor.
+ * @param widget  El widget interno que se mostrará u ocultará al expandir o contraer el expansor.
+ *
+ * @return Un nuevo widget que representa el expansor con el widget interno.
+ */
+GtkWidget *gobu_widget_expander_with_widget(const gchar *title, GtkWidget *widget)
+{
+    GtkWidget *box, *expand, *label;
+
+    box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    {
+        label = gtk_label_new(title);
+        gtk_label_set_use_markup(label, TRUE);
+        gtk_widget_set_hexpand(label, TRUE);
+        gtk_widget_set_halign(label, GTK_ALIGN_START);
+        gtk_box_append(box, label);
+
+        if (widget != NULL)
+            gtk_box_append(box, widget);
+    }
+
+    expand = gtk_expander_new(NULL);
+    {
+        gtk_expander_set_label_widget(expand, box);
+        gtk_expander_set_expanded(expand, TRUE);
+        gtk_expander_set_use_markup(expand, TRUE);
+        gtk_widget_add_css_class(expand, "expander_n");
+    }
+
+    return expand;
 }

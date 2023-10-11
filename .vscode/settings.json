@@ -113,7 +113,27 @@
         "gobu_project_editor.h": "c",
         "gobu_script.h": "c",
         "gobu_script_editor.h": "c",
-        "gobu-app.h": "c"
+        "gobu-app.h": "c",
+        "gobu-script.h": "c",
+        "gobuscript.h": "c",
+        "rcore.h": "c",
+        "rlgl.h": "c",
+        "raylib.h": "c",
+        "glfw3.h": "c",
+        "utils.h": "c",
+        "gobu_world_editor_outliner.h": "c",
+        "gobu_widget.h": "c",
+        "gobu_world_editor_tileeditor.h": "c",
+        "gobu_world_editor_inspector.h": "c",
+        "gobu_world_editor_spriteanim.h": "c",
+        "gobu_world_editor_timeline.h": "c",
+        "gobu_gobu_embed.h": "c",
+        "gobu_editor_world_viewport.h": "c",
+        "gobu_editor_world_spriteanim.h": "c",
+        "gobu_editor_world_browser.h": "c",
+        "gobu_editor_world_timeline.h": "c",
+        "gobu_editor_world_outliner.h": "c",
+        "gobu_editor_world.h": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }
