@@ -28,7 +28,7 @@
 #ifndef __GOBU_GOBU_EMBED_H__
 #define __GOBU_GOBU_EMBED_H__
 #include <gtk/gtk.h>
-#include "gobu/gobu-gobu.h"
+#include "bugo/bugo.h"
 
 G_BEGIN_DECLS
 
@@ -48,6 +48,7 @@ struct _GobuGobuEmbedPrivate
 };
 
 GobuGobuEmbed *gobu_gobu_embed_new(void);
+void gobu_gobu_embed_set_background_color(GobuGobuEmbed *embed, Color bg);
 
 G_END_DECLS
 

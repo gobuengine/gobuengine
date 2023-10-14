@@ -133,7 +133,14 @@
         "gobu_editor_world_browser.h": "c",
         "gobu_editor_world_timeline.h": "c",
         "gobu_editor_world_outliner.h": "c",
-        "gobu_editor_world.h": "c"
+        "gobu_editor_world.h": "c",
+        "glib-object.h": "c",
+        "gobu_stage.h": "c",
+        "gobu_actor.h": "c",
+        "bugo.h": "c",
+        "sokol_gp.h": "c",
+        "cstdlib": "c",
+        "*.m": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

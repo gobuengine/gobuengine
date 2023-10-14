@@ -74,8 +74,8 @@ static void gobu_script_signal_save(GtkWidget *widget, gpointer data)
         binn_free(obj);
     }
 
-    gchar *file_gcomponent_path = g_build_filename(gobu_project_get_path(), "Scripts", FILE_GAME_COMPONENT, NULL);
-    gobu_json_save_to_file(list, file_gcomponent_path);
+    gchar *file_gcomponent_path = g_build_filename(bugo_project_get_path(), "Scripts", FILE_GAME_COMPONENT, NULL);
+    bugo_json_save_to_file(list, file_gcomponent_path);
     g_free(file_gcomponent_path);
 
     binn_free(list);
@@ -244,8 +244,8 @@ static void gobu_script_list_component_load(void)
 {
     g_print("GOBU: List Component init\n");
 
-    gchar *file_gcomponent_path = g_build_filename(gobu_project_get_path(), "Scripts", FILE_GAME_COMPONENT, NULL);
-    APP->Module.Script.data = gobu_json_load_from_file(file_gcomponent_path);
+    gchar *file_gcomponent_path = g_build_filename(bugo_project_get_path(), "Scripts", FILE_GAME_COMPONENT, NULL);
+    APP->Module.Script.data = bugo_json_load_from_file(file_gcomponent_path);
     g_free(file_gcomponent_path);
 
     APP->Module.Script.cmp_list = gtk_string_list_new(NULL);

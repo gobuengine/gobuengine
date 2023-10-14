@@ -11,7 +11,7 @@ static void gobu_app_setting_init(void)
     g_info("GOBU: Setting Editor load\n");
 
     gchar *full_path = g_build_filename(g_get_current_dir(), "config", "editor.config", NULL);
-    APP->setting.data = gobu_json_load_from_file(full_path);
+    APP->setting.data = bugo_json_load_from_file(full_path);
 
     gboolean dark_theme = binn_object_bool(APP->setting.data, "app-theme-dark");
     const gchar *style_scheme = dark_theme == TRUE ? "Adwaita-dark" : "Adwaita";

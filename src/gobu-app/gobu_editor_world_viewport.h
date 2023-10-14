@@ -25,10 +25,29 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
+#pragma once
 #ifndef __GOBU_EDITOR_WORLD_VIEWPORT_H__
 #define __GOBU_EDITOR_WORLD_VIEWPORT_H__
 #include "gobu_project_editor.h"
+#include "gobu_gobu_embed.h"
 
-GtkWidget *gobu_editor_world_viewport_new(void);
+G_BEGIN_DECLS
+
+typedef struct _GobuEditorWorldViewportPrivate GobuEditorWorldViewportPrivate;
+
+#define GOBU_EDITOR_TYPE_WORLD_VIEWPORT (gobu_editor_world_viewport_get_type())
+G_DECLARE_FINAL_TYPE(GobuEditorWorldViewport, gobu_editor_world_viewport, GOBU_EDITOR, WORLD_VIEWPORT, GobuGobuEmbed)
+
+struct _GobuEditorWorldViewportPrivate
+{
+    GtkWidget instance;
+    Camera2D camera;
+    gboolean bGridShow;
+};
+
+GobuEditorWorldViewport *gobu_editor_world_viewport_new(void);
+
+G_END_DECLS
+
 
 #endif // __GOBU_EDITOR_WORLD_VIEWPORT_H__

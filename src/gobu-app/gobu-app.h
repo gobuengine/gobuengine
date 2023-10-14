@@ -30,7 +30,7 @@
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksource.h>
 #include "config.h"
-#include "gobu/gobu-gobu.h"
+#include "bugo/bugo.h"
 
 typedef enum
 {

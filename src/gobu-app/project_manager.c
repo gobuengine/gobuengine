@@ -1,7 +1,7 @@
 #include "project_manager.h"
 #include "gobu_project_editor.h"
 #include "config.h"
-#include "gobu/gobu-gobu.h"
+#include "bugo/bugo.h"
 
 typedef struct _GobuProjectManager
 {

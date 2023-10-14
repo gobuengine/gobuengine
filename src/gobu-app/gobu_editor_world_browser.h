@@ -28,6 +28,7 @@
 #ifndef __GOBU_EDITOR_WORLD_BROWSER_H__
 #define __GOBU_EDITOR_WORLD_BROWSER_H__
 #include "gobu_project_editor.h"
+#include "bugo/bugo.h"
 
 G_BEGIN_DECLS
 

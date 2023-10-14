@@ -30,6 +30,8 @@ G_DEFINE_TYPE_WITH_PRIVATE(GobuEditorWorldBrowser, gobu_editor_world_browser, GT
 static void gobu_editor_world_browser_class_init(GobuEditorWorldBrowserClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
+    // GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
+    // gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
 }
 
 static GobuEditorWorldBrowserAction *gobu_editor_world_browser_new_action(const gchar *title, const gchar *text, int response, gpointer data);
@@ -348,13 +350,13 @@ static void gobu_editor_world_browser_signal_view_file_popover(GtkGesture *gestu
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(gobu_editor_world_browser_signal_create_item_action),
-                gobu_editor_world_browser_new_action("Create New Entity", "New Entity", ACTION_CREATE_FOLDER, data));
+                gobu_editor_world_browser_new_action("Create New Entity", "New Entity", ACTION_CREATE_ENTITY, data));
 
                 item = gtk_button_new_with_label("New World");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(gobu_editor_world_browser_signal_create_item_action),
-                gobu_editor_world_browser_new_action("Create New World", "New World", ACTION_CREATE_FOLDER, data));
+                gobu_editor_world_browser_new_action("Create New World", "New World", ACTION_CREATE_LEVEL, data));
             }
         }
 
@@ -413,20 +415,39 @@ static void gobu_editor_world_browser_signal_navforward(GtkWidget *button, gpoin
  *
  * @return Un proveedor de contenido Gdk que representa los datos de arrastre preparados.
  */
-static GdkContentProvider *gobu_editor_world_browser_signal_drag_source_prepare(GtkDragSource *source, double x, double y, GtkListItem *list_item)
+static GdkContentProvider *gobu_editor_world_browser_signal_drag_source_prepare(GtkDragSource *source, gdouble x, gdouble y, GtkListItem *list_item)
 {
-    GtkWidget *paintable, *image;
-
     GtkWidget *box = gtk_list_item_get_child(list_item);
 
-    // GobuEditorWorldBrowserPrivate *private = gobu_editor_world_browser_get_instance_private(g_object_get_data(box, "BrowserContent"));
-    image = gtk_widget_get_first_child(box);
+    GobuEditorWorldBrowserPrivate *private = gobu_editor_world_browser_get_instance_private(g_object_get_data(box, "BrowserContent"));
 
-    // gtk_single_selection_set_selected(private->selection, GPOINTER_TO_UINT(g_object_get_data(box, "position_id")));
+    guint pos_selected = GPOINTER_TO_UINT(g_object_get_data(box, "position_id"));
+    gtk_single_selection_set_selected(private->selection, pos_selected);
 
-    paintable = gtk_widget_paintable_new(image);
-    gtk_drag_source_set_icon(source, paintable, x, y);
-    return gdk_content_provider_new_typed(G_TYPE_STRING, "");
+    GFileInfo *info = G_FILE_INFO(gtk_list_item_get_item(list_item));
+    GFile *file = G_FILE(g_file_info_get_attribute_object(info, "standard::file"));
+
+    return gdk_content_provider_new_union((GdkContentProvider*[2]) { 
+            gdk_content_provider_new_typed(G_TYPE_FILE, file),
+            gdk_content_provider_new_typed(G_TYPE_FILE_INFO, info),
+    },2);
+}
+
+/**
+ * Inicia la fuente de arrastre en el explorador de mundos del editor en Gobu.
+ *
+ * @param source      La fuente de arrastre que se inicia.
+ * @param drag        El objeto de arrastre asociado.
+ * @param list_item   El elemento de lista que se arrastra.
+ *
+ * @return Un proveedor de contenido Gdk que representa los datos de arrastre iniciales.
+ */
+static GdkContentProvider *gobu_editor_world_browser_signal_drag_source_begin(GtkDragSource *source, GdkDrag *drag, GtkListItem *list_item)
+{
+    GtkWidget *box = gtk_list_item_get_child(list_item);
+    GtkWidget *paintable = gtk_widget_paintable_new(gtk_widget_get_first_child(box));
+    gtk_drag_source_set_icon(source, paintable, 0, 0);
+    g_object_unref(paintable);
 }
 
 /**
@@ -470,7 +491,7 @@ static void gobu_editor_world_browser_signal_setup_view_file(GtkListItemFactory 
     GtkDragSource *source;
     // expression = gtk_constant_expression_new(GTK_TYPE_LIST_ITEM, list_item);
 
-    GFileInfo *info_file = gtk_list_item_get_item(list_item);
+    //GFileInfo *info_file = gtk_list_item_get_item(list_item);
 
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_list_item_set_child(list_item, box);
@@ -486,13 +507,13 @@ static void gobu_editor_world_browser_signal_setup_view_file(GtkListItemFactory 
     gtk_label_set_ellipsize(label, PANGO_ELLIPSIZE_END);
     gtk_box_append(GTK_BOX(box), label);
 
-    // g_object_set_data(box, "BrowserContent", user_data);
+    g_object_set_data(box, "BrowserContent", user_data);
 
     source = gtk_drag_source_new();
-    gtk_drag_source_set_actions(source, GDK_ACTION_MOVE);
+    gtk_drag_source_set_actions(source, GDK_ACTION_COPY);
     g_signal_connect(source, "prepare", G_CALLBACK(gobu_editor_world_browser_signal_drag_source_prepare), list_item);
-    // g_signal_connect(source, "drag-begin", G_CALLBACK(drag_begin), image);
-    // g_signal_connect(source, "drag-end", G_CALLBACK(drag_end), image);
+    g_signal_connect(source, "drag-begin", G_CALLBACK(gobu_editor_world_browser_signal_drag_source_begin), list_item);
+    // g_signal_connect(source, "drag-end", G_CALLBACK(gobu_editor_world_browser_signal_drag_source_prepare), list_item);
     gtk_widget_add_controller(box, GTK_EVENT_CONTROLLER(source));
     // gtk_expression_unref(expression);
 }
@@ -518,7 +539,7 @@ void gobu_editor_world_browser_signal_bind_view_file(GtkListItemFactory *factory
     label_name = gtk_widget_get_next_sibling(image);
 
     const char *name = g_file_info_get_name(info_file);
-    gtk_label_set_label(GTK_LABEL(label_name), name);
+    gtk_label_set_label(GTK_LABEL(label_name), bugo_file_get_name_without_ext(name));
     gtk_widget_set_tooltip_text(box, name);
 
     gobu_editor_world_browser_fn_get_icon_file(image, info_file);
@@ -542,7 +563,7 @@ static void gobu_editor_world_browser_init(GobuEditorWorldBrowser *self)
 
     private->path_back = g_ptr_array_new();
     private->path_forward = g_ptr_array_new();
-    private->path_current = g_strdup(g_build_filename(gobu_project_get_path(), "Content", NULL));
+    private->path_current = g_strdup(g_build_filename(bugo_project_get_path(), "Content", NULL));
     private->path_default = g_strdup(private->path_current);
 
     // Toolbar
@@ -567,7 +588,6 @@ static void gobu_editor_world_browser_init(GobuEditorWorldBrowser *self)
             gtk_button_set_has_frame(item, FALSE);
             gtk_box_append(GTK_BOX(toolbar), item);
             // g_signal_connect(item, "clicked", G_CALLBACK(GobuSignalContentBrowserPopover), self);
-            gtk_box_append(toolbar, item);
         }
     }
 

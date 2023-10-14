@@ -86,7 +86,7 @@
 #define RLGL_IMPLEMENTATION
 #include "rlgl.h"                   // OpenGL abstraction layer to OpenGL 1.1, 3.3+ or ES2
 
-// #include "raymath.h"                // Vector3, Quaternion and Matrix functionality
+#include "raymath.h"                // Vector3, Quaternion and Matrix functionality
 
 #if defined(SUPPORT_GESTURES_SYSTEM)
     #define RGESTURES_IMPLEMENTATION
@@ -317,14 +317,12 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 #endif
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition - Window and OpenGL Context Functions
+// Module Functions Definition: Window and Graphics Device
 //----------------------------------------------------------------------------------
 
-// NOTE: Multiple window/display/monitor management functions have been moved to platform-specific modules
-
-// Platform-specific functions:
-//void InitWindow(int width, int height, const char *title);
-//void CloseWindow(void);
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//void InitWindow(int width, int height, const char *title)
+//void CloseWindow(void)
 //bool WindowShouldClose(void)
 //bool IsWindowHidden(void)
 //bool IsWindowMinimized(void)
@@ -366,9 +364,6 @@ const char *TextFormat(const char *text, ...);       // Formatting of text with 
 //void HideCursor(void)
 //void EnableCursor(void)
 //void DisableCursor(void)
-//double GetTime(void)
-//void TakeScreenshot(const char *fileName)
-//void OpenURL(const char *url)
 
 
 // Check if window has been initialized successfully
@@ -436,6 +431,19 @@ bool IsCursorOnScreen(void)
 {
     return CORE.Input.Mouse.cursorOnScreen;
 }
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Custom frame control
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//void SwapScreenBuffer(void);  
+//void PollInputEvents(void);   
+//void WaitTime(double seconds);
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Screen Drawing
+//----------------------------------------------------------------------------------
 
 // Set background color (framebuffer clear color)
 void ClearBackground(Color color)
@@ -743,6 +751,10 @@ void EndScissorMode(void)
     rlDisableScissorTest();
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition: VR Stereo Rendering
+//----------------------------------------------------------------------------------
+
 // Begin VR drawing configuration
 void BeginVrStereoMode(VrStereoConfig config)
 {
@@ -838,6 +850,10 @@ void UnloadVrStereoConfig(VrStereoConfig config)
 {
     TRACELOG(LOG_INFO, "UnloadVrStereoConfig not implemented in rcore.c");
 }
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Shaders Management
+//----------------------------------------------------------------------------------
 
 // Load shader from files and bind default locations
 // NOTE: If shader string is NULL, using default vertex/fragment shaders
@@ -1004,6 +1020,10 @@ void SetShaderValueTexture(Shader shader, int locIndex, Texture2D texture)
     }
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Screen-space Queries
+//----------------------------------------------------------------------------------
+
 // Get a ray trace from mouse position
 Ray GetMouseRay(Vector2 mouse, Camera camera)
 {
@@ -1163,6 +1183,13 @@ Vector2 GetScreenToWorld2D(Vector2 position, Camera2D camera)
     return (Vector2){ transform.x, transform.y };
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Timming
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//double GetTime(void)
+
 // Set target FPS (maximum)
 void SetTargetFPS(int fps)
 {
@@ -1211,6 +1238,63 @@ float GetFrameTime(void)
     return (float)CORE.Time.frame;
 }
 
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Misc
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//void OpenURL(const char *url)
+
+// Get a random value between min and max (both included)
+// WARNING: Ranges higher than RAND_MAX will return invalid results
+// More specifically, if (max - min) > INT_MAX there will be an overflow,
+// and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
+int GetRandomValue(int min, int max)
+{
+    if (min > max)
+    {
+        int tmp = max;
+        max = min;
+        min = tmp;
+    }
+
+    if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
+    {
+        TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
+    }
+
+    return (rand()%(abs(max - min) + 1) + min);
+}
+
+// Set the seed for the random number generator
+void SetRandomSeed(unsigned int seed)
+{
+    srand(seed);
+}
+
+// Takes a screenshot of current screen (saved a .png)
+void TakeScreenshot(const char *fileName)
+{
+#if defined(SUPPORT_MODULE_RTEXTURES)
+    // Security check to (partially) avoid malicious code
+    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
+
+    Vector2 scale = GetWindowScaleDPI();
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+
+    char path[512] = { 0 };
+    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
+
+    ExportImage(image, path);           // WARNING: Module required: rtextures
+    RL_FREE(imgData);
+
+    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
+#else
+    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
+#endif
+}
+
 // Setup window configuration flags (view FLAGS)
 // NOTE: This function is expected to be called before window creation,
 // because it sets up some flags for the window creation process.
@@ -1223,7 +1307,7 @@ void SetConfigFlags(unsigned int flags)
 }
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition: FileSystem
+// Module Functions Definition: File system
 //----------------------------------------------------------------------------------
 
 // Check if the file exists
@@ -1671,35 +1755,8 @@ long GetFileModTime(const char *fileName)
 }
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition: Misc
+// Module Functions Definition: Compression and Encoding
 //----------------------------------------------------------------------------------
-
-// Get a random value between min and max (both included)
-// WARNING: Ranges higher than RAND_MAX will return invalid results
-// More specifically, if (max - min) > INT_MAX there will be an overflow,
-// and otherwise if (max - min) > RAND_MAX the random value will incorrectly never exceed a certain threshold
-int GetRandomValue(int min, int max)
-{
-    if (min > max)
-    {
-        int tmp = max;
-        max = min;
-        min = tmp;
-    }
-
-    if ((unsigned int)(max - min) > (unsigned int)RAND_MAX)
-    {
-        TRACELOG(LOG_WARNING, "Invalid GetRandomValue() arguments, range should not be higher than %i", RAND_MAX);
-    }
-
-    return (rand()%(abs(max - min) + 1) + min);
-}
-
-// Set the seed for the random number generator
-void SetRandomSeed(unsigned int seed)
-{
-    srand(seed);
-}
 
 // Compress data (DEFLATE algorithm)
 unsigned char *CompressData(const unsigned char *data, int dataSize, int *compDataSize)
@@ -1843,25 +1900,8 @@ unsigned char *DecodeDataBase64(const unsigned char *data, int *outputSize)
 }
 
 //----------------------------------------------------------------------------------
-// Module Functions Definition: Inputs
+// Module Functions Definition: Input Handling: Keyboard
 //----------------------------------------------------------------------------------
-
-// Platform-specific functions
-//void SetExitKey(int key)
-//const char *GetGamepadName(int gamepad)
-//int GetGamepadAxisCount(int gamepad)
-//int SetGamepadMappings(const char *mappings)
-//int GetMouseX(void)
-//int GetMouseY(void)
-//Vector2 GetMousePosition(void)
-//void SetMousePosition(int x, int y)
-//float GetMouseWheelMove(void)
-//void SetMouseCursor(int cursor)
-//int GetTouchX(void)
-//int GetTouchY(void)
-//Vector2 GetTouchPosition(int index)
-//void SwapScreenBuffer(void)
-//void PollInputEvents(void)
 
 // Check if a key has been pressed once
 bool IsKeyPressed(int key)
@@ -1973,6 +2013,22 @@ int GetCharPressed(void)
     return value;
 }
 
+// Set a custom key to exit program
+// NOTE: default exitKey is set to ESCAPE
+void SetExitKey(int key)
+{
+    CORE.Input.Keyboard.exitKey = key;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Input Handling: Gamepad
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//int GetGamepadAxisCount(int gamepad)          **
+//const char *GetGamepadName(int gamepad)       **
+//int SetGamepadMappings(const char *mappings)
+
 // Check if a gamepad is available
 bool IsGamepadAvailable(int gamepad)
 {
@@ -1983,16 +2039,11 @@ bool IsGamepadAvailable(int gamepad)
     return result;
 }
 
-// Get axis movement vector for a gamepad
-float GetGamepadAxisMovement(int gamepad, int axis)
-{
-    float value = 0;
-
-    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS) &&
-        (fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) > 0.1f)) value = CORE.Input.Gamepad.axisState[gamepad][axis];      // 0.1f = GAMEPAD_AXIS_MINIMUM_DRIFT/DELTA
-
-    return value;
-}
+// Get gamepad internal name id
+//const char *GetGamepadName(int gamepad)
+//{
+//    return CORE.Input.Gamepad.ready[gamepad];
+//}
 
 // Check if a gamepad button has been pressed once
 bool IsGamepadButtonPressed(int gamepad, int button)
@@ -2043,6 +2094,35 @@ int GetGamepadButtonPressed(void)
 {
     return CORE.Input.Gamepad.lastButtonPressed;
 }
+
+// Get gamepad axis count
+//int GetGamepadAxisCount(int gamepad)
+//{
+//    return CORE.Input.Gamepad.axisCount;
+//}
+
+// Get axis movement vector for a gamepad
+float GetGamepadAxisMovement(int gamepad, int axis)
+{
+    float value = 0;
+
+    if ((gamepad < MAX_GAMEPADS) && CORE.Input.Gamepad.ready[gamepad] && (axis < MAX_GAMEPAD_AXIS) &&
+        (fabsf(CORE.Input.Gamepad.axisState[gamepad][axis]) > 0.1f)) value = CORE.Input.Gamepad.axisState[gamepad][axis];      // 0.1f = GAMEPAD_AXIS_MINIMUM_DRIFT/DELTA
+
+    return value;
+}
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Input Handling: Mouse
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//int GetMouseX(void)                   **
+//int GetMouseY(void)                   **
+//Vector2 GetMousePosition(void)        **
+//void SetMousePosition(int x, int y)
+//float GetMouseWheelMove(void)         **
+//void SetMouseCursor(int cursor)
 
 // Check if a mouse button has been pressed once
 bool IsMouseButtonPressed(int button)
@@ -2130,6 +2210,15 @@ Vector2 GetMouseWheelMoveV(void)
 
     return result;
 }
+
+//----------------------------------------------------------------------------------
+// Module Functions Definition: Input Handling: Touch
+//----------------------------------------------------------------------------------
+
+// NOTE: Functions with a platform-specific implementation on rcore_<platform>.c
+//int GetTouchX(void)
+//int GetTouchY(void)
+//Vector2 GetTouchPosition(int index)
 
 // Get touch point identifier for given index
 int GetTouchPointId(int index)
@@ -2328,29 +2417,6 @@ void WaitTime(double seconds)
     #if defined(SUPPORT_PARTIALBUSY_WAIT_LOOP)
         while (GetTime() < destinationTime) { }
     #endif
-#endif
-}
-
-// Takes a screenshot of current screen (saved a .png)
-void TakeScreenshot(const char *fileName)
-{
-#if defined(SUPPORT_MODULE_RTEXTURES)
-    // Security check to (partially) avoid malicious code
-    if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
-
-    Vector2 scale = GetWindowScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
-
-    char path[512] = { 0 };
-    strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, fileName));
-
-    ExportImage(image, path);           // WARNING: Module required: rtextures
-    RL_FREE(imgData);
-
-    TRACELOG(LOG_INFO, "SYSTEM: [%s] Screenshot taken successfully", path);
-#else
-    TRACELOG(LOG_WARNING,"IMAGE: ExportImage() requires module: rtextures");
 #endif
 }
 

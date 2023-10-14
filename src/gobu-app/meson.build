@@ -28,8 +28,8 @@ gobuapp_src = [
 executable('gobueditor',
     gobuapp_src,
     dependencies: gobu_app_deps,
-    link_with: [libgobu, libgobuscript],
-    include_directories:['../.','ProjectEditor','.'],
+    link_with: [libgobubugo],
+    include_directories:['../.','.'],
     install : true,
     install_dir:base_dir+'/bin/',
     c_args : ['-W','-g','-w']

@@ -1,3 +1,3 @@
-subdir('gobu')
-subdir('gobu-script')
+subdir('bugo')
 subdir('gobu-app')
+# subdir('gobu-script')
