@@ -33,11 +33,25 @@
 #include <glib.h>
 #include "external/tmp_render/raylib.h"
 #include "external/binn_json.h"
-#include "bugo_ecs.h"
+#include "external/flecs.h"
+#include "components/bugo_components.h"
 
-#define GOBU_MODE_LINES                                0x0001      // GL_LINES
-#define GOBU_MODE_TRIANGLES                            0x0004      // GL_TRIANGLES
-#define GOBU_MODE_QUADS                                0x0007      // GL_QUADS
+#define GOBU_MODE_LINES 0x0001     // GL_LINES
+#define GOBU_MODE_TRIANGLES 0x0004 // GL_TRIANGLES
+#define GOBU_MODE_QUADS 0x0007     // GL_QUADS
+
+//------------------------------------------------------------------------------------
+//  Component
+//------------------------------------------------------------------------------------
+
+typedef struct ComponentAnimation
+{
+    int frame_width;
+    int frame_height;
+    bool is_playing;
+    float counter_frame;
+    int current_frame;
+} ComponentAnimation;
 
 //------------------------------------------------------------------------------------
 //
@@ -56,7 +70,10 @@ void bugo_gfx_vert3f(float x, float y, float z);
 
 void bugo_draw_shape_rect(Rectangle rec, Vector2 origin, float rotation, Color color);
 void bugo_draw_shape_grid(int slices, float spacing);
+void bugo_draw_texture(Texture2D texture, Rectangle source, Rectangle dest, Vector2 origin, float rotation, Color tint);
 void bugo_draw_text(const char *text, int x, int y, int size, Color color);
+
+Texture2D bugo_load_texture(const char *filename);
 
 const gchar *bugo_json_stringify(binn *b);
 binn *bugo_json_parse(gchar *json_string);
@@ -76,5 +93,11 @@ Vector2 bugo_math_vector2_one(void);
 
 const gchar *bugo_file_get_name(const gchar *filepath);
 const gchar *bugo_file_get_name_without_ext(const gchar *filepath);
+
+void bugo_ecs_progress(float delta);
+ecs_entity_t bugo_ecs_entity_new(Vector2 position, Vector2 scale, float rotation, Vector2 origin);
+void bugo_ecs_init(void);
+int32_t bugo_ecs_world_count(void);
+ecs_world_t *bugo_ecs_world(void);
 
 #endif // __BUGO_H__

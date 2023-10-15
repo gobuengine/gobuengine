@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu_ecs.h                                                                     *
+ * bugo_renderer.h                                                                *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,12 +25,26 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __BUGO_ECS_H__
-#define __BUGO_ECS_H__
+#ifndef __BUGO_COMPONENT_RENDERER_H__
+#define __BUGO_COMPONENT_RENDERER_H__
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include "external/flecs.h"
+#include "bugo_components.h"
 
-#endif // __BUGO_ECS_H__
+typedef struct ComponentRenderer
+{
+    char *name;
+    bool visible;
+    bool active;
+    Vector2 position;
+    Vector2 scale;
+    float rotation;
+    Vector2 origin;
+    uint32_t zindex;
+} ComponentRenderer;
+
+void bugo_ecs_init_renderer(ecs_world_t *world);
+void bugo_ecs_set_renderer(ecs_entity_t entity, ComponentRenderer *props);
+ecs_entity_t bugo_ecs_get_renderer_id(void);
+
+#endif // __BUGO_COMPONENT_RENDERER_H__
 

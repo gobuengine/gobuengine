@@ -593,6 +593,8 @@ void ViewportSize(int width, int height)
     CORE.Window.resizedLastFrame = true;
     CORE.Window.display.width = width;
     CORE.Window.display.height = height;
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
 
     if (IsWindowFullscreen()) return;
 

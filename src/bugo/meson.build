@@ -6,6 +6,14 @@ libgobu_src = [
     'external/binn.c',
     'external/binn_json.c',
 
+    'components/bugo_camera2d.c',
+    'components/bugo_color.c',
+    'components/bugo_rectangle.c',
+    'components/bugo_renderer.c',
+    'components/bugo_shape_rect.c',
+    'components/bugo_sprite.c',
+    'components/bugo_vector2.c',
+
     'external/tmp_render/rcore.c',
     'external/tmp_render/raudio.c',
     'external/tmp_render/rshapes.c',
@@ -14,10 +22,7 @@ libgobu_src = [
     'external/tmp_render/rmodels.c',
     'external/tmp_render/utils.c',
 
-    'bugo_text.c',
-    'bugo_shape.c',
-    'bugo_core.c',
-    'bugo_ecs.c',
+    'bugo.c',
     ]
 
 argst = ['-W' ,'-g' ,'-w','-DGRAPHICS_API_OPENGL_33']

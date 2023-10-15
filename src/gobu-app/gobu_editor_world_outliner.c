@@ -1,5 +1,5 @@
 #include "gobu_editor_world_outliner.h"
-#include "gobu_editor_world_outliner_item_column.h"
+#include "gobu_widget.h"
 
 struct _GobuEditorWorldOutliner
 {
@@ -147,41 +147,58 @@ static void gobu_fn_create_tree_list_model(GobuEditorWorldOutliner *self)
  */
 static void gobu_editor_world_outliner_init(GobuEditorWorldOutliner *self)
 {
-    GtkWidget *scroll;
+    GtkWidget *scroll, *vbox, *toolbar, *item;
     GtkListItemFactory *factory;
     GtkColumnViewColumn *column;
 
     GobuEditorWorldOutlinerPrivate *private = gobu_editor_world_outliner_get_instance_private(self);
 
-    scroll = gtk_scrolled_window_new();
-    gtk_widget_set_parent(scroll, self);
+    vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_widget_set_parent(vbox, self);
     {
-        private->colview = gtk_column_view_new(NULL);
-        gtk_column_view_set_reorderable(GTK_COLUMN_VIEW(private->colview), FALSE);
-        gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), private->colview);
-        // gtk_widget_add_css_class(private->colview, "data-table");
+        toolbar = gobu_widget_toolbar_new();
+        gtk_box_append(vbox, toolbar);
+
+        item = gobu_widget_button_new_icon_with_label("application-x-addon-symbolic", "Add Prefab");
+        gtk_button_set_has_frame(item, FALSE);
+        gtk_box_append(GTK_BOX(toolbar), item);
+        // g_signal_connect(item, "clicked", G_CALLBACK(gobu_editor_world_browser_signal_popover), self);
+        // gobu_widget_toolbar_separator_new(toolbar);
+    }
+
+    gtk_box_append(vbox, gobu_widget_separator_h());
+
+    {
+        scroll = gtk_scrolled_window_new();
+        gtk_box_append(vbox, scroll);
         {
-            factory = gtk_signal_list_item_factory_new();
-            g_signal_connect(factory, "setup", G_CALLBACK(gobu_signal_factory_setup_column_name), NULL);
-            g_signal_connect(factory, "bind", G_CALLBACK(gobu_signal_factory_bind_column_name), NULL);
+            private->colview = gtk_column_view_new(NULL);
+            gtk_column_view_set_reorderable(GTK_COLUMN_VIEW(private->colview), FALSE);
+            gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), private->colview);
+            // gtk_widget_add_css_class(private->colview, "data-table");
             {
-                column = gtk_column_view_column_new("Name", factory);
-                gtk_column_view_column_set_expand(column, TRUE);
-                gtk_column_view_append_column(GTK_COLUMN_VIEW(private->colview), column);
-                g_object_unref(column);
+                factory = gtk_signal_list_item_factory_new();
+                g_signal_connect(factory, "setup", G_CALLBACK(gobu_signal_factory_setup_column_name), NULL);
+                g_signal_connect(factory, "bind", G_CALLBACK(gobu_signal_factory_bind_column_name), NULL);
+                {
+                    column = gtk_column_view_column_new("Name", factory);
+                    gtk_column_view_column_set_expand(column, TRUE);
+                    gtk_column_view_append_column(GTK_COLUMN_VIEW(private->colview), column);
+                    g_object_unref(column);
+                }
+
+                factory = gtk_signal_list_item_factory_new();
+                g_signal_connect(factory, "setup", G_CALLBACK(gobu_signal_factory_setup_column_visible), NULL);
+                g_signal_connect(factory, "bind", G_CALLBACK(gobu_signal_factory_bind_column_visible), NULL);
+                {
+                    column = gtk_column_view_column_new("Visible", factory);
+                    gtk_column_view_append_column(GTK_COLUMN_VIEW(private->colview), column);
+                    g_object_unref(column);
+                }
             }
 
-            factory = gtk_signal_list_item_factory_new();
-            g_signal_connect(factory, "setup", G_CALLBACK(gobu_signal_factory_setup_column_visible), NULL);
-            g_signal_connect(factory, "bind", G_CALLBACK(gobu_signal_factory_bind_column_visible), NULL);
-            {
-                column = gtk_column_view_column_new("Visible", factory);
-                gtk_column_view_append_column(GTK_COLUMN_VIEW(private->colview), column);
-                g_object_unref(column);
-            }
+            gobu_fn_create_tree_list_model(self);
         }
-
-        gobu_fn_create_tree_list_model(self);
     }
 }
 

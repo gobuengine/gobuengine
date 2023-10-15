@@ -140,7 +140,8 @@
         "bugo.h": "c",
         "sokol_gp.h": "c",
         "cstdlib": "c",
-        "*.m": "c"
+        "*.m": "c",
+        "bugo_sprite.h": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

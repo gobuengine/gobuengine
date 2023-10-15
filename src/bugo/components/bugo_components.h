@@ -1,9 +1,9 @@
 /**********************************************************************************
- * gobu_script.h                                                           *
- * ********************************************************************************
+ * bugo_component.h                                                               *
+ **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
- * ********************************************************************************
+ **********************************************************************************
  * Copyright (c) 2023 Jhonson Ozuna Mejia                                         *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -25,10 +25,18 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GOBU_SCRIPT_H__
-#define __GOBU_SCRIPT_H__
+#ifndef __BUGO_COMPONENT_H__
+#define __BUGO_COMPONENT_H__
 #include <stdio.h>
+#include "../bugo.h"
 
-void gobu_script_compile(const char *str);
+#include "bugo_vector2.h"
+#include "bugo_color.h"
+#include "bugo_rectangle.h"
+#include "bugo_camera2d.h"
+#include "bugo_renderer.h"
+#include "bugo_sprite.h"
+#include "bugo_shape_rect.h"
 
-#endif // __GOBU_SCRIPT_H__
+#endif // __BUGO_COMPONENT_H__
+

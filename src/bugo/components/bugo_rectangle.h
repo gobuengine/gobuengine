@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu_editor_world_outliner.h                                                   *
+ * bugo_rectangle.h                                                               *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,31 +25,14 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#pragma once
-#ifndef __GOBU_EDITOR_WORLD_OUTLINER_H__
-#define __GOBU_EDITOR_WORLD_OUTLINER_H__
-#include "gobu_project_editor.h"
-#include "gobu_editor_world_outliner_item_column.h"
+#ifndef __BUGO_COMPONENT_RECTANGLE_H__
+#define __BUGO_COMPONENT_RECTANGLE_H__
+#include <stdio.h>
+#include "bugo_components.h"
 
-G_BEGIN_DECLS
+void bugo_ecs_init_rectangle(ecs_world_t *world);
+void bugo_ecs_set_rectangle(ecs_entity_t entity, Rectangle *props);
+ecs_entity_t bugo_ecs_get_rectangle_id(void);
 
-typedef struct _GobuEditorWorldOutlinerPrivate GobuEditorWorldOutlinerPrivate;
+#endif // __BUGO_COMPONENT_RECTANGLE_H__
 
-#define GOBU_EDITOR_TYPE_WORLD_OUTLINER (gobu_editor_world_outliner_get_type())
-G_DECLARE_FINAL_TYPE(GobuEditorWorldOutliner, gobu_editor_world_outliner, GOBU_EDITOR, WORLD_OUTLINER, GtkWidget)
-
-struct _GobuEditorWorldOutlinerPrivate
-{
-    GtkWidget instance;
-    GtkWidget *colview;
-    GListStore *store_root;
-    GobuWorldOutlineItemColumn *item_root;
-};
-
-GobuEditorWorldOutliner *gobu_editor_world_outliner_new(void);
-
-void gobu_editor_world_outliner_append(GObject *parent, GObject *child);
-
-G_END_DECLS
-
-#endif // __GOBU_EDITOR_WORLD_OUTLINER_H__

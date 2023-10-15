@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu_editor_world_outliner.h                                                   *
+ * bugo_shape_rect.h                                                              *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,31 +25,21 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#pragma once
-#ifndef __GOBU_EDITOR_WORLD_OUTLINER_H__
-#define __GOBU_EDITOR_WORLD_OUTLINER_H__
-#include "gobu_project_editor.h"
-#include "gobu_editor_world_outliner_item_column.h"
+#ifndef __BUGO_COMPONENT_SHAPE_RECT_H__
+#define __BUGO_COMPONENT_SHAPE_RECT_H__
+#include <stdio.h>
+#include "bugo_components.h"
 
-G_BEGIN_DECLS
-
-typedef struct _GobuEditorWorldOutlinerPrivate GobuEditorWorldOutlinerPrivate;
-
-#define GOBU_EDITOR_TYPE_WORLD_OUTLINER (gobu_editor_world_outliner_get_type())
-G_DECLARE_FINAL_TYPE(GobuEditorWorldOutliner, gobu_editor_world_outliner, GOBU_EDITOR, WORLD_OUTLINER, GtkWidget)
-
-struct _GobuEditorWorldOutlinerPrivate
+typedef struct ComponentShapeRectangle
 {
-    GtkWidget instance;
-    GtkWidget *colview;
-    GListStore *store_root;
-    GobuWorldOutlineItemColumn *item_root;
-};
+    float width;
+    float height;
+    Color color;
+} ComponentShapeRectangle;
 
-GobuEditorWorldOutliner *gobu_editor_world_outliner_new(void);
+void bugo_ecs_init_shape_rect(ecs_world_t *world);
+void bugo_ecs_set_shape_rect(ecs_entity_t entity, ComponentShapeRectangle *props);
+ecs_entity_t bugo_ecs_get_shape_rect_id(void);
 
-void gobu_editor_world_outliner_append(GObject *parent, GObject *child);
+#endif // __BUGO_COMPONENT_SHAPE_RECT_H__
 
-G_END_DECLS
-
-#endif // __GOBU_EDITOR_WORLD_OUTLINER_H__

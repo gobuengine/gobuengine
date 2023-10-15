@@ -4,17 +4,11 @@ struct _GobuEditorWorldViewport
 {
     GtkWidget parent_instance;
     GtkWidget *embed;
-    ecs_world_t *world;
 };
 
 G_DEFINE_TYPE_WITH_PRIVATE(GobuEditorWorldViewport, gobu_editor_world_viewport, GOBU_TYPE_GOBU_EMBED)
 
-typedef struct
-{
-    Vector2 position;
-    float rotation;
-    Color color;
-} cmp_test;
+Texture2D texture_logo;
 
 ECS_COMPONENT_DECLARE(cmp_test);
 
@@ -29,19 +23,7 @@ static void gobu_editor_world_viewport_class_init(GobuEditorWorldViewportClass *
 static void gobu_editor_world_viewport_signal_render(GtkWidget *embed, GobuEditorWorldViewport *data)
 {
     GobuEditorWorldViewportPrivate *private = gobu_editor_world_viewport_get_instance_private(data);
-
-    BeginMode2D(private->camera);
-    {
-        if (private->bGridShow)
-            bugo_draw_shape_grid(200, 50);
-            
-        ecs_progress(data->world, 0);
-    }
-    EndMode2D();
-
-    DrawFPS(10, 30);
-    bugo_draw_text(g_strdup_printf("Actor: %d", ecs_count(data->world, cmp_test)), 100, 30, 20, YELLOW);
-    bugo_draw_text("Mouse right button drag to move, mouse wheel to zoom", 10, 10, 10, WHITE);
+    bugo_ecs_progress(0.0f);
 }
 
 /**
@@ -109,49 +91,13 @@ static GdkDragAction *gobu_editor_world_viewport_signal_drop_motion(GtkDropTarge
  *
  * @param self  El viewport del mundo que se inicializa.
  */
-
-void test(ecs_iter_t *it)
-{
-    cmp_test *p = ecs_field(it, cmp_test, 1);
-
-    for (int i = 0; i < it->count; i++)
-    {
-        Vector2 pos = p[i].position;
-        gdouble rotation = p[i].rotation;
-        bugo_draw_shape_rect((Rectangle){pos.x, pos.y, 5, 5}, (Vector2){2.5f, 2.5f}, 0.0f, p[i].color);
-    }
-}
-
-void test_rot(ecs_iter_t *it)
-{
-    cmp_test *p = ecs_field(it, cmp_test, 1);
-
-    for (int i = 0; i < it->count; i++)
-    {
-        p[i].position.x += (float)bugo_math_random_range(0, 5);
-        p[i].position.y += (float)bugo_math_random_range(0, 5);
-        p[i].rotation += 1.0f;
-
-        if (p[i].position.x > 500)
-        {
-            p[i].position.x = -100;
-        }
-
-        if (p[i].position.y > 500)
-        {
-            p[i].position.y = -100;
-        }
-    }
-}
-
 void spawn_actor(GtkGestureClick *gesture, gint n_press, double x, double y, GobuEditorWorldViewport *viewport)
 {
-    ECS_COMPONENT_DEFINE(viewport->world, cmp_test);
-
-    for (int i = 0; i < 1000; i++)
+    for (int i = 0; i < 1; i++)
     {
-        ecs_entity_t e = ecs_new_id(viewport->world);
-        ecs_set(viewport->world, e, cmp_test, {.position = (Vector2){x, y}, .rotation = 0, .color = RAYWHITE});
+        ecs_entity_t e = bugo_ecs_entity_new((Vector2){x, y}, (Vector2){0.2f, 0.2f}, 0.0f, (Vector2){0.5f, 0.5f});
+        bugo_ecs_set_sprite(e, &(ComponentSprite){.texture = texture_logo, .tint = WHITE});
+        // bugo_ecs_set_shape_rect(e, &(ComponentShapeRectangle){.width = 50, .height = 50, .color = WHITE});
     }
 }
 
@@ -163,13 +109,9 @@ static void gobu_editor_world_viewport_init(GobuEditorWorldViewport *self)
     private->camera.zoom = 1.0f;
     private->camera.target = bugo_math_vector2_zero();
     private->camera.offset = bugo_math_vector2_zero();
-
     private->bGridShow = TRUE;
 
-    self->world = ecs_init();
-    ECS_COMPONENT(self->world, cmp_test);
-    ECS_SYSTEM(self->world, test_rot, EcsOnUpdate, cmp_test);
-    ECS_SYSTEM(self->world, test, EcsOnStore, cmp_test);
+    texture_logo = bugo_load_texture("D:/549GS/Projects/GobuProject/imagenes/logo_tmp.png");
 
     // self->embed = gobu_gobu_embed_new();
     g_signal_connect(self, "gobu-embed-render", G_CALLBACK(gobu_editor_world_viewport_signal_render), self);

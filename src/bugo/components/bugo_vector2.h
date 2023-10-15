@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu_shape.h                                                                   *
+ * bugo_vector2.h                                                                 *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,40 +25,14 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#include "bugo.h"
+#ifndef __BUGO_COMPONENT_VECTOR2_H__
+#define __BUGO_COMPONENT_VECTOR2_H__
+#include <stdio.h>
+#include "bugo_components.h"
 
-void bugo_draw_shape_rect(Rectangle rec, Vector2 origin, float rotation, Color color)
-{
-    DrawRectanglePro(rec, origin, rotation, color);
-}
+void bugo_ecs_init_vector2(ecs_world_t *world);
+void bugo_ecs_set_vector2(ecs_entity_t entity, Vector2 *props);
+ecs_entity_t bugo_ecs_get_vector2_id(void);
 
-void bugo_draw_shape_grid(int slices, float spacing)
-{
-    int halfSlices = slices / 2;
+#endif // __BUGO_COMPONENT_VECTOR2_H__
 
-    bugo_gfx_begin_mode(GOBU_MODE_LINES);
-    for (int i = -halfSlices; i <= halfSlices; i++)
-    {
-        if (i == 0)
-        {
-            bugo_gfx_color3f(0.18f, 0.18f, 0.18f);
-            bugo_gfx_color3f(0.18f, 0.18f, 0.18f);
-            bugo_gfx_color3f(0.18f, 0.18f, 0.18f);
-            bugo_gfx_color3f(0.18f, 0.18f, 0.18f);
-        }
-        else
-        {
-            bugo_gfx_color3f(0.19f, 0.19f, 0.19f);
-            bugo_gfx_color3f(0.19f, 0.19f, 0.19f);
-            bugo_gfx_color3f(0.19f, 0.19f, 0.19f);
-            bugo_gfx_color3f(0.19f, 0.19f, 0.19f);
-        }
-
-        bugo_gfx_vert2f((float)i * spacing, (float)-halfSlices * spacing);
-        bugo_gfx_vert2f((float)i * spacing, (float)halfSlices * spacing);
-
-        bugo_gfx_vert2f((float)-halfSlices * spacing, (float)i * spacing);
-        bugo_gfx_vert2f((float)halfSlices * spacing, (float)i * spacing);
-    }
-    bugo_gfx_end_mode();
-}

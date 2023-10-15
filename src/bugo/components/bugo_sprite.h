@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gobu_text.h                                                                    *
+ * bugo_sprite.h                                                                  *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,9 +25,25 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#include "bugo.h"
+#ifndef __BUGO_COMPONENT_SPRITE_H__
+#define __BUGO_COMPONENT_SPRITE_H__
+#include <stdio.h>
+#include "bugo_components.h"
 
-void bugo_draw_text(const char *text, int x, int y, int size, Color color)
+typedef struct ComponentSprite
 {
-    DrawText(text, x, y, size, color);
-}
+    Texture2D texture;
+    Rectangle src;
+    Rectangle dst;
+    // serialize
+    Color tint;
+    bool flip_h;
+    bool flip_v;
+} ComponentSprite;
+
+void bugo_ecs_init_sprite(ecs_world_t *world);
+void bugo_ecs_set_sprite(ecs_entity_t entity, ComponentSprite *props);
+ecs_entity_t bugo_ecs_get_sprite_id(void);
+
+#endif // __BUGO_COMPONENT_SPRITE_H__
+

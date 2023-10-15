@@ -54,6 +54,7 @@ void gobu_project_editor_init(GtkApplication *app)
     APP->window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(APP->window), g_strdup_printf("GobuEngine - %s", bugo_project_get_name()));
     gtk_window_set_default_size(GTK_WINDOW(APP->window), 1280, 720);
+    gtk_window_maximize(GTK_WINDOW(APP->window));
     g_signal_connect(APP->window, "realize", G_CALLBACK(gobu_project_editor_process), NULL);
     g_signal_connect(APP->window, "destroy", G_CALLBACK(gobu_project_editor_free), NULL);
 
