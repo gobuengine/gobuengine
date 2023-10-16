@@ -160,6 +160,16 @@ Vector2 bugo_math_vector2_one(void)
     return (Vector2){1.0f, 1.0f};
 }
 
+Vector2 bugo_math_vector2_add(Vector2 v1, Vector2 v2)
+{
+    return (Vector2){ v1.x + v2.x, v1.y + v2.y };
+}
+
+Vector2 bugo_math_vector2_scale(Vector2 v, float scale)
+{
+    return (Vector2){ v.x*scale, v.y*scale };
+}
+
 //------------------------------------------------------------------------------------
 // File
 //------------------------------------------------------------------------------------
@@ -263,6 +273,16 @@ ecs_entity_t bugo_ecs_entity_new(Vector2 position, Vector2 scale, float rotation
     return e;
 }
 
+void bugo_ecs_entity_delete(ecs_entity_t entity)
+{
+    ecs_delete(CORE.ecs.world, entity);
+}
+
+const void *bugo_ecs_get(ecs_entity_t entity, ecs_entity_t component)
+{
+    return ecs_get_id(CORE.ecs.world, entity, component);
+}
+
 void bugo_ecs_init(void)
 {
     CORE.ecs.world = ecs_init();
@@ -284,10 +304,13 @@ static void bugo_ecs_component_init(void)
 {
     ecs_world_t *world = CORE.ecs.world;
 
+    bugo_ecs_init_phaser(world);
     bugo_ecs_init_color(world);
     bugo_ecs_init_vector2(world);
     bugo_ecs_init_rectangle(world);
     bugo_ecs_init_camera2d(world);
+    bugo_ecs_init_stage(world);
+    bugo_ecs_init_camera_manager(world);
     // contienen systems
     bugo_ecs_init_renderer(world);
     bugo_ecs_init_shape_rect(world);

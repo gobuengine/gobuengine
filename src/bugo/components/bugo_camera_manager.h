@@ -1,5 +1,5 @@
 /**********************************************************************************
- * bugo_component.h                                                               *
+ * bugo_camera_manager.h                                                          *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,21 +25,13 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __BUGO_COMPONENT_H__
-#define __BUGO_COMPONENT_H__
+#ifndef __BUGO_COMPONENT_CAMERA_MANAGER_H__
+#define __BUGO_COMPONENT_CAMERA_MANAGER_H__
 #include <stdio.h>
-#include "../bugo.h"
+#include "bugo_components.h"
 
-#include "bugo_vector2.h"
-#include "bugo_color.h"
-#include "bugo_rectangle.h"
-#include "bugo_camera2d.h"
-#include "bugo_renderer.h"
-#include "bugo_sprite.h"
-#include "bugo_shape_rect.h"
-#include "bugo_phaser.h"
-#include "bugo_stage.h"
-#include "bugo_camera_manager.h"
+void bugo_ecs_init_camera_manager(ecs_world_t *world);
+void bugo_ecs_camera_manager_set_main(Camera2D* camera);
 
-#endif // __BUGO_COMPONENT_H__
+#endif // __BUGO_COMPONENT_CAMERA_MANAGER_H__
 

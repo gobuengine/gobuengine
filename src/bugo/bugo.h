@@ -90,12 +90,17 @@ float bugo_math_random(float number);
 int bugo_math_random_range(int min, int max);
 Vector2 bugo_math_vector2_zero(void);
 Vector2 bugo_math_vector2_one(void);
+Vector2 bugo_math_vector2_add(Vector2 v1, Vector2 v2);
+Vector2 bugo_math_vector2_scale(Vector2 v, float scale);
 
 const gchar *bugo_file_get_name(const gchar *filepath);
 const gchar *bugo_file_get_name_without_ext(const gchar *filepath);
 
 void bugo_ecs_progress(float delta);
 ecs_entity_t bugo_ecs_entity_new(Vector2 position, Vector2 scale, float rotation, Vector2 origin);
+void bugo_ecs_entity_delete(ecs_entity_t entity);
+const void *bugo_ecs_get(ecs_entity_t entity, ecs_entity_t component);
+
 void bugo_ecs_init(void);
 int32_t bugo_ecs_world_count(void);
 ecs_world_t *bugo_ecs_world(void);

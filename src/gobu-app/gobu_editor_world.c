@@ -22,36 +22,38 @@ typedef enum
     DOCKED_ORIENTATION_LAST
 } DOCKED_ORIENTATION;
 
-GtkWidget *gobu_editor_world_new(void)
+GtkWidget* gobu_editor_world_new(void)
 {
-    GtkWidget *vbox, *hbox;
-    GtkWidget *toolbar, *item;
-    GtkWidget *notebook_docked[DOCKED_ORIENTATION_LAST];
-    GtkWidget *paned_docked[DOCKED_ORIENTATION_LAST];
+    GtkWidget* vbox, * hbox;
+    GtkWidget* toolbar, * item;
+    GtkWidget* notebook_docked[DOCKED_ORIENTATION_LAST];
+    GtkWidget* paned_docked[DOCKED_ORIENTATION_LAST];
 
     vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 1);
     // TOOLBAR
     {
         toolbar = gobu_widget_toolbar_new();
         gtk_box_append(vbox, toolbar);
+        {
+            item = gobu_widget_button_new_icon_with_label("media-removable-symbolic", "Save");
+            gtk_box_append(toolbar, item);
+            gobu_widget_toolbar_separator_new(toolbar);
 
-        item = gobu_widget_button_new_icon_with_label("media-removable-symbolic", "Save");
-        gtk_box_append(toolbar, item);
-        gobu_widget_toolbar_separator_new(toolbar);
+            item = gtk_combo_box_text_new();
+            gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(item), "selected", "Selection Mode");
+            gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(item), "tiled", "Tiled Editor");
+            gtk_combo_box_set_active(item, 0);
+            gtk_box_append(toolbar, item);
+            gobu_widget_toolbar_separator_new(toolbar);
 
-        item = gtk_combo_box_text_new();
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(item), "selected", "Selection Mode");
-        gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(item), "tiled", "Tiled Editor");
-        gtk_combo_box_set_active(item, 0);
-        gtk_box_append(toolbar, item);
-        gobu_widget_toolbar_separator_new(toolbar);
+            item = gobu_widget_button_new_icon_with_label("input-gaming-symbolic", "Preview");
+            gtk_box_append(toolbar, item);
+            gobu_widget_toolbar_separator_new(toolbar);
 
-        item = gobu_widget_button_new_icon_with_label("input-gaming-symbolic", "Preview");
-        gtk_box_append(toolbar, item);
-        gobu_widget_toolbar_separator_new(toolbar);
-
-        item = gobu_widget_button_new_icon_with_label("send-to-symbolic", "Publish");
-        gtk_box_append(toolbar, item);
+            item = gobu_widget_button_new_icon_with_label("send-to-symbolic", "Publish");
+            gtk_box_append(toolbar, item);
+            gobu_widget_toolbar_separator_new(toolbar);
+        }
     }
 
     gtk_box_append(vbox, gobu_widget_separator_h());

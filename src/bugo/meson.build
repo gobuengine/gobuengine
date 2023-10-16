@@ -13,6 +13,9 @@ libgobu_src = [
     'components/bugo_shape_rect.c',
     'components/bugo_sprite.c',
     'components/bugo_vector2.c',
+    'components/bugo_phaser.c',
+    'components/bugo_camera_manager.c',
+    'components/bugo_stage.c',
 
     'external/tmp_render/rcore.c',
     'external/tmp_render/raudio.c',

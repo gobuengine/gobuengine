@@ -36,19 +36,25 @@ G_BEGIN_DECLS
 typedef struct _GobuEditorWorldOutlinerPrivate GobuEditorWorldOutlinerPrivate;
 
 #define GOBU_EDITOR_TYPE_WORLD_OUTLINER (gobu_editor_world_outliner_get_type())
-G_DECLARE_FINAL_TYPE(GobuEditorWorldOutliner, gobu_editor_world_outliner, GOBU_EDITOR, WORLD_OUTLINER, GtkWidget)
+G_DECLARE_FINAL_TYPE(GobuEditorWorldOutliner,
+                     gobu_editor_world_outliner,
+                     GOBU_EDITOR,
+                     WORLD_OUTLINER,
+                     GtkWidget)
 
 struct _GobuEditorWorldOutlinerPrivate
 {
-    GtkWidget instance;
-    GtkWidget *colview;
-    GListStore *store_root;
-    GobuWorldOutlineItemColumn *item_root;
+  GtkWidget instance;
+  GtkWidget* colview;
+  GListStore* store_root;
+  GobuWorldOutlineItemColumn* item_root;
 };
 
-GobuEditorWorldOutliner *gobu_editor_world_outliner_new(void);
+GobuEditorWorldOutliner*
+gobu_editor_world_outliner_new(void);
 
-void gobu_editor_world_outliner_append(GObject *parent, GObject *child);
+void
+gobu_editor_world_outliner_append(GObject* parent, GObject* child);
 
 G_END_DECLS
 

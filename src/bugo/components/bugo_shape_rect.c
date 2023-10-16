@@ -48,7 +48,7 @@ bugo_ecs_init_shape_rect(ecs_world_t* world)
 
   sys_shape_rect_t = ecs_system(world, {
         .entity = ecs_entity(world, {
-            .add = {ecs_dependson(EcsOnStore)},
+            .add = {ecs_dependson(bugo_ecs_get_phaser(PHASER_BEGIN_CAMERA))},
         }),
         .query.filter.terms = {
             { .id = bugo_ecs_get_renderer_id() },

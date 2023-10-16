@@ -126,9 +126,9 @@ static void gobu_fn_create_tree_list_model(GobuEditorWorldOutliner *self)
 
     GobuEditorWorldOutlinerPrivate *private = gobu_editor_world_outliner_get_instance_private(self);
 
-    private->store_root = g_list_store_new(WORLD_OUTLINER_TYPE_ITEM_COLUMN);
-    private->item_root = gobu_world_outline_item_column_new("Root", TRUE);
-    g_list_store_append(private->store_root, private->item_root);
+    // private->store_root = g_list_store_new(WORLD_OUTLINER_TYPE_ITEM_COLUMN);
+    // private->item_root = gobu_world_outline_item_column_new("Root", TRUE);
+    // g_list_store_append(private->store_root, private->item_root);
 
     tree_model = gtk_tree_list_model_new(G_LIST_MODEL(private->store_root), FALSE, TRUE,
                                          (GtkTreeListModelCreateModelFunc)gobu_fn_factory_tree_list_model_create_fn,

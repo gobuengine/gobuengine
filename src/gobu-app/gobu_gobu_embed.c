@@ -110,14 +110,7 @@ static gboolean gobu_gobu_embed_signal_render(GobuGobuEmbed *viewport, gpointer 
         priv->initialize = TRUE;
     }
 
-    g_signal_emit(viewport, w_signals[SIGNAL_UPDATE], 0);
-
-    bugo_gfx_render_begin(priv->width, priv->height);
-    {
-        bugo_gfx_render_clear_color(priv->background_color);
-        g_signal_emit(viewport, w_signals[SIGNAL_RENDER], 0);
-    }
-    bugo_gfx_render_end(priv->width, priv->height);
+    g_signal_emit(viewport, w_signals[SIGNAL_RENDER], 0);
 
     return TRUE;
 }
@@ -151,7 +144,8 @@ static void gobu_gobu_embed_init(GobuGobuEmbed *self)
 
     // gtk_gl_area_set_required_version(GTK_GL_AREA(self), 3, 3);
     // gtk_gl_area_set_auto_render(GTK_GL_AREA(self), TRUE);
-    gtk_widget_set_focus_on_click(GTK_WIDGET(self), TRUE);
+    gtk_widget_set_focus_on_click(GTK_GL_AREA(self), true);
+    gtk_widget_set_focusable(GTK_GL_AREA(self), true);
     gtk_widget_set_hexpand(GTK_WIDGET(self), TRUE);
     gtk_widget_set_vexpand(GTK_WIDGET(self), TRUE);
 

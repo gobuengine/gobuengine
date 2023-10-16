@@ -43,6 +43,7 @@ struct _GobuEditorWorldViewportPrivate
     GtkWidget instance;
     Camera2D camera;
     gboolean bGridShow;
+    Vector2 mouse;
 };
 
 GobuEditorWorldViewport *gobu_editor_world_viewport_new(void);
