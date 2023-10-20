@@ -64,7 +64,7 @@ static void gobu_gobu_embed_signal_resize(GtkWidget *viewport, gint width, gint 
     priv->width = width;
     priv->height = height;
 
-    // SetWindowSize(priv->width, priv->height);
+    SetWindowSize(priv->width, priv->height);
 }
 
 static void gobu_gobu_embed_signal_realize(GobuGobuEmbed *viewport, gpointer data)

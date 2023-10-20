@@ -13,14 +13,15 @@ static void
 handler_PHASER_BEGIN_CAMERA(ecs_iter_t* it)
 {
   ecs_entity_t camera_t = bugo_ecs_get_camera2d_id();
-  const Camera2D *camera = (ECS_CAST(const Camera2D*, ecs_get_id(it->world, camera_t, camera_t)));
-  BeginMode2D(camera[0]);
+  // const Camera2D *camera = (ECS_CAST(const Camera2D*, ecs_get_id(it->world, camera_t, camera_t)));
+  // BeginMode2D(camera[0]);
+  DrawGrid(200, 24);
 }
 
 static void
 handler_PHASER_END_CAMERA(ecs_iter_t* it)
 {
-  EndMode2D();
+  // EndMode2D();
 }
 
 static void

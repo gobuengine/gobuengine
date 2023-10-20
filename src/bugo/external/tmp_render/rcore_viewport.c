@@ -291,7 +291,8 @@ void SetWindowMaxSize(int width, int height)
 // Set window dimensions
 void SetWindowSize(int width, int height)
 {
-    TRACELOG(LOG_WARNING, "SetWindowSize() not available on target platform");
+    CORE.Window.screen.width = width;
+    CORE.Window.screen.height = height;
 }
 
 // Set window opacity, value opacity is between 0.0 and 1.0
@@ -596,7 +597,7 @@ void ViewportSize(int width, int height)
     CORE.Window.screen.width = width;
     CORE.Window.screen.height = height;
 
-    if (IsWindowFullscreen()) return;
+    // if (IsWindowFullscreen()) return;
 
     // Set current screen size
 #if defined(__APPLE__)

@@ -28,7 +28,7 @@
 #ifndef __BUGO_COMPONENT_RENDERER_H__
 #define __BUGO_COMPONENT_RENDERER_H__
 #include <stdio.h>
-#include "bugo_components.h"
+#include "component.h"
 
 typedef struct ComponentRenderer
 {

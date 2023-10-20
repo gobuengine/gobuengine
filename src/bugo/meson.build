@@ -1,21 +1,29 @@
 c = meson.get_compiler('c')
 
-libgobu_deps = [dependency('epoxy'), dependency('glib-2.0'), dependency('json-glib-1.0'), c.find_library('wsock32'), c.find_library('ws2_32')]
-libgobu_src = [
+subdir('external/lua')
+
+bugo_deps = [
+        dependency('epoxy'),
+        dependency('glib-2.0'),
+        dependency('json-glib-1.0'),
+        c.find_library('wsock32'),
+        c.find_library('ws2_32'),
+    ]
+
+bugo_src = [
     'external/flecs.c',
     'external/binn.c',
     'external/binn_json.c',
 
-    'components/bugo_camera2d.c',
-    'components/bugo_color.c',
-    'components/bugo_rectangle.c',
+    'components/bugo_bcamera2d.c',
+    'components/bugo_bcolor.c',
+    'components/bugo_brectangle.c',
+    'components/bugo_bvector2.c',
+    'components/bugo_blua.c',
+    'components/bugo_draw_shape_rect.c',
+    'components/bugo_draw_sprite.c',
     'components/bugo_renderer.c',
-    'components/bugo_shape_rect.c',
-    'components/bugo_sprite.c',
-    'components/bugo_vector2.c',
     'components/bugo_phaser.c',
-    'components/bugo_camera_manager.c',
-    'components/bugo_stage.c',
 
     'external/tmp_render/rcore.c',
     'external/tmp_render/raudio.c',
@@ -31,15 +39,16 @@ libgobu_src = [
 argst = ['-W' ,'-g' ,'-w','-DGRAPHICS_API_OPENGL_33']
 
 libgobubugo = static_library('gobu-bugo',
-    libgobu_src,
-    dependencies: libgobu_deps,
-    include_directories:['../'],
+    bugo_src,
+    link_with:[liblua],
+    dependencies: bugo_deps,
+    include_directories:['../','external/lua'],
     c_args : argst,
 )
 
 # library('gobu',
-#     libgobu_src,
-#     dependencies: libgobu_deps,
+#     bugo_src,
+#     dependencies: bugo_deps,
 #     include_directories:['../'],
 #     c_args : argst,
 # )

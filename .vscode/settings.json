@@ -141,7 +141,19 @@
         "sokol_gp.h": "c",
         "cstdlib": "c",
         "*.m": "c",
-        "bugo_sprite.h": "c"
+        "bugo_sprite.h": "c",
+        "bugo_components.h": "c",
+        "bugo_camera_manager.h": "c",
+        "bugo_camera2d.h": "c",
+        "bugo_rectangle.h": "c",
+        "bugo_vector2.h": "c",
+        "bugo_color.h": "c",
+        "bugo_renderer.h": "c",
+        "bugo_draw_sprite.h": "c",
+        "component.h": "c",
+        "lauxlib.h": "c",
+        "lualib.h": "c",
+        "lua.h": "c"
     },
     "C_Cpp.default.compileCommands": "builddir\\compile_commands.json"
 }

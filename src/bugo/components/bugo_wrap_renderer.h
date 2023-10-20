@@ -1,5 +1,5 @@
 /**********************************************************************************
- * bugo_phaser.h                                                                  *
+ * bugo_wrap_renderer.h                                                                *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,25 +25,9 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __BUGO_PHASER_H__
-#define __BUGO_PHASER_H__
+#ifndef __BUGO_WRAP_RENDERER_H__
+#define __BUGO_WRAP_RENDERER_H__
 #include <stdio.h>
-#include "component.h"
 
-typedef enum {
-    PHASER_NONE = 0,
-    PHASER_PHYSICS,
-    PHASER_UPDATE,
-    PHASER_BEGIN_DRAWING,
-    PHASER_BEGIN_CAMERA,
-    PHASER_END_CAMERA,
-    PHASER_UI,
-    PHASER_END_DRAWING,
-    PHASER_NUMS
-}BugoEcsPhaser;
-
-void bugo_ecs_init_phaser(ecs_world_t *world);
-ecs_entity_t bugo_ecs_get_phaser(BugoEcsPhaser phaser);
-
-#endif // __BUGO_PHASER_H__
+#endif // __BUGO_WRAP_RENDERER_H__
 

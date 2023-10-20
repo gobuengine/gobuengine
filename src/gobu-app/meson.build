@@ -28,7 +28,7 @@ gobuapp_src = [
 executable('gobueditor',
     gobuapp_src,
     dependencies: gobu_app_deps,
-    link_with: [libgobubugo],
+    link_with: [libgobubugo, liblua],
     include_directories:['../.','.'],
     install : true,
     install_dir:base_dir+'/bin/',

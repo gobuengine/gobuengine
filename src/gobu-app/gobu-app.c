@@ -15,7 +15,7 @@ static void gobu_app_setting_init(void)
 
     gboolean dark_theme = binn_object_bool(APP->setting.data, "app-theme-dark");
     const gchar *style_scheme = dark_theme == TRUE ? "Adwaita-dark" : "Adwaita";
-    const gchar *language = "c";
+    const gchar *language = "lua";
 
     // THEME
     gobu_widget_theme_init(dark_theme);

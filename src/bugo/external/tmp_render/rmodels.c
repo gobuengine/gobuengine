@@ -1006,24 +1006,24 @@ void DrawGrid(int slices, float spacing)
         {
             if (i == 0)
             {
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
-                rlColor3f(0.5f, 0.5f, 0.5f);
+                rlColor3f(0.11f, 0.11f, 0.11f);
+                rlColor3f(0.11f, 0.11f, 0.11f);
+                rlColor3f(0.11f, 0.11f, 0.11f);
+                rlColor3f(0.11f, 0.11f, 0.11f);
             }
             else
             {
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
-                rlColor3f(0.75f, 0.75f, 0.75f);
+                rlColor3f(0.15f, 0.15f, 0.15f);
+                rlColor3f(0.15f, 0.15f, 0.15f);
+                rlColor3f(0.15f, 0.15f, 0.15f);
+                rlColor3f(0.15f, 0.15f, 0.15f);
             }
 
-            rlVertex3f((float)i*spacing, 0.0f, (float)-halfSlices*spacing);
-            rlVertex3f((float)i*spacing, 0.0f, (float)halfSlices*spacing);
+            rlVertex2f((float)i*spacing, (float)-halfSlices*spacing);
+            rlVertex2f((float)i*spacing, (float)halfSlices*spacing);
 
-            rlVertex3f((float)-halfSlices*spacing, 0.0f, (float)i*spacing);
-            rlVertex3f((float)halfSlices*spacing, 0.0f, (float)i*spacing);
+            rlVertex2f((float)-halfSlices*spacing,(float)i*spacing);
+            rlVertex2f((float)halfSlices*spacing, (float)i*spacing);
         }
     rlEnd();
 }

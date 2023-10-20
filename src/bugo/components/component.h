@@ -1,5 +1,5 @@
 /**********************************************************************************
- * bugo_phaser.h                                                                  *
+ * bugo_component.h                                                               *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -24,26 +24,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE  *
  * SOFTWARE.                                                                      *
  **********************************************************************************/
+#pragma once
 
-#ifndef __BUGO_PHASER_H__
-#define __BUGO_PHASER_H__
+#ifndef __BUGO_COMPONENT_H__
+#define __BUGO_COMPONENT_H__
 #include <stdio.h>
-#include "component.h"
+#include "../bugo.h"
 
-typedef enum {
-    PHASER_NONE = 0,
-    PHASER_PHYSICS,
-    PHASER_UPDATE,
-    PHASER_BEGIN_DRAWING,
-    PHASER_BEGIN_CAMERA,
-    PHASER_END_CAMERA,
-    PHASER_UI,
-    PHASER_END_DRAWING,
-    PHASER_NUMS
-}BugoEcsPhaser;
+#include "bugo_bvector2.h"
+#include "bugo_bcolor.h"
+#include "bugo_brectangle.h"
+#include "bugo_bcamera2d.h"
+#include "bugo_renderer.h"
+#include "bugo_blua.h"
+#include "bugo_draw_sprite.h"
+#include "bugo_draw_shape_rect.h"
+#include "bugo_phaser.h"
 
-void bugo_ecs_init_phaser(ecs_world_t *world);
-ecs_entity_t bugo_ecs_get_phaser(BugoEcsPhaser phaser);
-
-#endif // __BUGO_PHASER_H__
+#endif // __BUGO_COMPONENT_H__
 

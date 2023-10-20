@@ -1,5 +1,5 @@
 /**********************************************************************************
- * bugo_phaser.h                                                                  *
+ * bugo_camera2d.h                                                                *
  **********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,25 +25,31 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __BUGO_PHASER_H__
-#define __BUGO_PHASER_H__
+#pragma once
+#ifndef __BUGO_COMPONENT_CAMERA2D_H__
+#define __BUGO_COMPONENT_CAMERA2D_H__
 #include <stdio.h>
 #include "component.h"
 
 typedef enum {
-    PHASER_NONE = 0,
-    PHASER_PHYSICS,
-    PHASER_UPDATE,
-    PHASER_BEGIN_DRAWING,
-    PHASER_BEGIN_CAMERA,
-    PHASER_END_CAMERA,
-    PHASER_UI,
-    PHASER_END_DRAWING,
-    PHASER_NUMS
-}BugoEcsPhaser;
+    CAMERA_MODE_NONE = 0,
+    CAMERA_MODE_EDITOR,
+    CAMERA_MODE_FOLLOW,
+    CAMERA_MODE_SMOOTH_FOLLOW,
+    CAMERA_MODE_NUMS
+}ComponentCameraMode;
 
-void bugo_ecs_init_phaser(ecs_world_t *world);
-ecs_entity_t bugo_ecs_get_phaser(BugoEcsPhaser phaser);
+typedef struct ComponentCamera {
+    Vector2 offset;
+    Vector2 target;
+    float rotation;
+    float zoom;
+    ComponentCameraMode mode;
+} ComponentCamera;
 
-#endif // __BUGO_PHASER_H__
+void bugo_ecs_init_camera2d(ecs_world_t* world);
+void bugo_ecs_set_camera2d(ecs_entity_t entity, ComponentCamera* props);
+ecs_entity_t bugo_ecs_get_camera2d_id(void);
+
+#endif // __BUGO_COMPONENT_CAMERA2D_H__
 

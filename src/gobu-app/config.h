@@ -1,11 +1,12 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 #include <stdio.h>
+#include "version.h"
 
-#define GTK_MICRO_VERSION 12
+#define GTK_MICRO_VERSION 13
 #define GTK_MINOR_VERSION 0
 #define GTK_MAJOR_VERSION 0
-#define GOBU_VERSION_STR "GobuEngine 0.0.12"
+#define GOBU_VERSION_STR "GobuEngine "VERSION_BUILD
 
 #define DOCK_R_MIN_SIZE 250
 #define DOCK_L_MIN_SIZE 250

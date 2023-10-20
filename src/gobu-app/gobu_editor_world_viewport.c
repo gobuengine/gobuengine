@@ -99,10 +99,10 @@ static GdkDragAction* gobu_editor_world_viewport_signal_drop_motion(GtkDropTarge
     GobuEditorWorldViewportPrivate* private = gobu_editor_world_viewport_get_instance_private(data);
 
     ecs_entity_t camera_t = bugo_ecs_get_camera2d_id();
-    Camera2D* camera = (ECS_CAST(const Camera2D*, ecs_get_id(bugo_ecs_world(), camera_t, camera_t)));
+    ComponentCamera* camera = (ECS_CAST(const ComponentCamera*, ecs_get_id(bugo_ecs_world(), camera_t, camera_t)));
 
     ComponentRenderer* render = bugo_ecs_get(entity_paint, bugo_ecs_get_renderer_id());
-    render->position = GetScreenToWorld2D((Vector2) { (float)x, (float)y }, * camera);
+    render->position = bugo_world_to_screen_2d((Vector2) { (float)x, (float)y }, *camera);
     mouse_drop = render->position;
 
     return TRUE;
@@ -139,13 +139,13 @@ void gobu_editor_world_viewport_signal_zoom(GtkEventControllerScroll* controller
     Vector2 mouse = private->mouse;
 
     ecs_entity_t camera_t = bugo_ecs_get_camera2d_id();
-    Camera2D* camera = (ECS_CAST(const Camera2D*, ecs_get_id(bugo_ecs_world(), camera_t, camera_t)));
-    Vector2 mouseWorldPos = GetScreenToWorld2D(mouse, *camera);
+    ComponentCamera* camera = (ECS_CAST(const ComponentCamera*, ecs_get_id(bugo_ecs_world(), camera_t, camera_t)));
+    Vector2 mouseWorldPos = bugo_world_to_screen_2d(mouse, *camera);
 
     camera->offset = mouse;
     camera->target = mouseWorldPos;
     camera->zoom += (dy * 0.125f);
-    if (camera->zoom < 0) camera->zoom = 0.125f;
+    if (camera->zoom <= 0) camera->zoom = 0.125f;
 }
 
 static void gobu_editor_world_viewport_signal_motion(GtkEventControllerMotion* controller, double x, double y, GtkWidget* widget)
@@ -159,9 +159,9 @@ static void gobu_editor_world_viewport_signal_motion(GtkEventControllerMotion* c
     if (mouse_down) {
         ecs_entity_t camera_t = bugo_ecs_get_camera2d_id();
         Camera2D* camera = (ECS_CAST(const Camera2D*, ecs_get_id(bugo_ecs_world(), camera_t, camera_t)));
-        
+
         Vector2 delta = GetMouseDelta();
-        delta = bugo_math_vector2_scale(delta, -1.0f/camera->zoom);
+        delta = bugo_math_vector2_scale(delta, -1.0f / camera->zoom);
         camera->target = bugo_math_vector2_add(camera->target, delta);
     }
 }
