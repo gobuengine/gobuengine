@@ -1,0 +1,17 @@
+libcore_source = [
+    files('gobu_autorotate.c'),
+    files('gobu_collision.c'),
+    files('gobu_controller.c'),
+    files('gobu_physics.c'),
+    files('gobu_rendering.c'),
+    files('gobu_resource.c'),
+    files('gobu_shapes.c'),
+    files('gobu_sprite.c'),
+    files('gobu_text.c'),
+    files('gobu_tilingsprite.c'),
+    files('gobu_transform.c'),
+    # files('gobu_gui.c'),
+    files('gobu_utility.c'),
+    files('gobu_project.c'),
+    files('gobu_gobu.c'),
+]

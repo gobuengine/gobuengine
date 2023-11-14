@@ -1,0 +1,26 @@
+#include "gobu_autorotate.h"
+#include "gobu_transform.h"
+
+typedef struct Test{
+	int id;
+}Test;
+
+ECS_COMPONENT_DECLARE(Test);
+
+static void ComponentTest_Update(ecs_iter_t* it);
+
+void ComponentTestImport(ecs_world_t* world)
+{
+    ECS_MODULE(world, ComponentTest);
+}
+
+static void ComponentTest_Update(ecs_iter_t* it)
+{
+    Test* test = ecs_field(it, Test, 1);
+
+    for (int i = 0; i < it->count; i++)
+    {
+    
+    }
+}
+

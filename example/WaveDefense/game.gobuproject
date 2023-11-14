@@ -5,7 +5,7 @@
         "height": 720
     },
     "game":{
-        "worldGame":"main.gworld",
-        "worldEditor":"main.gworld",
+        "game":"main.gworld",
+        "editor":"main.gworld"
     }
 }
