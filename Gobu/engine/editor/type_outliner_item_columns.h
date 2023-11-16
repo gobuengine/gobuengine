@@ -43,17 +43,14 @@ struct _GappOutlineItemColumn
     const char* name;
     gboolean visible;
     uint64_t entity;
-    GListStore* children;
-    GListStore *parent;
+    GPtrArray* children;
+    // GappOutlineItemColumn* parent;
+    // GListStore* parent;
     // copy world (Experimental)
-    ecs_world_t* world;
+    // ecs_world_t* world;
 };
 
 GappOutlineItemColumn* gapp_outline_item_column_new(const char* name, uint64_t entity, gboolean visible);
-
-const gchar* gapp_outline_item_column_get_name(GappOutlineItemColumn* item);
-
-gboolean* gapp_outline_item_column_get_visible(GappOutlineItemColumn* item);
 
 G_END_DECLS
 

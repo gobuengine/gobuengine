@@ -50,10 +50,16 @@ static void project_editor_free(GtkWidget* widget, gpointer user_data)
     project_editor_resource_free();
 }
 
-void gapp_project_editor_append_page(GobuAppNotebook page, int icon_type, const gchar *name, GtkWidget *child)
+static void signal_close_page(GtkWidget* button, GtkNotebook* notebook)
 {
-    GtkWidget *hbox;
-    GtkWidget *label, *icon, *button;
+    int page = gtk_notebook_get_current_page(notebook);
+    gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), page);
+}
+
+void gapp_project_editor_append_page(GobuAppNotebook page, int icon_type, const gchar* name, GtkWidget* child)
+{
+    GtkWidget* hbox;
+    GtkWidget* label, * icon, * button;
 
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 
@@ -71,6 +77,7 @@ void gapp_project_editor_append_page(GobuAppNotebook page, int icon_type, const 
     gtk_notebook_append_page(GTK_NOTEBOOK(EditorCore->notebook[page]), child, hbox);
     gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(EditorCore->notebook[page]), child, TRUE);
     // gtk_notebook_set_tab_detachable(GTK_NOTEBOOK(EditorCore->notebook[GOBU_NOTEBOOK_DEFAULT]), level, TRUE);
+    g_signal_connect(button, "clicked", G_CALLBACK(signal_close_page), EditorCore->notebook[page]);
 }
 
 void gapp_project_editor_window_new(GtkApplication* app)

@@ -29,8 +29,10 @@ static gboolean signal_drop(GtkDropTarget* target, const GValue* value, double x
 {
     if (G_VALUE_HOLDS(value, OUTLINER_TYPE_ITEM_COLUMN))
     {
-        GappOutlineItemColumn* parent = OUTLINER_ITEM_COLUMN(gtk_tree_list_row_get_item(gtk_list_item_get_item(list_item)));
-        GappOutlineItemColumn* children = OUTLINER_ITEM_COLUMN(g_value_get_object(value));
+        GappOutlineItemColumn* parent = gtk_list_item_get_item(list_item);
+        GappOutlineItemColumn* children = g_value_get_object(value);
+        // g_return_if_fail(parent);
+        // g_return_if_fail(children);
         gapp_level_outliner_item_moveTo(parent, children);
 
         return TRUE;
@@ -38,60 +40,62 @@ static gboolean signal_drop(GtkDropTarget* target, const GValue* value, double x
     return FALSE;
 }
 
-static GdkContentProvider* signal_drag_source_prepare(GtkDragSource* source, gdouble x, gdouble y, GtkListItem* list_item)
+static GdkContentProvider* signal_drag_prepare(GtkDragSource* source, gdouble x, gdouble y, GtkListItem* list_item)
 {
-    GappOutlineItemColumn* item = OUTLINER_ITEM_COLUMN(gtk_tree_list_row_get_item(gtk_list_item_get_item(list_item)));
-    return gdk_content_provider_new_typed(OUTLINER_TYPE_ITEM_COLUMN, item);
-}
+    GtkTreeListRow* row_item = gtk_list_item_get_item(list_item);
+    if (row_item == NULL)
+        return NULL;
 
-static void signal_drag_source_begin(GtkDragSource* source, GdkDrag* drag, GtkListItem* list_item)
-{
+    GappOutlineItemColumn* item = gtk_tree_list_row_get_item(row_item);
+    return gdk_content_provider_new_typed(OUTLINER_TYPE_ITEM_COLUMN, item);
 }
 
 static void signal_factory_setup_name(GtkSignalListItemFactory* factory, GtkListItem* listitem, gpointer data)
 {
-    GtkWidget* label;
-    GtkWidget* expander;
-
-    label = gtk_label_new("");
-    gtk_label_set_xalign(GTK_LABEL(label), 0);
-    gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
+    GtkWidget* label, * expander;
+    GtkDropTarget* drop;
+    GtkDragSource* drag;
 
     expander = gtk_tree_expander_new();
-    gtk_tree_expander_set_child(GTK_TREE_EXPANDER(expander), label);
-    gtk_list_item_set_focusable(GTK_LIST_ITEM(listitem), FALSE);
+    // gtk_list_item_set_focusable(GTK_LIST_ITEM(listitem), FALSE);
     gtk_list_item_set_child(GTK_LIST_ITEM(listitem), expander);
 
-    GtkDropTarget* target_drop = gtk_drop_target_new(OUTLINER_TYPE_ITEM_COLUMN, GDK_ACTION_MOVE);
-    g_signal_connect(target_drop, "drop", G_CALLBACK(signal_drop), listitem);
-    gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(target_drop));
+    drop = gtk_drop_target_new(OUTLINER_TYPE_ITEM_COLUMN, GDK_ACTION_MOVE);
+    g_signal_connect(drop, "drop", G_CALLBACK(signal_drop), listitem);
+    gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(drop));
 
-    GtkDragSource* source = gtk_drag_source_new();
-    gtk_drag_source_set_actions(source, GDK_ACTION_MOVE);
-    g_signal_connect(source, "prepare", G_CALLBACK(signal_drag_source_prepare), listitem);
-    g_signal_connect(source, "drag-begin", G_CALLBACK(signal_drag_source_begin), listitem);
-    gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(source));
+    drag = gtk_drag_source_new();
+    gtk_drag_source_set_actions(drag, GDK_ACTION_MOVE);
+    g_signal_connect(drag, "prepare", G_CALLBACK(signal_drag_prepare), listitem);
+    gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(drag));
+
+    label = gtk_label_new("");
+    gtk_tree_expander_set_child(GTK_TREE_EXPANDER(expander), label);
+    gtk_label_set_xalign(GTK_LABEL(label), 0);
+    gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
 }
 
-static void signal_factory_bind_name(GtkSignalListItemFactory* factory, GtkListItem* listitem, gpointer data)
+static void signal_factory_bind_name(GtkSignalListItemFactory* factory, GtkListItem* list_item, gpointer data)
 {
-    GtkWidget* expander = GTK_TREE_EXPANDER(gtk_list_item_get_child(listitem));
-    GtkTreeListRow* row = GTK_TREE_LIST_ROW(gtk_list_item_get_item(listitem));
-    GappOutlineItemColumn* item = OUTLINER_ITEM_COLUMN(gtk_tree_list_row_get_item(row));
+    GtkWidget* expander, * child;
+    GtkTreeListRow* row_item;
 
-    gtk_tree_expander_set_list_row(expander, row);
+    row_item = gtk_list_item_get_item(list_item);
+    GappOutlineItemColumn* item = gtk_tree_list_row_get_item(row_item);
+
+    expander = gtk_list_item_get_child(list_item);
+    gtk_tree_expander_set_list_row(expander, row_item);
+    gtk_tree_expander_set_hide_expander(expander, TRUE);
 
     GtkWidget* label = gtk_tree_expander_get_child(expander);
     gtk_label_set_label(GTK_LABEL(label), item->name);
 
-    gint children_count = GPOINTER_TO_INT(g_object_get_data(item->children, "n-items"));
-    gtk_tree_expander_set_hide_expander(expander, children_count == 0 ? TRUE : FALSE);
+    g_object_unref(item);
 }
 
 static void signal_factory_setup_visible(GtkSignalListItemFactory* factory, GtkListItem* listitem, gpointer data)
 {
     GtkWidget* checkbox;
-
     checkbox = gtk_check_button_new();
     gtk_list_item_set_child(GTK_LIST_ITEM(listitem), checkbox);
 }
@@ -100,7 +104,6 @@ static void signal_factory_bind_visible(GtkSignalListItemFactory* factory, GtkLi
 {
     GtkWidget* checkbox = gtk_list_item_get_child(GTK_LIST_ITEM(listitem));
     GappOutlineItemColumn* item = gtk_list_item_get_item(GTK_LIST_ITEM(listitem));
-
     gtk_check_button_set_active(GTK_CHECK_BUTTON(checkbox), item->visible);
 }
 
@@ -112,25 +115,27 @@ static void signal_selection_selected(GObject* object, GParamSpec* pspec, GappLe
     printf("Selected: %d, %s\n", post, item->name);
 }
 
-static GListModel* gapp_level_outliner_fn_factory_tree_list_model_create(gpointer* item, GappLevelOutliner* self)
+static GListModel* fn_factory_tree_list_model_create(GObject* object, gpointer data)
 {
-    GappOutlineItemColumn* itemm = OUTLINER_ITEM_COLUMN(item);
-    return G_LIST_MODEL(itemm->children);
+    GappOutlineItemColumn* item = OUTLINER_ITEM_COLUMN(object);
+
+    if (item->children->len > 0) {
+        GListStore* store = g_list_store_new(OUTLINER_TYPE_ITEM_COLUMN);
+        for (int i = 0; i < item->children->len; i++) {
+            GappOutlineItemColumn* item = g_ptr_array_index(item->children, i);
+            g_list_store_append(store, item);
+        }
+        return G_LIST_MODEL(store);
+    }
+
+    return NULL;
 }
 
-static void gapp_level_outliner_fn_create_tree_list_model(GappLevelOutliner* self)
+static void fn_create_tree_list_model(GappLevelOutliner* self)
 {
-    GtkTreeListModel* tree_model;
-    GtkSingleSelection* selection_model;
-
     self->store = g_list_store_new(OUTLINER_TYPE_ITEM_COLUMN);
-
-    self->tree_model = gtk_tree_list_model_new(G_LIST_MODEL(self->store), FALSE, TRUE,
-                                         gapp_level_outliner_fn_factory_tree_list_model_create,
-                                         self, NULL);
-
+    self->tree_model = gtk_tree_list_model_new(G_LIST_MODEL(self->store), FALSE, TRUE, fn_factory_tree_list_model_create, NULL, NULL);
     self->selection = gtk_single_selection_new(G_LIST_MODEL(self->tree_model));
-
     gtk_column_view_set_model(GTK_COLUMN_VIEW(self->colview), GTK_SELECTION_MODEL(self->selection));
 }
 
@@ -165,27 +170,14 @@ static void gapp_level_outliner_init(GappLevelOutliner* self)
         gtk_box_append(self, scroll);
         {
             self->colview = gtk_column_view_new(NULL);
+            fn_create_tree_list_model(self);
+
             gtk_column_view_set_reorderable(GTK_COLUMN_VIEW(self->colview), FALSE);
             gtk_column_view_set_show_column_separators(GTK_COLUMN_VIEW(self->colview), FALSE);
             gtk_column_view_set_show_row_separators(GTK_COLUMN_VIEW(self->colview), FALSE);
             gtk_column_view_set_enable_rubberband(GTK_COLUMN_VIEW(self->colview), FALSE);
             gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), self->colview);
-            // gtk_widget_add_css_class(self->colview, "data-table");
-
-            // gtk_column_view_set_single_click_activate(GTK_COLUMN_VIEW(self->colview), TRUE);
-            // g_signal_connect(self->colview, "activate", signal_selection_selected, self);
-
-            // ------------------------------------------------------------
-            gapp_level_outliner_fn_create_tree_list_model(self);
-            // ------------------------------------------------------------
-
-
-            // GtkSorter * column_sorter = gtk_column_view_get_sorter(self->colview);
-            // GtkTreeListRowSorter * sorter = gtk_tree_list_row_sorter_new(g_object_ref(column_sorter));
-            // GtkSortListModel * sort_model = gtk_sort_list_model_new(self->tree_model, sorter);
-            g_signal_connect(self->selection, "notify::selected", signal_selection_selected, self);
-
-            // gtk_widget_add_css_class(self->colview, "rich-list");
+            // g_signal_connect(self->selection, "notify::selected", signal_selection_selected, self);
             {
                 factory = gtk_signal_list_item_factory_new();
                 g_signal_connect(factory, "setup", G_CALLBACK(signal_factory_setup_name), NULL);
@@ -219,39 +211,38 @@ GappLevelOutliner* gapp_level_outliner_new(void)
 void gapp_level_outliner_append(GappLevelOutliner* outliner, ecs_world_t* world, const gchar* name, uint64_t entity, bool visible)
 {
     GappOutlineItemColumn* item = gapp_outline_item_column_new(name, entity, visible);
-    item->world = world; // experimental
-    item->parent = outliner->store;
+    // item->world = world; // experimental
+    // item->parent = outliner->store;
     g_list_store_append(outliner->store, item);
-
     debug_print(CONSOLE_INFO, TF("Outliner append entity %lld %s", entity, name));
 }
 
-void gapp_level_outliner_item_moveTo(GappOutlineItemColumn* parent, GappOutlineItemColumn* children)
+void gapp_level_outliner_item_moveTo(GappOutlineItemColumn* parent, GappOutlineItemColumn* item)
 {
-    guint position;
-
-    if (g_list_store_find(children->parent, children, &position))
+    if (parent->entity != item->entity)
     {
-        debug_print(CONSOLE_INFO, TF("Outliner entity parent %s to children %s", parent->name, children->name));
+        // item->parent = parent->parent;
+        // g_ptr_array_add(parent->children, item);
+        // g_list_store_append(parent->parent, item);
+        // g_list_store_remove(item->parent, position);
+        // item->parent = parent->children;
+        // g_object_unref(item);
 
-        g_list_store_remove(children->parent, position);
-        children->parent = parent;
-
-        // g_list_store_append(parent->children, children);
         // ecs_add_pair(parent->world, children->entity, EcsChildOf, parent->entity);
+        debug_print(CONSOLE_INFO, TF("Move entity %s to entity %s", item->name, parent->name));
     }
 }
 
 void gapp_level_outliner_remove(GappLevelOutliner* outliner, uint64_t entity)
 {
-    for (int i = 0; i < g_list_model_get_n_items(outliner->store); i++)
-    {
-        GappOutlineItemColumn* item = g_list_model_get_object(outliner->store, i);
-        if (item->entity == entity) {
-            g_list_store_remove(outliner->store, i);
-            debug_print(CONSOLE_INFO, TF("Outliner remove entity %lld", entity));
-            break;
-        }
-    }
+    // for (int i = 0; i < g_list_model_get_n_items(outliner->store); i++)
+    // {
+    //     GappOutlineItemColumn* item = g_list_model_get_object(outliner->store, i);
+    //     if (item->entity == entity) {
+    //         g_list_store_remove(outliner->store, i);
+    //         debug_print(CONSOLE_INFO, TF("Outliner remove entity %lld", entity));
+    //         break;
+    //     }
+    // }
 }
 

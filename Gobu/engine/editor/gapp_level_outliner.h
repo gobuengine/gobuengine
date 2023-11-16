@@ -47,7 +47,7 @@ struct _GappLevelOutlinerPrivate
 GappLevelOutliner* gapp_level_outliner_new(void);
 void gapp_level_outliner_append(GappLevelOutliner* outliner, ecs_world_t* world, const gchar* name, uint64_t entity, bool visible);
 void gapp_level_outliner_remove(GappLevelOutliner* outliner, uint64_t entity);
-void gapp_level_outliner_item_moveTo(GappOutlineItemColumn* parent, GappOutlineItemColumn* children);
+void gapp_level_outliner_item_moveTo(GappOutlineItemColumn* parent, GappOutlineItemColumn* item);
 
 G_END_DECLS
 
