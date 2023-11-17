@@ -28,7 +28,6 @@ gobueditor_src += [
     'gapp_inspector.c',
     'gapp_level_editor.c',
     'gapp_level_outliner.c',
-    'type_outliner_item_columns.c',
     libcore_source,
     libraygo_source,
 ]
@@ -40,5 +39,5 @@ executable('gobu-editor',
     include_directories:[gobuapp_header],
     install : true,
     install_dir:base_dir+'/bin/',
-    c_args : ['-W','-w','-DPLATFORM_VIEWPORT', '-DGRAPHICS_API_OPENGL_33', '-DBUILD_LIBTYPE_SHARED', '-DEDITOR']
+    c_args : ['-W','-w','-g','-DPLATFORM_VIEWPORT', '-DGRAPHICS_API_OPENGL_33', '-DBUILD_LIBTYPE_SHARED', '-DEDITOR']
 )

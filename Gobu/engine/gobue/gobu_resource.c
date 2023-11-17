@@ -1,6 +1,8 @@
 #include "gobu_resource.h"
 #include "raygo/rlgl.h"
 #include "raygo/raymath.h"
+#include "gobu_utility.h"
+#include "gobu_project.h"
 
 ECS_COMPONENT_DECLARE(gb_resource);
 
@@ -29,8 +31,12 @@ void GobuResourceImport(ecs_world_t* world)
 bool gobu_resource_set(ecs_world_t* world, const char* key, const char* path)
 {
     if (ecs_is_valid(world, ecs_lookup(world, key) == false)) {
+        char** str = gb_str_split(path,"Content");
+        char *npath = gb_strdup(str[1]);
+        gb_str_split_free(str);
+
         ecs_entity_t resource = ecs_new_entity(world, key);
-        ecs_set(world, resource, gb_resource, { .path = path });
+        ecs_set(world, resource, gb_resource, { .path = npath });
         return true;
     }
     return false;
@@ -49,23 +55,27 @@ static void GobuShapes_SetResource(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
+        char* path = gb_path_join(gb_project_get_path(), "Content", resource[i].path, NULL);
+
         if (event == EcsOnSet) {
-            if (IsFileExtension(resource[i].path, ".png") || IsFileExtension(resource[i].path, ".jpg"))
-                resource[i].texture = LoadTexture(resource[i].path);
-            if (IsFileExtension(resource[i].path, ".ttf"))
-                resource[i].font = LoadFont(resource[i].path);
-            if (IsFileExtension(resource[i].path, ".anim"))
-                resource[i].anim2d = binn_serialize_from_file(resource[i].path);
+            if (IsFileExtension(path, ".png") || IsFileExtension(path, ".jpg"))
+                resource[i].texture = LoadTexture(path);
+            if (IsFileExtension(path, ".ttf"))
+                resource[i].font = LoadFont(path);
+            if (IsFileExtension(path, ".anim"))
+                resource[i].anim2d = binn_serialize_from_file(path);
 
         }
         else if (event == EcsOnRemove) {
-            if (IsFileExtension(resource[i].path, ".png") || IsFileExtension(resource[i].path, ".jpg"))
+            if (IsFileExtension(path, ".png") || IsFileExtension(path, ".jpg"))
                 UnloadTexture(resource[i].texture);
-            if (IsFileExtension(resource[i].path, ".ttf"))
+            if (IsFileExtension(path, ".ttf"))
                 UnloadFont(resource[i].font);
-            if (IsFileExtension(resource[i].path, ".anim"))
+            if (IsFileExtension(path, ".anim"))
                 binn_free(resource[i].anim2d);
         }
+
+        free(path);
     }
 }
 

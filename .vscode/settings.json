@@ -1,6 +1,13 @@
 {
     "files.associations": {
         "atomic": "c",
-        "memory": "c"
+        "memory": "c",
+        "type_outliner_item_columns.h": "c",
+        "gapp_widget.h": "c",
+        "gapp_main.h": "c",
+        "type_traits": "c",
+        "xtr1common": "c",
+        "xutility": "c",
+        "xstring": "c"
     }
 }

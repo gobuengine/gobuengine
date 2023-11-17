@@ -87,7 +87,7 @@ void gapp_project_editor_window_new(GtkApplication* app)
     GtkWidget* paned, * paned_bottom;
 
     EditorCore->window = gtk_application_window_new(app);
-    gtk_window_set_title(GTK_WINDOW(EditorCore->window), gb_strdups("GobuEngine - %s", gb_project_get_name()));
+    // gtk_window_set_title(GTK_WINDOW(EditorCore->window), gb_strdups("[%s] - GobuEngine", gb_project_get_name()));
     gtk_window_set_default_size(GTK_WINDOW(EditorCore->window), 1280, 720);
     gtk_window_maximize(GTK_WINDOW(EditorCore->window));
     g_signal_connect(EditorCore->window, "realize", G_CALLBACK(project_editor_process), NULL);
@@ -112,7 +112,7 @@ void gapp_project_editor_window_new(GtkApplication* app)
 
         {
             titlew = gtk_label_new(NULL);
-            gtk_label_set_markup(titlew, gb_strdups("GobuEngine - %s", gb_project_get_name()));
+            gtk_label_set_markup(titlew, gb_strdups("[ %s ] - GobuEngine", gb_project_get_name()));
             gtk_header_bar_pack_start(headerbar, titlew);
         }
     }

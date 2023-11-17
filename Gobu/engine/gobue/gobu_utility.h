@@ -60,5 +60,7 @@ const char* gb_strdups(const char* format, ...);
 const char* gb_strdup(const char* str);
 const char* gb_str_tolower(const char* text);
 bool gb_str_isequal(const char* text1, const char* text2);
+char** gb_str_split(const char* string, const char* delimiter);
+void gb_str_split_free(char** str_array);
 
 #endif // __BUGO_STR_H__

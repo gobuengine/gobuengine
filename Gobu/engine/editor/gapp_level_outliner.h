@@ -29,7 +29,6 @@
 #define __GAPP_LEVEL_OUTLINER_H__
 #include <stdio.h>
 #include <gtk/gtk.h>
-#include "type_outliner_item_columns.h"
 #include "gobu_gobu.h"
 
 G_BEGIN_DECLS
@@ -47,7 +46,7 @@ struct _GappLevelOutlinerPrivate
 GappLevelOutliner* gapp_level_outliner_new(void);
 void gapp_level_outliner_append(GappLevelOutliner* outliner, ecs_world_t* world, const gchar* name, uint64_t entity, bool visible);
 void gapp_level_outliner_remove(GappLevelOutliner* outliner, uint64_t entity);
-void gapp_level_outliner_item_moveTo(GappOutlineItemColumn* parent, GappOutlineItemColumn* item);
+void gapp_level_outliner_root_init(ecs_world_t *world, GappLevelOutliner* self);
 
 G_END_DECLS
 

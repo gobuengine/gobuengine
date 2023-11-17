@@ -64,11 +64,11 @@ const char* gb_fs_extname(const char* filename)
 
 char* gb_fs_get_name(const char* filename, bool with_ext)
 {
-    gchar *basename = gb_path_basename(filename);
-    if (with_ext){
-        gchar **sep_name = g_strsplit(basename, ".", -1);
-        gchar *name = gb_strdup(sep_name[0]);
-        g_strfreev(sep_name);
+    gchar* basename = gb_path_basename(filename);
+    if (with_ext) {
+        gchar** sep_name = gb_str_split(basename, ".");
+        gchar* name = gb_strdup(sep_name[0]);
+        gb_str_split_free(sep_name);
         return name;
     }
     return basename;
@@ -125,4 +125,14 @@ bool gb_str_isequal(const char* text1, const char* text2)
     }
 
     return result;
+}
+
+char** gb_str_split(const char* string, const char* delimiter)
+{
+    return g_strsplit(string, delimiter, -1);
+}
+
+void gb_str_split_free(char** str_array)
+{
+    g_strfreev(str_array);
 }

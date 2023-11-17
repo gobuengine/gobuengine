@@ -104,7 +104,7 @@ static void gapp_level_querys(ecs_iter_t* it)
             gapp_level_outliner_remove(self->outliner, entity);
         }
         if (event == EcsOnAdd || event == 0) {
-            gapp_level_outliner_append(self->outliner, it->world, ecs_get_name(it->world, entity), entity, true);
+            gapp_level_outliner_append(self->outliner, it->world, ecs_get_name(it->world, entity), entity, TRUE);
         }
         if (event == EcsOnSet) {
         }
@@ -141,7 +141,7 @@ static GappLevelEditor* gapp_level_editor_template(GappLevelEditor* self)
     gtk_box_append(self, toolbar);
     {
         GtkWidget* btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save");
-        g_signal_connect(btn_s, "clicked", G_CALLBACK(gapp_level_editor_signal_save), NULL);
+        g_signal_connect(btn_s, "clicked", G_CALLBACK(gapp_level_editor_signal_save), self);
         gtk_box_append(toolbar, btn_s);
     }
 
