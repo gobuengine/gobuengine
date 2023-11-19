@@ -1,10 +1,14 @@
 c = meson.get_compiler('c')
 
-flecs_dep = [c.find_library('m'), c.find_library('wsock32'), c.find_library('ws2_32')]
+flecs_dep = [dependency('threads')]
+
+if host_machine.system() == 'windows'
+    flecs_dep += c.find_library('ws2_32') # Required for http addon
+endif
 
 flecs_src = ['flecs.c']
 
-argst = ['-O2', '-Wall', '-Wextra']
+argst = ['-O2', '-Wall', '-Wextra', '-Dflecs_STATIC', '-Dflecs_EXPORTS']
 
 libflecs = static_library('flecs',
     flecs_src,

@@ -3,8 +3,6 @@ c = meson.get_compiler('c')
 message('Build module: Windows platform')
 gobugame_deps = [
         c.find_library('m'),
-        c.find_library('gdi32'), 
-        c.find_library('winmm'), 
         dependency('epoxy'), 
         dependency('glfw3'), 
         dependency('glib-2.0')
@@ -12,6 +10,11 @@ gobugame_deps = [
 
 gobugame_src = []
 gobuapp_header = ['../../thirdparty/', '../../gobue/']
+
+if host_machine.system() == 'windows'
+    gobugame_deps += c.find_library('gdi32')
+    gobugame_deps += c.find_library('winmm')
+endif
 
 gobugame_src += [
     'gobu_desktop.c',

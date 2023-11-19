@@ -242,7 +242,7 @@ GobuEditorScript* gapp_editor_script_new(const gchar* filename)
     self->filename = gb_strdup(filename);
     char* name = gb_fs_get_name(filename, false);
 
-    gapp_project_editor_append_page(GOBU_NOTEBOOK_DEFAULT, 0, name, gapp_editor_script_template(self));
+    gapp_project_editor_append_page(GAPP_NOTEBOOK_DEFAULT, 0, name, gapp_editor_script_template(self));
 
     return self;
 }

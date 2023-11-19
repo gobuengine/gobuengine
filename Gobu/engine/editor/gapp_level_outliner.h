@@ -29,9 +29,26 @@
 #define __GAPP_LEVEL_OUTLINER_H__
 #include <stdio.h>
 #include <gtk/gtk.h>
+#include "gapp_level_editor.h"
 #include "gobu_gobu.h"
 
 G_BEGIN_DECLS
+
+// -------------------------
+// BEGIN DEFINE TYPE
+// ------------------------
+typedef struct _ObjectOutlinerItem ObjectOutlinerItem;
+
+#define OBJECT_TYPE_OUTLINER_ITEM (object_outliner_item_get_type())
+G_DECLARE_FINAL_TYPE(ObjectOutlinerItem, object_outliner_item, OBJECT, OUTLINER_ITEM, GObject);
+
+// -------------------------
+// END DEFINE TYPE
+// -------------------------
+
+// -------------------------
+// BEGIN DEFINE TYPE
+// ------------------------
 
 typedef struct _GappLevelOutlinerPrivate GappLevelOutlinerPrivate;
 
@@ -43,10 +60,22 @@ struct _GappLevelOutlinerPrivate
     GtkWidget parent_instance;
 };
 
-GappLevelOutliner* gapp_level_outliner_new(void);
-void gapp_level_outliner_append(GappLevelOutliner* outliner, ecs_world_t* world, const gchar* name, uint64_t entity, bool visible);
-void gapp_level_outliner_remove(GappLevelOutliner* outliner, uint64_t entity);
-void gapp_level_outliner_root_init(ecs_world_t *world, GappLevelOutliner* self);
+// -------------------------
+// END DEFINE TYPE
+// -------------------------
+
+ObjectOutlinerItem* object_outliner_item_new(ecs_world_t* world, ecs_entity_t entity);
+// ObjectOutlinerItem* object_outliner_item_get_entity(GappLevelOutliner* self, ecs_entity_t entity);
+// void object_outliner_item_append(ObjectOutlinerItem* parent, ObjectOutlinerItem* item);
+// void object_outliner_item_remove(ObjectOutlinerItem* item);
+// void object_outliner_item_set_parent(ObjectOutlinerItem* item, ObjectOutlinerItem* parent);
+
+GappLevelOutliner* gapp_level_outliner_new(GappLevelEditor* editor);
+void gapp_level_outliner_update(GtkWidget *widget, GappLevelOutliner* self);
+void gapp_level_outliner_clear(GappLevelOutliner* self);
+void gapp_level_outliner_events(GappLevelOutliner* self, ecs_entity_t event, ecs_entity_t entity, ecs_world_t* world);
+// void gapp_level_outliner_init_root(GappLevelOutliner* self, ObjectOutlinerItem* item);
+void gapp_level_outliner_init_root(GappLevelOutliner* self, ecs_entity_t entity);
 
 G_END_DECLS
 

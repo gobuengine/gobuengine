@@ -1,23 +1,21 @@
-#include "gapp_inspector.h"
+#include "gapp_level_inspector.h"
 #include "gapp_main.h"
 
-struct _GobuInspector
+struct _GappLevelInspector
 {
     GtkWidget parent;
 };
 
-G_DEFINE_TYPE_WITH_PRIVATE(GobuInspector, gapp_inspector, GTK_TYPE_BOX);
+G_DEFINE_TYPE_WITH_PRIVATE(GappLevelInspector, gapp_level_inspector, GTK_TYPE_BOX);
 
-static void gapp_inspector_class_init(GobuInspectorClass* klass)
+static void gapp_level_inspector_class_init(GappLevelInspectorClass* klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
 }
 
 //  -------------------------
 
-extern GAPP* EditorCore;
-
-static void gapp_inspector_init(GobuInspector* self)
+static void gapp_level_inspector_init(GappLevelInspector* self)
 {
     GtkWidget* scroll, * vbox;
 
@@ -33,9 +31,8 @@ static void gapp_inspector_init(GobuInspector* self)
     }
 }
 
-GobuInspector* gapp_inspector_new(void)
+GappLevelInspector* gapp_level_inspector_new(void)
 {
-    GobuInspector* inspector = g_object_new(GAPP_TYPE_INSPECTOR, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
-    return inspector;
+    return g_object_new(GAPP_LEVEL_TYPE_INSPECTOR, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
 }
 

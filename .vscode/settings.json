@@ -8,6 +8,11 @@
         "type_traits": "c",
         "xtr1common": "c",
         "xutility": "c",
-        "xstring": "c"
+        "xstring": "c",
+        "gapp_inspector.h": "c",
+        "gapp_level_outliner.h": "c",
+        "gapp_tool_console.h": "c",
+        "xmemory": "c",
+        "gapp_level_editor.h": "c"
     }
 }

@@ -20,14 +20,14 @@ typedef enum
 
 typedef enum
 {
-    GOBU_NOTEBOOK_DEFAULT,
-    GOBU_NOTEBOOK_BOTTOM,
-    GOBU_NOTEBOOK_NUMS
-}GobuAppNotebook;
+    GAPP_NOTEBOOK_DEFAULT,
+    GAPP_NOTEBOOK_BOTTOM,
+    GAPP_NOTEBOOK_NUMS
+}enumGappNotebook;
 
 typedef struct {
     GtkWidget* window;
-    GtkWidget* notebook[GOBU_NOTEBOOK_NUMS];
+    GtkWidget* notebook[GAPP_NOTEBOOK_NUMS];
     GtkWidget* console;
     // ecs_world_t *world[MAX_WORLD_OPEN];
 

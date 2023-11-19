@@ -1,9 +1,9 @@
 /**********************************************************************************
- * gb_project_editor.h                                                          *
- **********************************************************************************
+ * gapp_level_viewport.h                                                            *
+ * ********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
- **********************************************************************************
+ * ********************************************************************************
  * Copyright (c) 2023 Jhonson Ozuna Mejia                                         *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -25,12 +25,28 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GOBU_PROJECT_EDITOR_H__
-#define __GOBU_PROJECT_EDITOR_H__
+#ifndef __GAPP_VIEWPORT_H__
+#define __GAPP_VIEWPORT_H__
+#include <stdio.h>
 #include <gtk/gtk.h>
-#include "gapp_main.h"
+#include "gapp_gobu_embed.h"
+#include "gapp_level_editor.h"
 
-void gapp_project_editor_window_new(GtkApplication* app);
-void gapp_project_editor_append_page(enumGappNotebook notebook_id, int icon_type, const gchar* name, GtkWidget* child);
+G_BEGIN_DECLS
 
-#endif // __GOBU_PROJECT_EDITOR_H__
+typedef struct _GappLevelViewportPrivate GappLevelViewportPrivate;
+
+#define GAPP_LEVEL_TYPE_VIEWPORT (gapp_level_viewport_get_type())
+G_DECLARE_FINAL_TYPE(GappLevelViewport, gapp_level_viewport, GAPP_LEVEL, VIEWPORT, GappGobuEmbed)
+
+struct _GappLevelViewportPrivate
+{
+    GtkWidget parent_instance;
+};
+
+GappLevelViewport* gapp_level_viewport_new(GappLevelEditor *editor);
+
+G_END_DECLS
+
+#endif // __GAPP_VIEWPORT_H__
+

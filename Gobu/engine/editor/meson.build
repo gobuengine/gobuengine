@@ -3,13 +3,15 @@ c = meson.get_compiler('c')
 message('Build module: Editor')
 gobueditor_deps = [
     c.find_library('m'),
-    c.find_library('gdi32'),
-    c.find_library('winmm'),
     dependency('epoxy'),
     dependency('gtksourceview-5'),
     dependency('gtk4'),
     dependency('glib-2.0'),
     ]
+
+if host_machine.system() == 'windows'
+    gobueditor_deps += [c.find_library('gdi32'), c.find_library('winmm')]
+endif
 
 gobueditor_src = []
 gobuapp_header = ['../thirdparty/', '../gobue/']
@@ -25,9 +27,10 @@ gobueditor_src += [
     'gapp_gobu_embed.c',
     'gapp_script_editor.c',
     'gapp_tool_console.c',
-    'gapp_inspector.c',
+    'gapp_level_inspector.c',
     'gapp_level_editor.c',
     'gapp_level_outliner.c',
+    'gapp_level_viewport.c',
     libcore_source,
     libraygo_source,
 ]

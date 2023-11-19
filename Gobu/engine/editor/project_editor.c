@@ -56,28 +56,28 @@ static void signal_close_page(GtkWidget* button, GtkNotebook* notebook)
     gtk_notebook_remove_page(GTK_NOTEBOOK(notebook), page);
 }
 
-void gapp_project_editor_append_page(GobuAppNotebook page, int icon_type, const gchar* name, GtkWidget* child)
+void gapp_project_editor_append_page(enumGappNotebook notebook_id, int icon_type, const gchar* name, GtkWidget* child)
 {
     GtkWidget* hbox;
     GtkWidget* label, * icon, * button;
 
     hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
+    {
+        icon = gtk_image_new();
+        gtk_image_set_from_gicon(icon, EditorCore->resource.icons[icon_type]);
+        gtk_box_append(hbox, icon);
 
-    icon = gtk_image_new();
-    // gtk_image_set_icon_size(icon, GTK_ICON_SIZE_LARGE);
-    gtk_image_set_from_gicon(icon, EditorCore->resource.icons[icon_type]);
-    gtk_box_append(hbox, icon);
+        label = gtk_label_new(name);
+        gtk_box_append(hbox, label);
 
-    label = gtk_label_new(name);
-    gtk_box_append(hbox, label);
+        button = gapp_widget_button_new_icon_with_label("window-close-symbolic", NULL);
+        gtk_box_append(hbox, button);
+        g_signal_connect(button, "clicked", G_CALLBACK(signal_close_page), EditorCore->notebook[notebook_id]);
+    }
 
-    button = gapp_widget_button_new_icon_with_label("window-close-symbolic", NULL);
-    gtk_box_append(hbox, button);
-
-    gtk_notebook_append_page(GTK_NOTEBOOK(EditorCore->notebook[page]), child, hbox);
-    gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(EditorCore->notebook[page]), child, TRUE);
-    // gtk_notebook_set_tab_detachable(GTK_NOTEBOOK(EditorCore->notebook[GOBU_NOTEBOOK_DEFAULT]), level, TRUE);
-    g_signal_connect(button, "clicked", G_CALLBACK(signal_close_page), EditorCore->notebook[page]);
+    gtk_notebook_append_page(GTK_NOTEBOOK(EditorCore->notebook[notebook_id]), child, hbox);
+    gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(EditorCore->notebook[notebook_id]), child, TRUE);
+    // gtk_notebook_set_tab_detachable(GTK_NOTEBOOK(EditorCore->notebook[GAPP_NOTEBOOK_DEFAULT]), level, TRUE);
 }
 
 void gapp_project_editor_window_new(GtkApplication* app)
@@ -126,17 +126,17 @@ void gapp_project_editor_window_new(GtkApplication* app)
             paned_bottom = gapp_widget_paned_new(GTK_ORIENTATION_VERTICAL, FALSE);
             gtk_paned_set_end_child(GTK_PANED(paned), paned_bottom);
 
-            EditorCore->notebook[GOBU_NOTEBOOK_DEFAULT] = gtk_notebook_new();
-            gtk_notebook_set_show_border(GTK_NOTEBOOK(EditorCore->notebook[GOBU_NOTEBOOK_DEFAULT]), FALSE);
-            gtk_notebook_popup_enable(GTK_NOTEBOOK(EditorCore->notebook[GOBU_NOTEBOOK_DEFAULT]));
-            gtk_widget_set_size_request(GTK_WIDGET(EditorCore->notebook[GOBU_NOTEBOOK_DEFAULT]), -1, DOCK_T_MIN_SIZE);
-            gtk_paned_set_start_child(GTK_PANED(paned_bottom), EditorCore->notebook[GOBU_NOTEBOOK_DEFAULT]);
+            EditorCore->notebook[GAPP_NOTEBOOK_DEFAULT] = gtk_notebook_new();
+            gtk_notebook_set_show_border(GTK_NOTEBOOK(EditorCore->notebook[GAPP_NOTEBOOK_DEFAULT]), FALSE);
+            gtk_notebook_popup_enable(GTK_NOTEBOOK(EditorCore->notebook[GAPP_NOTEBOOK_DEFAULT]));
+            gtk_widget_set_size_request(GTK_WIDGET(EditorCore->notebook[GAPP_NOTEBOOK_DEFAULT]), -1, DOCK_T_MIN_SIZE);
+            gtk_paned_set_start_child(GTK_PANED(paned_bottom), EditorCore->notebook[GAPP_NOTEBOOK_DEFAULT]);
 
-            EditorCore->notebook[GOBU_NOTEBOOK_BOTTOM] = gtk_notebook_new();
-            gtk_notebook_set_show_border(GTK_NOTEBOOK(EditorCore->notebook[GOBU_NOTEBOOK_BOTTOM]), FALSE);
-            gtk_notebook_popup_enable(GTK_NOTEBOOK(EditorCore->notebook[GOBU_NOTEBOOK_BOTTOM]));
-            // gtk_widget_set_size_request(GTK_WIDGET(EditorCore->notebook[GOBU_NOTEBOOK_BOTTOM]), -1, 100);
-            gtk_paned_set_end_child(GTK_PANED(paned_bottom), EditorCore->notebook[GOBU_NOTEBOOK_BOTTOM]);
+            EditorCore->notebook[GAPP_NOTEBOOK_BOTTOM] = gtk_notebook_new();
+            gtk_notebook_set_show_border(GTK_NOTEBOOK(EditorCore->notebook[GAPP_NOTEBOOK_BOTTOM]), FALSE);
+            gtk_notebook_popup_enable(GTK_NOTEBOOK(EditorCore->notebook[GAPP_NOTEBOOK_BOTTOM]));
+            // gtk_widget_set_size_request(GTK_WIDGET(EditorCore->notebook[GAPP_NOTEBOOK_BOTTOM]), -1, 100);
+            gtk_paned_set_end_child(GTK_PANED(paned_bottom), EditorCore->notebook[GAPP_NOTEBOOK_BOTTOM]);
 
             EditorCore->console = gapp_tool_console_new();
         }

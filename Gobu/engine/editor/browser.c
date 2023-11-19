@@ -76,7 +76,7 @@ static GobuEditorWorldBrowserAction* gb_editor_world_browser_new_action(const gc
 static void gb_editor_world_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_file)
 {
     GIcon* icon;
-    const char* ext_file = g_file_info_get_content_type(info_file);
+    const char* ext_file = g_file_info_get_name(info_file);
 
     if (gb_fs_is_extension(ext_file, ".png") || gb_fs_is_extension(ext_file, ".jpg"))
     {

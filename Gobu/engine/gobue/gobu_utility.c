@@ -84,9 +84,9 @@ unsigned char* gb_fs_get_contents(const char* filename, int* dataSize)
     unsigned char* data = NULL;
     *dataSize = 0;
 
-    if (filename != NULL)
+    if (filename != NULL && g_file_get_contents(filename, &data, dataSize, NULL))
     {
-        g_file_get_contents(filename, &data, dataSize, NULL);
+        printf("Error\n");
     }
 
     return data;

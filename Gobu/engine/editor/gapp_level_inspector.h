@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gapp_inspector.h                                                            *
+ * gapp_level_inspector.h                                                         *
  * ********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,26 +25,26 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GAPP_INSPECTOR_H__
-#define __GAPP_INSPECTOR_H__
+#ifndef __GAPP_LEVEL_INSPECTOR_H__
+#define __GAPP_LEVEL_INSPECTOR_H__
 #include <stdio.h>
 #include <gtk/gtk.h>
 
 G_BEGIN_DECLS
 
-typedef struct _GobuInspectorPrivate GobuInspectorPrivate;
+typedef struct _GappLevelInspectorPrivate GappLevelInspectorPrivate;
 
-#define GAPP_TYPE_INSPECTOR (gapp_inspector_get_type())
-G_DECLARE_FINAL_TYPE(GobuInspector, gapp_inspector, GAPP, INSPECTOR, GtkBox)
+#define GAPP_LEVEL_TYPE_INSPECTOR (gapp_level_inspector_get_type())
+G_DECLARE_FINAL_TYPE(GappLevelInspector, gapp_level_inspector, GAPP_LEVEL, INSPECTOR, GtkBox)
 
-struct _GobuInspectorPrivate
+struct _GappLevelInspectorPrivate
 {
     GtkWidget parent_instance;
 };
 
-GobuInspector* gapp_inspector_new(void);
+GappLevelInspector* gapp_level_inspector_new(void);
 
 G_END_DECLS
 
-#endif // __GAPP_INSPECTOR_H__
+#endif // __GAPP_LEVEL_INSPECTOR_H__
 

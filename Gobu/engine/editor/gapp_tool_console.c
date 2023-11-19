@@ -64,7 +64,7 @@ static void gapp_tool_console_init(GobuToolConsole* self)
 {
     GtkWidget* scroll;
 
-    gapp_project_editor_append_page(GOBU_NOTEBOOK_BOTTOM, 0, "Console", self);
+    gapp_project_editor_append_page(GAPP_NOTEBOOK_BOTTOM, 0, "Console", self);
 
     scroll = gtk_scrolled_window_new();
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);

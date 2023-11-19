@@ -41,9 +41,18 @@ G_DECLARE_FINAL_TYPE(GappLevelEditor, gapp_level_editor, GAPP_LEVEL, EDITOR, Gtk
 struct _GappLevelEditorPrivate
 {
     GtkWidget parent_instance;
+
+    GtkWidget* viewport;
+    GtkWidget* inspector;
+    GtkWidget* outliner;
+
+    ecs_world_t* world; // world ecs
+    ecs_entity_t root;  // entity root level
+    gchar* filename;
 };
 
 GappLevelEditor* gapp_level_editor_new(const gchar* filename);
+ecs_world_t *gapp_level_editor_get_world(GappLevelEditor *self);
 
 G_END_DECLS
 
