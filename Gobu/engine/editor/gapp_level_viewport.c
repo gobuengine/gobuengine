@@ -40,14 +40,14 @@ static void signal_viewport_start(GappLevelViewport* viewport, gpointer data)
 {
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
-    ecs_world_t *world = gapp_level_editor_get_world(viewport->editor);
+    ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
-    gobu_rendering_init(world, width, height, "LevelEditor", true);
+    gobu_rendering_init(world, &(GWindow){.title = "LevelEditor", .width = width, .height = height, .viewport = true});
 }
 
 static void signal_viewport_render(GappLevelViewport* viewport, gpointer data)
 {
-    ecs_world_t *world = gapp_level_editor_get_world(viewport->editor);
+    ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
     gobu_rendering_progress(world);
 }
 
@@ -60,7 +60,7 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
 {
     gchar* filename = g_file_get_path(file);
     gchar* name = gb_fs_get_name(filename, true);
-    ecs_world_t *world = gapp_level_editor_get_world(viewport->editor);
+    ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
     if (gobu_resource_set(world, name, filename))
         debug_print(CONSOLE_INFO, gb_strdups("Resource load: %s", name));

@@ -12,7 +12,6 @@ static void GobuSprite_SetAnimated(ecs_iter_t* it);
 static void GobuSprite_UpdateAnimated(ecs_iter_t* it);
 
 static void GobuSprite_Set(ecs_iter_t* it);
-static void GobuSprite_Draw(ecs_iter_t* it);
 
 void GobuSpriteImport(ecs_world_t* world)
 {
@@ -22,12 +21,8 @@ void GobuSpriteImport(ecs_world_t* world)
     ECS_COMPONENT_DEFINE(world, GSpriteAnimated);
     ECS_COMPONENT_DEFINE(world, GSprite);
 
-    const RenderPhases* phases = ecs_singleton_get(world, RenderPhases);
-
     ECS_OBSERVER(world, GobuSprite_Set, EcsOnSet, GSprite);
     ECS_OBSERVER(world, GobuSprite_SetAnimated, EcsOnSet, GSprite, GSpriteAnimated);
-
-    ECS_SYSTEM(world, GobuSprite_Draw, phases->Draw, GSprite, ? GPosition, ? GScale, ? GRotation);
     ECS_SYSTEM(world, GobuSprite_UpdateAnimated, EcsOnUpdate, GSprite, GSpriteAnimated);
 
     ecs_struct(world, {
@@ -140,32 +135,3 @@ static void GobuSprite_Set(ecs_iter_t* it)
         sprite[i].tint = (sprite[i].tint.a == 0) ? WHITE : sprite[i].tint;
     }
 }
-
-static void GobuSprite_Draw(ecs_iter_t* it)
-{
-    GSprite* sprite = ecs_field(it, GSprite, 1);
-    GPosition* post = ecs_field(it, GPosition, 2);
-    GScale* scale = ecs_field(it, GScale, 3);
-    GRotation* rota = ecs_field(it, GRotation, 4);
-
-    for (int i = 0; i < it->count; i++)
-    {
-        Vector2 origin = (Vector2){ 0.0f, 0.0f };
-        float rotation = (rota) ? rota[i] : 0.0f;
-        GPosition post_ = (post) ? post[i] : (GPosition) { 0.0f, 0.0f };
-        GScale scale_ = (scale) ? scale[i] : (GScale) { 1.0f, 1.0f };
-
-        rlPushMatrix();
-        {
-            rlTranslatef(post_.x, post_.y, 0.0f);
-            rlRotatef(rotation, 0.0f, 0.0f, 1.0f);
-            rlTranslatef(-origin.x, -origin.y, 0.0f);
-            rlScalef(scale_.x, scale_.y, 1.0f);
-            {
-                DrawTexturePro(sprite[i].texture, sprite[i].src, sprite[i].dst, origin, 0.0f, sprite[i].tint);
-            }
-        }
-        rlPopMatrix();
-    }
-}
-

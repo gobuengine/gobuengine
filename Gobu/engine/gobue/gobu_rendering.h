@@ -30,7 +30,7 @@ extern ECS_COMPONENT_DECLARE(GWindow);
 extern ECS_COMPONENT_DECLARE(RenderPhases);
 
 void GobuRenderingImport(ecs_world_t* world);
-void gobu_rendering_init(ecs_world_t* world, int width, int height, const char *title, bool viewport);
+void gobu_rendering_init(ecs_world_t* world, GWindow *window);
 void gobu_rendering_main(ecs_world_t *world);
 void gobu_rendering_progress(ecs_world_t* world);
 

@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     ECS_IMPORT(world, GobuPlayerController);
     ECS_IMPORT(world, GobuCollision);
 
-    gobu_rendering_init(world, 1280, 720, "Gobu - Example2", false);
+    gobu_rendering_init(world, &(GWindow){.title = "Gobu - Example2", .width = 1280, .height = 720});
 
     gobu_resource_set(world, "good_sprite", "Content/goo_weapon.png");
     gobu_resource_set(world, "good_anim", "Content/goo_weapon.anim");

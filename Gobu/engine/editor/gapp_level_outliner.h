@@ -71,7 +71,6 @@ ObjectOutlinerItem* object_outliner_item_new(ecs_world_t* world, ecs_entity_t en
 // void object_outliner_item_set_parent(ObjectOutlinerItem* item, ObjectOutlinerItem* parent);
 
 GappLevelOutliner* gapp_level_outliner_new(GappLevelEditor* editor);
-void gapp_level_outliner_update(GtkWidget *widget, GappLevelOutliner* self);
 void gapp_level_outliner_clear(GappLevelOutliner* self);
 void gapp_level_outliner_events(GappLevelOutliner* self, ecs_entity_t event, ecs_entity_t entity, ecs_world_t* world);
 // void gapp_level_outliner_init_root(GappLevelOutliner* self, ObjectOutlinerItem* item);

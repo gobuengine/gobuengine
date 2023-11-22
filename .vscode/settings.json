@@ -13,6 +13,11 @@
         "gapp_level_outliner.h": "c",
         "gapp_tool_console.h": "c",
         "xmemory": "c",
-        "gapp_level_editor.h": "c"
+        "gapp_level_editor.h": "c",
+        "gobu_shapes.h": "c",
+        "gobu_text.h": "c",
+        "raylib.h": "c",
+        "gobu_sprite.h": "c",
+        "flecs.h": "c"
     }
 }
