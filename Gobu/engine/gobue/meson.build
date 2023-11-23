@@ -1,4 +1,5 @@
 libcore_source = [
+    files('gobu_custom.c'),
     files('gobu_autorotate.c'),
     files('gobu_collision.c'),
     files('gobu_controller.c'),
@@ -10,6 +11,8 @@ libcore_source = [
     files('gobu_text.c'),
     files('gobu_tilingsprite.c'),
     files('gobu_transform.c'),
+    files('gobu_camera.c'),
+    files('gobu_input.c'),
     # files('gobu_gui.c'),
     files('gobu_utility.c'),
     files('gobu_project.c'),

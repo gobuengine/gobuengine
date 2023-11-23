@@ -389,32 +389,47 @@ void PollInputEvents(void)
     // Reset keys/chars pressed registered
     CORE.Input.Keyboard.keyPressedQueueCount = 0;
     CORE.Input.Keyboard.charPressedQueueCount = 0;
-
     // Reset key repeats
     for (int i = 0; i < MAX_KEYBOARD_KEYS; i++) CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
 
     // Reset last gamepad button/axis registered state
-    CORE.Input.Gamepad.lastButtonPressed = 0; // GAMEPAD_BUTTON_UNKNOWN
+    CORE.Input.Gamepad.lastButtonPressed = 0;       // GAMEPAD_BUTTON_UNKNOWN
     //CORE.Input.Gamepad.axisCount = 0;
-
-    // Register previous touch states
-    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
-
-    // Reset touch positions
-    // TODO: It resets on target platform the mouse position and not filled again until a move-event,
-    // so, if mouse is not moved it returns a (0, 0) position... this behaviour should be reviewed!
-    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+    // Keyboard/Mouse input polling (automatically managed by GLFW3 through callback)
 
     // Register previous keys states
-    // NOTE: Android supports up to 260 keys
-    for (int i = 0; i < 260; i++)
+    for (int i = 0; i < MAX_KEYBOARD_KEYS; i++)
     {
         CORE.Input.Keyboard.previousKeyState[i] = CORE.Input.Keyboard.currentKeyState[i];
         CORE.Input.Keyboard.keyRepeatInFrame[i] = 0;
     }
 
-    // TODO: Poll input events for current plaform
+    // Register previous mouse states
+    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++) CORE.Input.Mouse.previousButtonState[i] = CORE.Input.Mouse.currentButtonState[i];
+
+    // Register previous mouse wheel state
+    CORE.Input.Mouse.previousWheelMove = CORE.Input.Mouse.currentWheelMove;
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ 0.0f, 0.0f };
+
+    // Register previous mouse position
+    CORE.Input.Mouse.previousPosition = CORE.Input.Mouse.currentPosition;
+
+    // Register previous touch states
+    for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.previousTouchState[i] = CORE.Input.Touch.currentTouchState[i];
+
+    // Reset touch positions
+    //for (int i = 0; i < MAX_TOUCH_POINTS; i++) CORE.Input.Touch.position[i] = (Vector2){ 0, 0 };
+
+    // Map touch position to mouse position for convenience
+    // WARNING: If the target desktop device supports touch screen, this behavious should be reviewed!
+    // TODO: GLFW does not support multi-touch input just yet
+    // https://www.codeproject.com/Articles/668404/Programming-for-Multi-Touch
+    // https://docs.microsoft.com/en-us/windows/win32/wintouch/getting-started-with-multi-touch-messages
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+
+    CORE.Window.resizedLastFrame = false;
 }
+
 
 
 //----------------------------------------------------------------------------------

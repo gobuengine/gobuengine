@@ -2961,6 +2961,75 @@ void SetMouseScale(float scaleX, float scaleY)
     CORE.Input.Mouse.scale = (Vector2){ scaleX, scaleY };
 }
 
+void SetMouseWheelMove(float xoffset, float yoffset)
+{
+    CORE.Input.Mouse.currentWheelMove = (Vector2){ (float)xoffset, (float)yoffset };
+}
+
+void SetMouse(double x, double y)
+{
+    CORE.Input.Mouse.currentPosition.x = (float)x;
+    CORE.Input.Mouse.currentPosition.y = (float)y;
+    CORE.Input.Touch.position[0] = CORE.Input.Mouse.currentPosition;
+
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    gestureEvent.touchAction = TOUCH_ACTION_MOVE;
+
+    // Assign a pointer ID
+    gestureEvent.pointId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = CORE.Input.Touch.position[0];
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures-system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
+void SetMouseButton(int button, int action)
+{
+    // WARNING: GLFW could only return GLFW_PRESS (1) or GLFW_RELEASE (0) for now,
+    // but future releases may add more actions (i.e. GLFW_REPEAT)
+    CORE.Input.Mouse.currentButtonState[button] = action;
+
+#if defined(SUPPORT_GESTURES_SYSTEM) && defined(SUPPORT_MOUSE_GESTURES)
+    // Process mouse events as touches to be able to use mouse-gestures
+    GestureEvent gestureEvent = { 0 };
+
+    // Register touch actions
+    if ((CORE.Input.Mouse.currentButtonState[button] == 1) && (CORE.Input.Mouse.previousButtonState[button] == 0)) gestureEvent.touchAction = TOUCH_ACTION_DOWN;
+    else if ((CORE.Input.Mouse.currentButtonState[button] == 0) && (CORE.Input.Mouse.previousButtonState[button] == 1)) gestureEvent.touchAction = TOUCH_ACTION_UP;
+
+    // NOTE: TOUCH_ACTION_MOVE event is registered in MouseCursorPosCallback()
+
+    // Assign a pointer ID
+    gestureEvent.pointId[0] = 0;
+
+    // Register touch points count
+    gestureEvent.pointCount = 1;
+
+    // Register touch points position, only one point registered
+    gestureEvent.position[0] = GetMousePosition();
+
+    // Normalize gestureEvent.position[0] for CORE.Window.screen.width and CORE.Window.screen.height
+    gestureEvent.position[0].x /= (float)GetScreenWidth();
+    gestureEvent.position[0].y /= (float)GetScreenHeight();
+
+    // Gesture data is sent to gestures-system for processing
+    ProcessGestureEvent(gestureEvent);
+#endif
+}
+
 // Get mouse wheel movement Y
 float GetMouseWheelMove(void)
 {

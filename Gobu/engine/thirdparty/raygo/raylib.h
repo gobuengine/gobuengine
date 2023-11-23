@@ -1180,6 +1180,9 @@ RLAPI Vector2 GetMouseDelta(void);                            // Get mouse delta
 RLAPI void SetMousePosition(int x, int y);                    // Set mouse position XY
 RLAPI void SetMouseOffset(int offsetX, int offsetY);          // Set mouse offset
 RLAPI void SetMouseScale(float scaleX, float scaleY);         // Set mouse scaling
+RLAPI void SetMouseWheelMove(float xoffset, float yoffset);   // Set mouse wheel move
+RLAPI void SetMouse(double x, double y);                      // Set mouse position XY (double)
+RLAPI void SetMouseButton(int button, int action);            // Set mouse button state (0: release, 1: press, 2: repeat)
 RLAPI float GetMouseWheelMove(void);                          // Get mouse wheel movement for X or Y, whichever is larger
 RLAPI Vector2 GetMouseWheelMoveV(void);                       // Get mouse wheel movement for both X and Y
 RLAPI void SetMouseCursor(int cursor);                        // Set mouse cursor

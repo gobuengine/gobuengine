@@ -159,7 +159,7 @@ GappLevelEditor* gapp_level_editor_new(const gchar* filename)
             .callback = signal_observer_state_world,
             .ctx = self
         });
-
+        
         gapp_project_editor_append_page(GAPP_NOTEBOOK_DEFAULT, 1, gb_fs_get_name(filename, FALSE), self);
     }
     return self;

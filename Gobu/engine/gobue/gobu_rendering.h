@@ -24,6 +24,9 @@ typedef struct GWindow
     uint32_t height;
     bool viewport;
     // RenderPhases phases;
+    int fps;
+    bool show_fps;
+    bool show_grid;
 }GWindow;
 
 extern ECS_COMPONENT_DECLARE(GWindow);

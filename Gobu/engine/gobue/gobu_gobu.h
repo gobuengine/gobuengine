@@ -15,6 +15,8 @@
 #include "gobu_text.h"
 #include "gobu_tilingsprite.h"
 #include "gobu_transform.h"
+#include "gobu_camera.h"
+#include "gobu_input.h"
 
 void gobu_import_all(ecs_world_t* world);
 
