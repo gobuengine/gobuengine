@@ -15,6 +15,7 @@ struct _GappLevelEditor
 
     ecs_world_t* world; // world ecs
     ecs_entity_t root;  // entity root level
+    // level data
     gchar* filename;
 };
 
@@ -22,6 +23,7 @@ G_DEFINE_TYPE_WITH_PRIVATE(GappLevelEditor, gapp_level_editor, GTK_TYPE_BOX);
 
 static void signal_toolbar_click_save(GtkWidget* button, GappLevelEditor* self);
 static void signal_observer_state_world(ecs_iter_t* it);
+static void signal_viewport_init(GappLevelEditor* self, gpointer data);
 
 static void gapp_level_editor_class_finalize(GObject* object)
 {
@@ -37,6 +39,10 @@ static void gapp_level_editor_class_init(GappLevelEditorClass* klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
     object_class->finalize = gapp_level_editor_class_finalize;
+
+    g_signal_new("level-viewport-init", G_TYPE_FROM_CLASS(klass),
+        G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+        0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void gapp_level_editor_init(GappLevelEditor* self)
@@ -75,6 +81,8 @@ static void gapp_level_editor_init(GappLevelEditor* self)
             gtk_paned_set_end_child(GTK_PANED(paned2), self->inspector);
         }
     }
+
+    g_signal_connect(self, "level-viewport-init", G_CALLBACK(signal_viewport_init), NULL);
 }
 
 static void signal_toolbar_click_save(GtkWidget* button, GappLevelEditor* self)
@@ -100,6 +108,41 @@ static void signal_observer_state_world(ecs_iter_t* it)
         gapp_level_outliner_events(self->outliner, event, entity, it->world);
     }
 }
+
+// Cuando el viewport esta listo, cargamos el .level en el mundo ecs
+static void signal_viewport_init(GappLevelEditor* self, gpointer data)
+{
+    size_t level_buffer_size;
+
+    // cargamos el archivo .level
+    unsigned char* level_buffer = LoadFileData(self->filename, &level_buffer_size);
+
+    GCamera* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), GCamera);
+    camera->mode = CAMERA_EDITOR;
+
+    if (level_buffer_size > 0) {
+        ecs_world_from_json(self->world, level_buffer, NULL);
+        free(level_buffer);
+    }
+
+    // Buscamos o creamos una entidad principal de nombre World...
+    self->root = ecs_lookup(self->world, "World");
+    if (self->root == 0) {
+        self->root = ecs_new_entity(self->world, "World");
+    }
+
+    // Creamos la entidad World en el Outliner que fueron cargadas
+    // en el .level
+    gapp_level_outliner_init_root(self->outliner, self->root);
+
+    ecs_observer(self->world, {
+        .filter = {.terms = { {.id = ecs_id(GPosition)} }},
+        .events = { EcsOnRemove, EcsOnAdd, EcsOnSet },
+        .callback = signal_observer_state_world,
+        .ctx = self
+    });
+}
+
 
 // // 
 // static void gapp_level_outliner_init(ecs_world_t* world, ecs_entity_t root)
@@ -131,35 +174,10 @@ GappLevelEditor* gapp_level_editor_new(const gchar* filename)
     GappLevelEditor* self = g_object_new(GAPP_LEVEL_TYPE_EDITOR, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
     {
         self->filename = gb_strdup(filename);
-
-        int size = 0;
-        unsigned char* buffer = LoadFileData(filename, &size);
-
+        // creamos el mundo ecs
         self->world = ecs_init();
         gobu_import_all(self->world);
 
-        if (size > 0) {
-            ecs_world_from_json(self->world, buffer, NULL);
-            free(buffer);
-        }
-
-        // Buscamos o creamos una entidad principal de nombre World...
-        self->root = ecs_lookup(self->world, "World");
-        if (self->root == 0) {
-            self->root = ecs_new_entity(self->world, "World");
-        }
-
-        // Creamos la entidad World en el Outliner que fueron cargadas
-        // en el .level
-        gapp_level_outliner_init_root(self->outliner, self->root);
-
-        ecs_observer(self->world, {
-            .filter = {.terms = { {.id = ecs_id(GPosition)} }},
-            .events = { EcsOnRemove, EcsOnAdd, EcsOnSet },
-            .callback = signal_observer_state_world,
-            .ctx = self
-        });
-        
         gapp_project_editor_append_page(GAPP_NOTEBOOK_DEFAULT, 1, gb_fs_get_name(filename, FALSE), self);
     }
     return self;

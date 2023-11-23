@@ -25,11 +25,11 @@ void GobuRenderingImport(ecs_world_t* world)
 
     ECS_MODULE(world, GobuRendering);
     ECS_IMPORT(world, GobuTransform);
+    ECS_IMPORT(world, GobuInputSystem);
+    ECS_IMPORT(world, GobuCamera);
     ECS_IMPORT(world, GobuShapes);
     ECS_IMPORT(world, GobuText);
     ECS_IMPORT(world, GobuSprite);
-    ECS_IMPORT(world, GobuCamera);
-    ECS_IMPORT(world, GobuInputSystem);
 
     ecs_entity_t PreDraw = ecs_new_w_id(world, EcsPhase);
     ecs_entity_t Background = ecs_new_w_id(world, EcsPhase);
@@ -49,7 +49,7 @@ void GobuRenderingImport(ecs_world_t* world)
         .callback = GobuRendering_Window
     });
 
-    ECS_SYSTEM(world, GobuRendering_BeginDrawing, PreDraw, GWindow);
+    ECS_SYSTEM(world, GobuRendering_BeginDrawing, PreDraw, GWindow, GCamera);
     ECS_SYSTEM(world, GobuRendering_Drawing, Draw, GPosition, ? GScale, ? GRotation, ? GShapeRec, ? GSprite, ? GText);
     ECS_SYSTEM(world, GobuRendering_EndDrawing, PostDraw, GWindow);
     ECS_SYSTEM(world, GobuRendering_CheckExitRequest, PostDraw, GWindow);
@@ -57,18 +57,18 @@ void GobuRenderingImport(ecs_world_t* world)
 
 void gobu_rendering_init(ecs_world_t* world, GWindow* window)
 {
-    ecs_singleton_set(world, GWindow, {
-        .title = window->title,      // Establece el título de la ventana
-        .width = window->width,      // Establece el ancho de la ventana
-        .height = window->height,    // Establece la altura de la ventana
-        .viewport = window->viewport,// Establece el viewport para el renderizado sin ventana
-        .fps = window->fps,          // Establece los cuadros por segundo
-        .show_fps = window->show_fps,// Establece si se muestra los FPS
-        .show_grid = window->show_grid // Establece si se muestra la cuadrícula
+    ecs_entity_t engine = ecs_new_entity(world, "Engine");
+    ecs_set(world, engine, GWindow, {
+        .title = window->title,         // Establece el título de la ventana
+        .width = window->width,         // Establece el ancho de la ventana
+        .height = window->height,       // Establece la altura de la ventana
+        .viewport = window->viewport,   // Establece el viewport para el renderizado sin ventana
+        .fps = window->fps,             // Establece los cuadros por segundo
+        .show_fps = window->show_fps,   // Establece si se muestra los FPS
+        .show_grid = window->show_grid  // Establece si se muestra la cuadrícula
     });
-    ecs_singleton_set(world, GCamera, { .camera = {.zoom = 1.0f} });
-    ecs_singleton_set(world, GInputSystem, { 0 });
-
+    ecs_set(world, engine, GCamera, { 0 });
+    ecs_set(world, engine, GInputSystem, { 0 });
     SetTargetFPS(window->fps ? window->fps : 60);
 }
 
@@ -109,7 +109,7 @@ static void GobuRendering_CheckExitRequest(ecs_iter_t* it)
 static void GobuRendering_BeginDrawing(ecs_iter_t* it)
 {
     GWindow* win = ecs_field(it, GWindow, 1);
-    GCamera* camera = ecs_singleton_get(it->world, GCamera);
+    GCamera* camera = ecs_field(it, GCamera, 2);
 
     for (int i = 0; i < it->count; i++)
     {

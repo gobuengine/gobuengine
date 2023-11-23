@@ -3,22 +3,25 @@
 #include "gobu_custom.h"
 #include "raygo/rlgl.h"
 
-ECS_COMPONENT_DECLARE(GCamera);
 ECS_COMPONENT_DECLARE(enumCameraMode);
 ECS_COMPONENT_DECLARE(Camera2D);
+ECS_COMPONENT_DECLARE(GCamera);
 
 static void GobuCamera_Update(ecs_iter_t* it);
+static void GobuCamera_Set(ecs_iter_t* it);
 
 void GobuCameraImport(ecs_world_t* world)
 {
     ECS_MODULE(world, GobuCamera);
     ECS_IMPORT(world, GobuCustom);
+    ECS_IMPORT(world, GobuInputSystem);
 
-    ECS_COMPONENT_DEFINE(world, GCamera);
     ECS_COMPONENT_DEFINE(world, enumCameraMode);
     ECS_COMPONENT_DEFINE(world, Camera2D);
+    ECS_COMPONENT_DEFINE(world, GCamera);
 
-    ECS_SYSTEM(world, GobuCamera_Update, EcsOnUpdate, GCamera);
+    ECS_SYSTEM(world, GobuCamera_Update, EcsOnUpdate, GCamera, GInputSystem);
+    ECS_OBSERVER(world, GobuCamera_Set, EcsOnSet, GCamera);
 
     ecs_enum(world, {
         .entity = ecs_id(enumCameraMode),
@@ -48,10 +51,19 @@ void GobuCameraImport(ecs_world_t* world)
     });
 }
 
+static void GobuCamera_Set(ecs_iter_t* it)
+{
+    GCamera* camera = ecs_field(it, GCamera, 1);
+    for (int i = 0; i < it->count; i++)
+    {
+        camera[i].camera.zoom = (camera[i].camera.zoom  == 0) ? 1.0f : camera[i].camera.zoom;
+    }
+}
+
 static void GobuCamera_Update(ecs_iter_t* it)
 {
     GCamera* camera = ecs_field(it, GCamera, 1);
-    GInputSystem* input = ecs_singleton_get(it->world, GInputSystem);
+    GInputSystem* input = ecs_field(it, GInputSystem, 2);
 
     for (int i = 0; i < it->count; i++)
     {

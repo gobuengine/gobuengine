@@ -70,12 +70,12 @@ static void signal_viewport_start(GappLevelViewport* viewport, gpointer data)
 {
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
+
     ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
-    gobu_rendering_init(world, &(GWindow){.title = "LevelEditor", .width = width, .height = height, .viewport = true, .show_grid = true});
+    gobu_rendering_init(world, &(GWindow){.width = width, .height = height, .viewport = true, .show_grid = true});
 
-    GCamera* camera = ecs_singleton_get(world, GCamera);
-    camera->mode = CAMERA_EDITOR;
+    g_signal_emit_by_name(viewport->editor, "level-viewport-init", 0);
 }
 
 /**
@@ -125,7 +125,7 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
 
     /**
      * Establece el recurso para el mundo dado con el nombre y el nombre de archivo especificados.
-     * 
+     *
      */
     if (gobu_resource_set(world, name, filename))
         debug_print(CONSOLE_INFO, gb_strdups("Resource load: %s", name));
@@ -133,11 +133,12 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
     /**
      * Obtiene la cámara principal y el sistema de entrada del sistema de componentes de entidad del mundo.
      * Convierte las coordenadas de la pantalla a coordenadas del mundo utilizando la matriz de transformación de la cámara principal.
-     * 
+     *
      */
-    GCamera* cameraMain = ecs_singleton_get(world, GCamera);
-    GInputSystem* input = ecs_singleton_get(world, GInputSystem);
-    Vector2 mouseWorld = input->get_screen_to_world((Vector2) { x, y }, * cameraMain);
+    ecs_entity_t Engine = ecs_lookup(world, "Engine");
+    GCamera* cameraMain = ecs_get(world, Engine, GCamera);
+    GInputSystem* input = ecs_get(world, Engine, GInputSystem);
+    Vector2 mouseWorld = input->get_screen_to_world((Vector2) { x, y }, (*cameraMain));
 
     // Crea una nueva entidad y le asigna un nombre.
     ecs_entity_t entity = ecs_new_id(world);
