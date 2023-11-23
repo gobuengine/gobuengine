@@ -53,7 +53,7 @@ static void gb_script_signal_build(GtkWidget* widget, GobuEditorScript* self)
 
     // gb_script_reset();
 
-    debug_print(CONSOLE_INFO, TF("Build gbscript [%s]", self->filename));
+    gb_print_info(TF("Build gbscript [%s]", self->filename));
 }
 
 /**
@@ -71,7 +71,7 @@ static void gb_script_signal_save(GtkWidget* widget, GobuEditorScript* self)
     gb_fs_write_file(self->filename, buffer);
 
     // gb_script_view_console_print("Save Scripts");
-    debug_print(CONSOLE_INFO, TF("Save gbscript [%s]", self->filename));
+    gb_print_success(TF("Save gbscript [%s]", self->filename));
 }
 
 

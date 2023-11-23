@@ -128,7 +128,7 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
      *
      */
     if (gobu_resource_set(world, name, filename))
-        debug_print(CONSOLE_INFO, gb_strdups("Resource load: %s", name));
+        gb_print_info(gb_strdups("Resource load: %s", name));
 
     /**
      * Obtiene la cámara principal y el sistema de entrada del sistema de componentes de entidad del mundo.
@@ -148,7 +148,7 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
 
     if (gb_fs_is_extension(filename, ".png")) {
         ecs_set(world, entity, GSprite, { .resource = name });
-        debug_print(CONSOLE_INFO, gb_strdups("Spawn Entity [%lld], Component Sprite [%s]", entity, name));
+        gb_print_success(gb_strdups("Spawn Entity [%lld], Component Sprite [%s]", entity, name));
     }
 }
 

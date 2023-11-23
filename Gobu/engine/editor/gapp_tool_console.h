@@ -32,15 +32,6 @@
 
 G_BEGIN_DECLS
 
-
-typedef enum {
-    CONSOLE_INFO = 0,
-    CONSOLE_WARNING,
-    CONSOLE_ERROR,
-    CONSOLE_SUCCESS
-}ConsoleTypeMessage;
-
-#define debug_print gapp_console_print
 #define TF gb_strdups
 
 typedef struct _GobuToolConsolePrivate GobuToolConsolePrivate;
@@ -50,12 +41,16 @@ G_DECLARE_FINAL_TYPE(GobuToolConsole, gapp_tool_console, GAPP_TOOL, CONSOLE, Gtk
 
 struct _GobuToolConsolePrivate
 {
-    GtkWidget *instance;
+    GtkWidget parent_instance;
+    GtkWidget* console;
+    GtkWidget* scroll;
 };
 
 GobuToolConsole* gapp_tool_console_new(void);
-void gapp_console_print(ConsoleTypeMessage type, const gchar* msg);
-void gapp_tool_console_print(GobuToolConsole* self, ConsoleTypeMessage type, const gchar* msg);
+void gb_print_error(const gchar *msg, const gchar *error);
+void gb_print_warning(const gchar *msg);
+void gb_print_success(const gchar *msg);
+void gb_print_info(const gchar *msg);
 
 G_END_DECLS
 

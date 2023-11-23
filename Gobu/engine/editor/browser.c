@@ -134,7 +134,7 @@ static void gb_editor_world_browser_fn_open_folder(GobuEditorWorldBrowser* brows
     //  EL BOTON DE NAV (HOME) SE HABILITA SI NO ESTAMOS EN CONTENT
     gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_home), is_home);
 
-    debug_print(CONSOLE_INFO, TF("Open folder: %s", gb_path_basename(private->path_current)));
+    gb_print_info(TF("Open folder: %s", gb_path_basename(private->path_current)));
 }
 
 /**
@@ -196,7 +196,7 @@ static void gb_editor_world_browser_fn_history_path_forward(GobuEditorWorldBrows
  * Maneja la señal de borrar elementos en el explorador de mundos del editor en Gobu.
  *
  */
-static void gb_editor_world_browser_signal_delete_file_response(GtkWidget* widget, int response, gpointer data)
+static void signal_delete_file_response(GtkWidget* widget, int response, gpointer data)
 {
     if (response == GTK_RESPONSE_OK)
     {
@@ -205,24 +205,24 @@ static void gb_editor_world_browser_signal_delete_file_response(GtkWidget* widge
         if (!g_file_delete(file, NULL, &error) && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
         {
             gapp_widget_alert(widget, error->message);
-            debug_print(CONSOLE_ERROR, TF(("Failed to delete %s: %s [%d]\n", g_file_peek_path(file), error->message, error->code)));
+            gb_print_error(TF("Failed to delete %s\n", g_file_peek_path(file)), error->message);
             return;
         }
 
-        debug_print(CONSOLE_SUCCESS, TF("File delete %s\n", g_file_peek_path(file)));
+        gb_print_success(TF("File delete %s\n", g_file_peek_path(file)));
     }
 
     gtk_window_destroy(widget);
 }
 
-void gb_editor_world_browser_signal_delete_file(GtkWidget* widget, gpointer data)
+void signal_delete_file(GtkWidget* widget, gpointer data)
 {
     GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
 
     GFileInfo* file_selected = G_FILE_INFO(gtk_single_selection_get_selected_item(private->selection));
     GFile* file = G_FILE(g_file_info_get_attribute_object(file_selected, "standard::file"));
 
-    gapp_widget_dialog_confirm_delete(widget, g_file_info_get_name(file_selected), file, gb_editor_world_browser_signal_delete_file_response);
+    gapp_widget_dialog_confirm_delete(widget, g_file_info_get_name(file_selected), file, signal_delete_file_response);
     gtk_popover_popdown(GTK_POPOVER(private->popover));
 }
 
@@ -230,7 +230,7 @@ void gb_editor_world_browser_signal_delete_file(GtkWidget* widget, gpointer data
  * Maneja la señal de creación de elementos en el explorador de mundos del editor en Gobu.
  *
  */
-static void gb_editor_world_browser_signal_create_item_action_response(GtkDialog* dialog, int response, const GobuEditorWorldBrowserAction* action)
+static void signal_create_item_action_response(GtkDialog* dialog, int response, const GobuEditorWorldBrowserAction* action)
 {
     if (response == GTK_RESPONSE_OK)
     {
@@ -242,23 +242,23 @@ static void gb_editor_world_browser_signal_create_item_action_response(GtkDialog
             gb_fs_mkdir(path_result);
             g_free(path_result);
 
-            debug_print(CONSOLE_INFO, TF("Create Folder: %s", result));
+            gb_print_info(TF("Create Folder: %s", result));
         }
         else if (action->response == ACTION_CREATE_LEVEL) {
             gchar* path_result = gb_path_join(private->path_current, TF("%s.level", result), NULL);
             g_file_create_readwrite(g_file_new_for_path(path_result), G_FILE_CREATE_NONE, NULL, NULL);
             g_free(path_result);
 
-            debug_print(CONSOLE_INFO, TF("Create Level: %s", result));
+            gb_print_info(TF("Create Level: %s", result));
         }
     }
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-static void gb_editor_world_browser_signal_create_item_action(GtkWidget* button, const GobuEditorWorldBrowserAction* action)
+static void signal_create_item_action(GtkWidget* button, const GobuEditorWorldBrowserAction* action)
 {
     GtkWidget* dialog = gapp_widget_dialog_input(button, action->title, action->text);
-    g_signal_connect(dialog, "response", G_CALLBACK(gb_editor_world_browser_signal_create_item_action_response), action);
+    g_signal_connect(dialog, "response", G_CALLBACK(signal_create_item_action_response), action);
     gtk_popover_popdown(GTK_POPOVER(gtk_widget_get_ancestor(button, GTK_TYPE_POPOVER)));
 }
 
@@ -268,7 +268,7 @@ static void gb_editor_world_browser_signal_create_item_action(GtkWidget* button,
  * @param button  El botón que desencadenó la activación del popover.
  * @param data    Datos relacionados con la activación del popover en el explorador de mundos.
  */
-static void gb_editor_world_browser_signal_popover(GtkWidget* button, gpointer data)
+static void signal_popover(GtkWidget* button, gpointer data)
 {
     GtkWidget* popover, * box, * item;
 
@@ -287,7 +287,7 @@ static void gb_editor_world_browser_signal_popover(GtkWidget* button, gpointer d
         item = gtk_button_new_with_label("New Folder");
         gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
         gtk_box_append(GTK_BOX(box), item);
-        g_signal_connect(item, "clicked", G_CALLBACK(gb_editor_world_browser_signal_create_item_action),
+        g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
         gb_editor_world_browser_new_action("Create New Folder", "New Folder", ACTION_CREATE_FOLDER, data));
 
         gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
@@ -295,7 +295,7 @@ static void gb_editor_world_browser_signal_popover(GtkWidget* button, gpointer d
         item = gtk_button_new_with_label("New Level");
         gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
         gtk_box_append(GTK_BOX(box), item);
-        g_signal_connect(item, "clicked", G_CALLBACK(gb_editor_world_browser_signal_create_item_action),
+        g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
         gb_editor_world_browser_new_action("Create New Level", "New Level", ACTION_CREATE_LEVEL, data));
     }
 
@@ -308,7 +308,7 @@ static void gb_editor_world_browser_signal_popover(GtkWidget* button, gpointer d
  * @param button  El botón que desencadenó la activación del popover.
  * @param data    Datos relacionados con la activación del popover en el explorador de mundos.
  */
-static void gb_editor_world_browser_signal_view_file_popover(GtkGesture* gesture, int n_press, double x, double y, gpointer data)
+static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x, double y, gpointer data)
 {
     GtkWidget* widget, * child;
     GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
@@ -337,7 +337,7 @@ static void gb_editor_world_browser_signal_view_file_popover(GtkGesture* gesture
                 item = gtk_button_new_with_label("Delete");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_box_append(GTK_BOX(box), item);
-                g_signal_connect(item, "clicked", G_CALLBACK(gb_editor_world_browser_signal_delete_file), data);
+                g_signal_connect(item, "clicked", G_CALLBACK(signal_delete_file), data);
             }
             else
             {
@@ -350,7 +350,7 @@ static void gb_editor_world_browser_signal_view_file_popover(GtkGesture* gesture
                 item = gtk_button_new_with_label("New Folder");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_box_append(GTK_BOX(box), item);
-                g_signal_connect(item, "clicked", G_CALLBACK(gb_editor_world_browser_signal_create_item_action),
+                g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
                 gb_editor_world_browser_new_action("Create New Folder", "New Folder", ACTION_CREATE_FOLDER, data));
 
                 gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
@@ -358,7 +358,7 @@ static void gb_editor_world_browser_signal_view_file_popover(GtkGesture* gesture
                 item = gtk_button_new_with_label("New Level");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_box_append(GTK_BOX(box), item);
-                g_signal_connect(item, "clicked", G_CALLBACK(gb_editor_world_browser_signal_create_item_action),
+                g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
                 gb_editor_world_browser_new_action("Create New Level", "New Level", ACTION_CREATE_LEVEL, data));
             }
         }
@@ -373,12 +373,51 @@ static void gb_editor_world_browser_signal_view_file_popover(GtkGesture* gesture
 }
 
 /**
+ * @brief Función que maneja el evento de soltar un archivo en la vista.
+ *
+ * @param target El objeto GtkDropTarget que recibió el evento.
+ * @param value El valor del archivo que se soltó.
+ * @param x La posición horizontal del cursor en la vista.
+ * @param y La posición vertical del cursor en la vista.
+ * @param user_data Datos adicionales proporcionados por el usuario.
+ * @return gboolean Devuelve TRUE si el evento fue manejado correctamente, FALSE en caso contrario.
+ */
+static gboolean signal_view_file_drop(GtkDropTarget* target, const GValue* value, double x, double y, GobuEditorWorldBrowser* browser)
+{
+    if (G_VALUE_HOLDS(value, GDK_TYPE_FILE_LIST))
+    {
+        GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+
+
+        GList* list_files = g_value_get_boxed(value);
+        for (int i = 0; i < g_list_length(list_files); i++)
+        {
+            GError* error = NULL;
+            GFile* file_src = G_FILE(g_list_nth_data(list_files, i));
+            GFile* file_dest = g_file_new_for_path(gb_path_join(private->path_current, g_file_get_basename(file_src), NULL));
+            gchar* name = g_file_get_basename(file_src);
+
+            if (g_file_copy(file_src, file_dest, G_FILE_COPY_NONE, NULL, NULL, NULL, &error))
+            {
+                gb_print_success(TF("Copy file: [%s]", name));
+            }
+            else
+            {
+                gb_print_error(TF("Copy [%s]", name), error->message);
+            }
+        }
+        return TRUE;
+    }
+    return FALSE;
+}
+
+/**
  * Maneja la señal de navegación a la página de inicio en el explorador de mundos del editor en Gobu.
  *
  * @param button  El botón que desencadenó la navegación a la página de inicio.
  * @param data    Datos relacionados con la navegación a la página de inicio en el explorador de mundos.
  */
-static void gb_editor_world_browser_signal_navhome(GtkWidget* button, gpointer data)
+static void signal_navhome(GtkWidget* button, gpointer data)
 {
     GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
     gb_editor_world_browser_fn_open_folder(data, private->path_default, TRUE);
@@ -390,7 +429,7 @@ static void gb_editor_world_browser_signal_navhome(GtkWidget* button, gpointer d
  * @param button  El botón que desencadenó la navegación hacia atrás.
  * @param data    Datos relacionados con la navegación hacia atrás en el explorador de mundos.
  */
-static void gb_editor_world_browser_signal_navback(GtkWidget* button, gpointer data)
+static void signal_navback(GtkWidget* button, gpointer data)
 {
     GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
     gb_editor_world_browser_fn_history_path_back(data);
@@ -402,7 +441,7 @@ static void gb_editor_world_browser_signal_navback(GtkWidget* button, gpointer d
  * @param button  El botón que desencadenó la navegación hacia adelante.
  * @param data    Datos relacionados con la navegación hacia adelante en el explorador de mundos.
  */
-static void gb_editor_world_browser_signal_navforward(GtkWidget* button, gpointer data)
+static void signal_navforward(GtkWidget* button, gpointer data)
 {
     GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
     gb_editor_world_browser_fn_history_path_forward(data);
@@ -418,7 +457,7 @@ static void gb_editor_world_browser_signal_navforward(GtkWidget* button, gpointe
  *
  * @return Un proveedor de contenido Gdk que representa los datos de arrastre preparados.
  */
-static GdkContentProvider* gb_editor_world_browser_signal_drag_source_prepare(GtkDragSource* source, gdouble x, gdouble y, GtkListItem* list_item)
+static GdkContentProvider* signal_drag_source_prepare(GtkDragSource* source, gdouble x, gdouble y, GtkListItem* list_item)
 {
     GtkWidget* box = gtk_list_item_get_child(list_item);
 
@@ -445,7 +484,7 @@ static GdkContentProvider* gb_editor_world_browser_signal_drag_source_prepare(Gt
  *
  * @return Un proveedor de contenido Gdk que representa los datos de arrastre iniciales.
  */
-static void gb_editor_world_browser_signal_drag_source_begin(GtkDragSource* source, GdkDrag* drag, GtkListItem* list_item)
+static void signal_drag_source_begin(GtkDragSource* source, GdkDrag* drag, GtkListItem* list_item)
 {
     GtkWidget* box = gtk_list_item_get_child(list_item);
     GtkWidget* paintable = gtk_widget_paintable_new(gtk_widget_get_first_child(box));
@@ -460,7 +499,7 @@ static void gb_editor_world_browser_signal_drag_source_begin(GtkDragSource* sour
  * @param position     La posición del archivo seleccionado.
  * @param user_data    Datos de usuario opcionales relacionados con la selección de archivo.
  */
-static void gb_editor_world_browser_signal_view_file_selected(GtkGridView* self, guint position, gpointer user_data)
+static void signal_view_file_selected(GtkGridView* self, guint position, gpointer user_data)
 {
     GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(user_data);
 
@@ -484,11 +523,12 @@ static void gb_editor_world_browser_signal_view_file_selected(GtkGridView* self,
         }
         else if (gb_fs_is_extension(filename, ".gbscript")) {
             gapp_editor_script_new(filename);
-        }else {
+        }
+        else {
             return;
         }
 
-        debug_print(CONSOLE_INFO, TF("Open file: %s", gb_path_basename(filename)));
+        gb_print_info(TF("Open file: %s", gb_path_basename(filename)));
     }
 }
 
@@ -499,7 +539,7 @@ static void gb_editor_world_browser_signal_view_file_selected(GtkGridView* self,
  * @param list_item   El elemento de lista al que se aplica la configuración de la vista de archivo.
  * @param user_data   Datos de usuario opcionales para la configuración de la vista de archivo.
  */
-static void gb_editor_world_browser_signal_setup_view_file(GtkListItemFactory* factory, GtkListItem* list_item, gpointer user_data)
+static void signal_setup_view_file(GtkListItemFactory* factory, GtkListItem* list_item, gpointer user_data)
 {
     GtkWidget* box, * imagen, * label, * entry;
     GtkExpression* expression;
@@ -526,11 +566,9 @@ static void gb_editor_world_browser_signal_setup_view_file(GtkListItemFactory* f
 
     source = gtk_drag_source_new();
     gtk_drag_source_set_actions(source, GDK_ACTION_COPY);
-    g_signal_connect(source, "prepare", G_CALLBACK(gb_editor_world_browser_signal_drag_source_prepare), list_item);
-    g_signal_connect(source, "drag-begin", G_CALLBACK(gb_editor_world_browser_signal_drag_source_begin), list_item);
-    // g_signal_connect(source, "drag-end", G_CALLBACK(gb_editor_world_browser_signal_drag_source_prepare), list_item);
+    g_signal_connect(source, "prepare", G_CALLBACK(signal_drag_source_prepare), list_item);
+    g_signal_connect(source, "drag-begin", G_CALLBACK(signal_drag_source_begin), list_item);
     gtk_widget_add_controller(box, GTK_EVENT_CONTROLLER(source));
-    // gtk_expression_unref(expression);
 }
 
 /**
@@ -540,7 +578,7 @@ static void gb_editor_world_browser_signal_setup_view_file(GtkListItemFactory* f
  * @param list_item   El elemento de lista al que se vincula la vista de archivo.
  * @param user_data   Datos de usuario opcionales para la vinculación de la vista de archivo.
  */
-void gb_editor_world_browser_signal_bind_view_file(GtkListItemFactory* factory, GtkListItem* list_item, gpointer user_data)
+void signal_bind_view_file(GtkListItemFactory* factory, GtkListItem* list_item, gpointer user_data)
 {
     GtkWidget* box, * label_name, * image;
 
@@ -590,7 +628,7 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
             item = gapp_widget_button_new_icon_with_label("list-add-symbolic", "Add");
             gtk_button_set_has_frame(item, FALSE);
             gtk_box_append(GTK_BOX(toolbar), item);
-            g_signal_connect(item, "clicked", G_CALLBACK(gb_editor_world_browser_signal_popover), self);
+            g_signal_connect(item, "clicked", G_CALLBACK(signal_popover), self);
             gapp_widget_toolbar_separator_new(toolbar);
 
             item = gapp_widget_button_new_icon_with_label("insert-image-symbolic", "Import");
@@ -618,21 +656,21 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
             gtk_button_set_has_frame(private->btn_nav_home, FALSE);
             gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_home), FALSE);
             gtk_box_append(toolbar, private->btn_nav_home);
-            g_signal_connect(private->btn_nav_home, "clicked", G_CALLBACK(gb_editor_world_browser_signal_navhome), self);
+            g_signal_connect(private->btn_nav_home, "clicked", G_CALLBACK(signal_navhome), self);
             gapp_widget_toolbar_separator_new(toolbar);
 
             private->btn_nav_back = gapp_widget_button_new_icon_with_label("go-previous-symbolic", NULL);
             gtk_button_set_has_frame(private->btn_nav_back, FALSE);
             gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_back), FALSE);
             gtk_box_append(toolbar, private->btn_nav_back);
-            g_signal_connect(private->btn_nav_back, "clicked", G_CALLBACK(gb_editor_world_browser_signal_navback), self);
+            g_signal_connect(private->btn_nav_back, "clicked", G_CALLBACK(signal_navback), self);
             gapp_widget_toolbar_separator_new(toolbar);
 
             private->btn_nav_forward = gapp_widget_button_new_icon_with_label("go-next-symbolic", NULL);
             gtk_button_set_has_frame(private->btn_nav_forward, FALSE);
             gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_forward), FALSE);
             gtk_box_append(GTK_BOX(toolbar), private->btn_nav_forward);
-            g_signal_connect(private->btn_nav_forward, "clicked", G_CALLBACK(gb_editor_world_browser_signal_navforward), self);
+            g_signal_connect(private->btn_nav_forward, "clicked", G_CALLBACK(signal_navforward), self);
         }
     }
 
@@ -643,6 +681,7 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
         GtkWidget* scroll, * grid;
         GtkSingleSelection* selection;
         GtkGesture* gesture;
+        GtkDropTarget* drop;
         GFile* file;
 
         scroll = gtk_scrolled_window_new();
@@ -663,21 +702,25 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
         gtk_single_selection_set_autoselect(private->selection, FALSE);
 
         private->factory = gtk_signal_list_item_factory_new();
-        g_signal_connect(private->factory, "setup", G_CALLBACK(gb_editor_world_browser_signal_setup_view_file), self);
-        g_signal_connect(private->factory, "bind", G_CALLBACK(gb_editor_world_browser_signal_bind_view_file), self);
+        g_signal_connect(private->factory, "setup", G_CALLBACK(signal_setup_view_file), self);
+        g_signal_connect(private->factory, "bind", G_CALLBACK(signal_bind_view_file), self);
 
         // GtkWidget *view = gtk_list_view_new(selection, private->factory);
         grid = gtk_grid_view_new(private->selection, private->factory);
         // gtk_grid_view_set_single_click_activate(grid, TRUE);
         gtk_grid_view_set_max_columns(grid, 15);
         gtk_grid_view_set_min_columns(grid, 2);
-        g_signal_connect(grid, "activate", G_CALLBACK(gb_editor_world_browser_signal_view_file_selected), self);
+        g_signal_connect(grid, "activate", G_CALLBACK(signal_view_file_selected), self);
         gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), grid);
 
         gesture = gtk_gesture_click_new();
         gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(gesture), 0);
-        g_signal_connect(gesture, "released", G_CALLBACK(gb_editor_world_browser_signal_view_file_popover), self);
+        g_signal_connect(gesture, "released", G_CALLBACK(signal_view_file_popover), self);
         gtk_widget_add_controller(grid, GTK_EVENT_CONTROLLER(gesture));
+
+        drop = gtk_drop_target_new(GDK_TYPE_FILE_LIST, GDK_ACTION_COPY);
+        g_signal_connect(drop, "drop", G_CALLBACK(signal_view_file_drop), self);
+        gtk_widget_add_controller(grid, GTK_EVENT_CONTROLLER(drop));
     }
 }
 
