@@ -15,24 +15,26 @@ static GProject project = { 0 };
 bool gb_project_load(const char* filename)
 {
     bool test = gb_fs_file_exist(filename);
-    g_return_if_fail(test == true);
 
-    project.path = gb_path_dirname(filename);
-    // project.name = gb_path_basename(project.path);
-
-    char *file_gobuproject = gb_path_join(project.path, "game.gobuproject", NULL);
-    binn* game_setting = binn_serialize_from_file(file_gobuproject);
-    g_free(file_gobuproject);
-
-    binn* setting = binn_object_object(game_setting, "setting");
+    if (test)
     {
-        project.width = binn_object_uint32(setting, "width");
-        project.width = binn_object_uint32(setting, "height");
-        project.name = binn_object_str(setting, "name");
-    }
+        project.path = gb_path_dirname(filename);
+        // project.name = gb_path_basename(project.path);
 
-    // binn_free(setting);
-    binn_free(game_setting);
+        char* file_gobuproject = gb_path_join(project.path, "game.gobuproject", NULL);
+        binn* game_setting = binn_serialize_from_file(file_gobuproject);
+        g_free(file_gobuproject);
+
+        binn* setting = binn_object_object(game_setting, "setting");
+        {
+            project.width = binn_object_uint32(setting, "width");
+            project.height = binn_object_uint32(setting, "height");
+            project.name = gb_strdup(binn_object_str(setting, "name"));
+        }
+
+        // binn_free(setting);
+        binn_free(game_setting);
+    }
 
     return test;
 }

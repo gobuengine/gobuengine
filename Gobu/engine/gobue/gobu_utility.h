@@ -31,6 +31,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <glib.h>
 
 typedef enum
 {
@@ -54,13 +55,18 @@ bool gb_fs_test(const char* filename, GFSTest test);
 const char* gb_fs_extname(const char* filename);
 char* gb_fs_get_name(const char* filename, bool with_ext);
 bool gb_fs_is_extension(const char* filename, const char* ext);
-unsigned char* gb_fs_get_contents(const char* filename, int* dataSize);
+gchar* gb_fs_get_contents(const char* filename, gsize *length);
 
-const char* gb_strdups(const char* format, ...);
-const char* gb_strdup(const char* str);
-const char* gb_str_tolower(const char* text);
+char* gb_strdups(const char* format, ...);
+char* gb_strdup(const char* str);
+char* gb_str_tolower(const char* text);
+char* gb_str_uppercase(const char* text);
 bool gb_str_isequal(const char* text1, const char* text2);
 char** gb_str_split(const char* string, const char* delimiter);
 void gb_str_split_free(char** str_array);
+char* gb_str_trim(char* str);
+char* gb_str_remove_spaces(char* str);
+char* gb_str_sanitize(char* str);
+char* gb_str_replace(const char* str, const char* find, const char* replace);
 
 #endif // __BUGO_STR_H__

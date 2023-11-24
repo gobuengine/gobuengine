@@ -115,7 +115,8 @@ static void signal_viewport_init(GappLevelEditor* self, gpointer data)
     size_t level_buffer_size;
 
     // cargamos el archivo .level
-    unsigned char* level_buffer = LoadFileData(self->filename, &level_buffer_size);
+    // unsigned char* level_buffer = LoadFileData(self->filename, &level_buffer_size);
+    gchar *level_buffer = gb_fs_get_contents(self->filename, &level_buffer_size);
 
     GCamera* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), GCamera);
     camera->mode = CAMERA_EDITOR;
