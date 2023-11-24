@@ -372,6 +372,38 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
     }
 }
 
+static void gb_fs_copyc(GFile* src, GFile* dest)
+{
+    // Es un directorio
+    if (gb_path_exist(g_file_get_path(src))) {
+        if (gb_fs_mkdir(g_file_get_path(dest))) {
+            GFileEnumerator* enumerator = g_file_enumerate_children(src, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+            GFileInfo* file_info = NULL;
+            while ((file_info = g_file_enumerator_next_file(enumerator, NULL, NULL)) != NULL)
+            {
+                gchar* file_name = g_file_info_get_name(file_info);
+                GFile* file_src = g_file_new_for_path(gb_path_join(g_file_get_path(src), file_name, NULL));
+                GFile* file_dest = g_file_new_for_path(gb_path_join(g_file_get_path(dest), file_name, NULL));
+                gb_fs_copyc(file_src, file_dest);
+            }
+        }
+        return;
+    }
+
+    // Copiamos el archivo
+    GError* error = NULL;
+    gchar* name = g_file_get_basename(src);
+
+    if (g_file_copy(src, dest, G_FILE_COPY_NONE, NULL, NULL, NULL, &error))
+    {
+        gb_print_success(TF("Copy file: [%s]", name));
+    }
+    else
+    {
+        gb_print_error(TF("Copy [%s]", name), error->message);
+    }
+}
+
 /**
  * @brief Función que maneja el evento de soltar un archivo en la vista.
  *
@@ -388,23 +420,12 @@ static gboolean signal_view_file_drop(GtkDropTarget* target, const GValue* value
     {
         GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
 
-
         GList* list_files = g_value_get_boxed(value);
         for (int i = 0; i < g_list_length(list_files); i++)
         {
-            GError* error = NULL;
             GFile* file_src = G_FILE(g_list_nth_data(list_files, i));
             GFile* file_dest = g_file_new_for_path(gb_path_join(private->path_current, g_file_get_basename(file_src), NULL));
-            gchar* name = g_file_get_basename(file_src);
-
-            if (g_file_copy(file_src, file_dest, G_FILE_COPY_NONE, NULL, NULL, NULL, &error))
-            {
-                gb_print_success(TF("Copy file: [%s]", name));
-            }
-            else
-            {
-                gb_print_error(TF("Copy [%s]", name), error->message);
-            }
+            gb_fs_copyc(file_src, file_dest);
         }
         return TRUE;
     }
