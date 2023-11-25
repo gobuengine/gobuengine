@@ -372,38 +372,6 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
     }
 }
 
-static void gb_fs_copyc(GFile* src, GFile* dest)
-{
-    // Es un directorio
-    if (gb_path_exist(g_file_get_path(src))) {
-        if (gb_fs_mkdir(g_file_get_path(dest))) {
-            GFileEnumerator* enumerator = g_file_enumerate_children(src, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, NULL, NULL);
-            GFileInfo* file_info = NULL;
-            while ((file_info = g_file_enumerator_next_file(enumerator, NULL, NULL)) != NULL)
-            {
-                gchar* file_name = g_file_info_get_name(file_info);
-                GFile* file_src = g_file_new_for_path(gb_path_join(g_file_get_path(src), file_name, NULL));
-                GFile* file_dest = g_file_new_for_path(gb_path_join(g_file_get_path(dest), file_name, NULL));
-                gb_fs_copyc(file_src, file_dest);
-            }
-        }
-        return;
-    }
-
-    // Copiamos el archivo
-    GError* error = NULL;
-    gchar* name = g_file_get_basename(src);
-
-    if (g_file_copy(src, dest, G_FILE_COPY_NONE, NULL, NULL, NULL, &error))
-    {
-        gb_print_success(TF("Copy file: [%s]", name));
-    }
-    else
-    {
-        gb_print_error(TF("Copy [%s]", name), error->message);
-    }
-}
-
 /**
  * @brief Función que maneja el evento de soltar un archivo en la vista.
  *
@@ -423,9 +391,18 @@ static gboolean signal_view_file_drop(GtkDropTarget* target, const GValue* value
         GList* list_files = g_value_get_boxed(value);
         for (int i = 0; i < g_list_length(list_files); i++)
         {
+            GError* error = NULL;
             GFile* file_src = G_FILE(g_list_nth_data(list_files, i));
             GFile* file_dest = g_file_new_for_path(gb_path_join(private->path_current, g_file_get_basename(file_src), NULL));
-            gb_fs_copyc(file_src, file_dest);
+            gchar* name = g_file_get_basename(file_src);
+            if (gb_fs_copyc(file_src, file_dest, &error))
+            {
+                gb_print_success(TF("Copy file: [%s]", name));
+            }
+            else
+            {
+                gb_print_error(TF("Copy [%s]", name), error->message);
+            }
         }
         return TRUE;
     }
@@ -618,9 +595,31 @@ void signal_bind_view_file(GtkListItemFactory* factory, GtkListItem* list_item, 
 
     gb_editor_world_browser_fn_get_icon_file(image, info_file);
     // TODO: Buscar una mejor solucion
-    g_object_set_data(image, "position_id", GINT_TO_POINTER(id));
-    g_object_set_data(label_name, "position_id", GINT_TO_POINTER(id));
-    g_object_set_data(box, "position_id", GINT_TO_POINTER(id));
+    g_object_set_data(G_OBJECT(image), "position_id", GINT_TO_POINTER(id));
+    g_object_set_data(G_OBJECT(label_name), "position_id", GINT_TO_POINTER(id));
+    g_object_set_data(G_OBJECT(box), "position_id", GINT_TO_POINTER(id));
+}
+
+
+/**
+ * Ordena los archivos de directorio con las carpetas primero.
+ *
+ * @param a     El primer archivo a comparar.
+ * @param b     El segundo archivo a comparar.
+ * @param data  Datos adicionales opcionales.
+ * @return      Un entero negativo si a debe ir antes que b, un entero positivo si b debe ir antes que a, o 0 si son iguales.
+ */
+static int sort_files_with_folders_first(GFileInfo* a, GFileInfo* b, gpointer data)
+{
+    GFileType type_a = g_file_info_get_file_type(a);
+    GFileType type_b = g_file_info_get_file_type(b);
+
+    if (type_a == G_FILE_TYPE_DIRECTORY && type_b != G_FILE_TYPE_DIRECTORY)
+        return -1;
+    else if (type_a != G_FILE_TYPE_DIRECTORY && type_b == G_FILE_TYPE_DIRECTORY)
+        return 1;
+
+    return 0;
 }
 
 /**
@@ -720,7 +719,9 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
         // gtk_directory_list_set_io_priority(private->directory_list, G_PRIORITY_LOW);
         g_object_unref(file);
 
-        private->selection = gtk_single_selection_new(G_LIST_MODEL(private->directory_list));
+        GtkSorter* sorter = GTK_SORTER(gtk_custom_sorter_new((GCompareDataFunc)sort_files_with_folders_first, NULL, NULL));
+
+        private->selection = gtk_single_selection_new(gtk_sort_list_model_new(G_LIST_MODEL(private->directory_list), sorter));
         gtk_single_selection_set_can_unselect(private->selection, TRUE);
         gtk_single_selection_set_autoselect(private->selection, FALSE);
 
@@ -728,9 +729,7 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
         g_signal_connect(private->factory, "setup", G_CALLBACK(signal_setup_view_file), self);
         g_signal_connect(private->factory, "bind", G_CALLBACK(signal_bind_view_file), self);
 
-        // GtkWidget *view = gtk_list_view_new(selection, private->factory);
         grid = gtk_grid_view_new(private->selection, private->factory);
-        // gtk_grid_view_set_single_click_activate(grid, TRUE);
         gtk_grid_view_set_max_columns(grid, 15);
         gtk_grid_view_set_min_columns(grid, 2);
         g_signal_connect(grid, "activate", G_CALLBACK(signal_view_file_selected), self);

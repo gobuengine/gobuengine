@@ -18,6 +18,22 @@
         "gobu_text.h": "c",
         "raylib.h": "c",
         "gobu_sprite.h": "c",
-        "flecs.h": "c"
+        "flecs.h": "c",
+        "*.m": "c",
+        "string.h": "c",
+        "gobu_autorotate.h": "c",
+        "gobu_transform.h": "c",
+        "gobu_camera.h": "c",
+        "gobu_input.h": "c",
+        "raymath.h": "c",
+        "gapp_level_inspector.h": "c",
+        "gobu_gobu.h": "c",
+        "rlgl.h": "c",
+        "initializer_list": "c",
+        "vector": "c",
+        "gobu_project.h": "c",
+        "gobu_controller.h": "c",
+        "algorithm": "c",
+        "stdio.h": "c"
     }
 }

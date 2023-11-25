@@ -1,5 +1,19 @@
 #include "gobu_utility.h"
 
+/**
+ * @brief Normaliza una ruta de archivo.
+ *
+ * Esta función toma una ruta de archivo y la normaliza, eliminando cualquier
+ * caracter especial o redundante. Devuelve un puntero a la ruta de archivo
+ * normalizada.
+ *
+ * @param path La ruta de archivo a normalizar.
+ * @return Un puntero a la ruta de archivo normalizada.
+ */
+char* gb_path_normalize(const char* path)
+{
+    return gb_str_replace(path, "\\", "/");
+}
 
 /**
  * @brief Combina múltiples rutas en una sola ruta.
@@ -70,6 +84,34 @@ char* gb_path_current_dir(void)
 bool gb_path_exist(const char* filename)
 {
     return gb_fs_test(filename, G_FS_TEST_IS_DIR);
+}
+
+/**
+ * @brief Copia un archivo desde la ruta de origen a la ruta de destino.
+ *
+ * Esta función copia el contenido del archivo de origen al archivo de destino.
+ *
+ * @param src El archivo de origen que se copiará.
+ * @param dest El archivo de destino donde se copiará el contenido.
+ */
+bool gb_fs_copyc(GFile* src, GFile* dest, GError** error)
+{
+    if (gb_path_exist(g_file_get_path(src))) {
+        if (gb_fs_mkdir(g_file_get_path(dest))) {
+            GFileEnumerator* enumerator = g_file_enumerate_children(src, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, NULL, NULL);
+            GFileInfo* file_info = NULL;
+            while ((file_info = g_file_enumerator_next_file(enumerator, NULL, NULL)) != NULL)
+            {
+                const gchar* file_name = g_file_info_get_name(file_info);
+                GFile* file_src = g_file_new_for_path(gb_path_join(g_file_get_path(src), file_name, NULL));
+                GFile* file_dest = g_file_new_for_path(gb_path_join(g_file_get_path(dest), file_name, NULL));
+                gb_fs_copyc(file_src, file_dest, error);
+            }
+        }
+        return TRUE;
+    }
+
+    return g_file_copy(src, dest, G_FILE_COPY_NONE, NULL, NULL, NULL, error);
 }
 
 /**
@@ -337,8 +379,8 @@ char* gb_str_sanitize(char* str)
  */
 char* gb_str_replace(const char* str, const char* find, const char* replace)
 {
-    char **split = g_strsplit_set(str, find, -1);
-    char *result = g_strjoinv(replace, split);
+    char** split = g_strsplit_set(str, find, -1);
+    char* result = g_strjoinv(replace, split);
     g_strfreev(split);
     return result;
 }

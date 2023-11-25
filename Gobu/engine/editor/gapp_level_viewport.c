@@ -121,7 +121,7 @@ static void signal_viewport_resize(GappLevelViewport* viewport, int width, int h
 static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, double x, double y, gpointer data)
 {
     gchar* filename = g_file_get_path(file);
-    gchar* name = gb_str_sanitize(gb_fs_get_name(filename, true));
+    gchar* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
     ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
     /**

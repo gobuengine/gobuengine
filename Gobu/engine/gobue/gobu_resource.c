@@ -31,9 +31,11 @@ void GobuResourceImport(ecs_world_t* world)
 bool gobu_resource_set(ecs_world_t* world, const char* key, const char* path)
 {
     if (ecs_is_valid(world, ecs_lookup(world, key) == false)) {
-        char** str = gb_str_split(path,"Content");
-        char *npath = gb_strdup(str[1]);
-        gb_str_split_free(str);
+        // Buscamos la ruta relativa al directorio Content
+        char* npath = strstr(path, "Content");
+        if (npath != NULL) {
+            npath += strlen("Content");
+        }
 
         ecs_entity_t resource = ecs_new_entity(world, key);
         ecs_set(world, resource, gb_resource, { .path = npath });
@@ -56,6 +58,7 @@ static void GobuShapes_SetResource(ecs_iter_t* it)
     for (int i = 0; i < it->count; i++)
     {
         char* path = gb_path_join(gb_project_get_path(), "Content", resource[i].path, NULL);
+        path = gb_path_normalize(path);
 
         if (event == EcsOnSet) {
             if (IsFileExtension(path, ".png") || IsFileExtension(path, ".jpg"))
