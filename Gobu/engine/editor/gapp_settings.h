@@ -1,9 +1,9 @@
 /**********************************************************************************
- * gb_project.h                                                                 *
- **********************************************************************************
+ * gapp_settings.h                                                                *
+ * ********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
- **********************************************************************************
+ * ********************************************************************************
  * Copyright (c) 2023 Jhonson Ozuna Mejia                                         *
  *                                                                                *
  * Permission is hereby granted, free of charge, to any person obtaining a copy   *
@@ -25,20 +25,26 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __BUGO_PROJECT_H__
-#define __BUGO_PROJECT_H__
+#ifndef __GAPP_SETTINGS_H__
+#define __GAPP_SETTINGS_H__
 #include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include "binn/binn_json.h"
+#include <gtk/gtk.h>
 
-bool gb_project_load(const char* filename);
+G_BEGIN_DECLS
 
-const char* gb_project_get_path(void);
+typedef struct _GappSettingsPrivate GappSettingsPrivate;
 
-const char* gb_project_get_name(void);
+#define GAPP_TYPE_SETTINGS (gapp_settings_get_type())
+G_DECLARE_FINAL_TYPE(GappSettings, gapp_settings, GAPP, SETTINGS, GtkWidget)
 
-binn* gb_project_get_setting(void);
+struct _GappSettingsPrivate
+{
+    GtkWidget parent_instance;
+};
 
-#endif // __BUGO_PROJECT_H__
+GappSettings* gapp_settings_new(void);
+
+G_END_DECLS
+
+#endif // __GAPP_SETTINGS_H__
+

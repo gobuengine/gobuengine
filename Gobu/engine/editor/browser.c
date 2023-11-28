@@ -639,8 +639,6 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
     private->path_current = gb_path_join(gb_project_get_path(), FOLDER_CONTENT_PROJECT, NULL);
     private->path_default = gb_strdup(private->path_current);
 
-    printf("PATH: %s\n", private->path_current);
-
     // Toolbar
     {
         toolbar = gapp_widget_toolbar_new();

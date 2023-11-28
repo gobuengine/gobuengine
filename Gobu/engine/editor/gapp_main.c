@@ -6,7 +6,7 @@ static void editor_setting_init(void)
 {
     g_info("GOBU-APP: Setting load\n");
 
-    gchar* full_path = g_build_filename(g_get_current_dir(), "config", "editor.config", NULL);
+    gchar* full_path = g_build_filename(g_get_current_dir(), "Config", "editor.config", NULL);
     EditorCore->setting.data = binn_serialize_from_file(full_path);
 
     gboolean dark_theme = binn_object_bool(EditorCore->setting.data, GAPP_THEME_DEFAULT);

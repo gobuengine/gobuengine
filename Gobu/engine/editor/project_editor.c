@@ -4,6 +4,7 @@
 #include "browser.h"
 #include "gapp_level_editor.h"
 #include "gapp_tool_console.h"
+#include "gapp_settings.h"
 
 #include "gobu_utility.h"
 #include "gobu_project.h"
@@ -96,11 +97,16 @@ void gapp_project_editor_window_new(GtkApplication* app)
     headerbar = gtk_header_bar_new();
     gtk_window_set_titlebar(GTK_WINDOW(EditorCore->window), headerbar);
     {
+        {
+            titlew = gtk_label_new(NULL);
+            gtk_label_set_markup(titlew, gb_strdups("[ %s ] - GobuEngine", gb_project_get_name()));
+            gtk_header_bar_pack_start(headerbar, titlew);
+        }
+
         hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-        // hbox = gapp_widget_toolbar_new();
         gtk_header_bar_set_title_widget(headerbar, hbox);
         {
-            GtkWidget* btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save");
+            GtkWidget* btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save all");
             gtk_box_append(hbox, btn_s);
 
             GtkWidget* btn_p = gapp_widget_button_new_icon_with_label("applications-games-symbolic", "Preview");
@@ -111,9 +117,9 @@ void gapp_project_editor_window_new(GtkApplication* app)
         }
 
         {
-            titlew = gtk_label_new(NULL);
-            gtk_label_set_markup(titlew, gb_strdups("[ %s ] - GobuEngine", gb_project_get_name()));
-            gtk_header_bar_pack_start(headerbar, titlew);
+            GtkWidget* btn_set = gapp_widget_button_new_icon_with_label("preferences-other-symbolic", "World Settings");
+            gtk_header_bar_pack_end(headerbar, btn_set);
+            g_signal_connect(btn_set, "clicked", G_CALLBACK(gapp_settings_new), NULL);
         }
     }
 
@@ -140,7 +146,6 @@ void gapp_project_editor_window_new(GtkApplication* app)
 
             EditorCore->console = gapp_tool_console_new();
         }
-
     }
 
     gtk_window_present(GTK_WINDOW(EditorCore->window));

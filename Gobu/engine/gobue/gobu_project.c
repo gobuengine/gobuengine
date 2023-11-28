@@ -1,5 +1,4 @@
 #include "gobu_project.h"
-#include "binn/binn_json.h"
 #include "gobu_utility.h"
 #include <glib.h>
 
@@ -8,6 +7,7 @@ typedef struct GProject {
     char* name;
     int width;
     int height;
+    binn* setting;
 }GProject;
 
 static GProject project = { 0 };
@@ -22,10 +22,10 @@ bool gb_project_load(const char* filename)
         // project.name = gb_path_basename(project.path);
 
         char* file_gobuproject = gb_path_join(project.path, "game.gobuproject", NULL);
-        binn* game_setting = binn_serialize_from_file(file_gobuproject);
+        project.setting = binn_serialize_from_file(file_gobuproject);
         g_free(file_gobuproject);
 
-        binn* setting = binn_object_object(game_setting, "setting");
+        binn* setting = binn_object_object(project.setting, "setting");
         {
             project.width = binn_object_uint32(setting, "width");
             project.height = binn_object_uint32(setting, "height");
@@ -33,7 +33,7 @@ bool gb_project_load(const char* filename)
         }
 
         // binn_free(setting);
-        binn_free(game_setting);
+        // binn_free(game_setting);
     }
 
     return test;
@@ -49,4 +49,9 @@ const char* gb_project_get_name(void)
 {
     const gchar* name = gb_strdup(project.name);
     return name;
+}
+
+binn* gb_project_get_setting(void)
+{
+    return project.setting;
 }
