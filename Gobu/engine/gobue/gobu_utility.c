@@ -111,7 +111,7 @@ bool gb_fs_copyc(GFile* src, GFile* dest, GError** error)
         return TRUE;
     }
 
-    return g_file_copy(src, dest, G_FILE_COPY_NONE, NULL, NULL, NULL, error);
+    return g_file_copy(src, dest, G_FILE_COPY_OVERWRITE, NULL, NULL, NULL, error);
 }
 
 /**

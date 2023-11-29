@@ -7,17 +7,18 @@ static void editor_setting_init(void)
     g_info("GOBU-APP: Setting load\n");
 
     gchar* full_path = g_build_filename(g_get_current_dir(), "Config", "editor.config", NULL);
-    EditorCore->setting.data = binn_serialize_from_file(full_path);
+    EditorCore->setting.data = g_key_file_new();
+    g_key_file_load_from_file(EditorCore->setting.data, full_path, G_KEY_FILE_NONE, NULL);
 
-    gboolean dark_theme = binn_object_bool(EditorCore->setting.data, GAPP_THEME_DEFAULT);
-    const gchar* style_scheme = dark_theme == TRUE ? GAPP_THEME_DARK_SCRIPT : GAPP_THEME_LIGHT_SCRIPT;
+    gboolean darkMode = g_key_file_get_boolean(EditorCore->setting.data, "editor", "darkMode", NULL);
+    gchar *themeScript = g_key_file_get_string(EditorCore->setting.data, "editor", "themeScript", NULL);
 
     // THEME
-    gapp_widget_theme_init(dark_theme);
+    gapp_widget_theme_init(darkMode);
 
     // SCRIPT EDITOR
     GtkSourceStyleSchemeManager* scheme_manager = gtk_source_style_scheme_manager_get_default();
-    EditorCore->setting.scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, style_scheme);
+    EditorCore->setting.scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, themeScript);
 
     GtkSourceLanguageManager* managerLanguage = gtk_source_language_manager_get_default();
     EditorCore->setting.language = gtk_source_language_manager_get_language(managerLanguage, GAPP_SCRIPT_LANGUAGE_DEFAULT);
@@ -28,7 +29,7 @@ static void editor_free(GtkApplication* self, GtkWindow* window, gpointer data)
     if (gtk_application_get_active_window(self) == NULL)
     {
         g_print("GOBU-APP: free\n");
-        binn_free(EditorCore->setting.data);
+        g_key_file_free(EditorCore->setting.data);
         g_object_unref(EditorCore->setting.scheme);
         g_object_unref(EditorCore->setting.language);
         g_free(EditorCore);

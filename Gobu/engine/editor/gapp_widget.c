@@ -9,7 +9,7 @@ void gapp_widget_theme_init(gboolean dark_mode)
     if (dark_mode)
         g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", TRUE, NULL);
 
-    GtkCssProvider *provider = gtk_css_provider_new();
+    GtkCssProvider* provider = gtk_css_provider_new();
     gtk_css_provider_load_from_path(provider, "Content/theme/default.css");
     gtk_style_context_add_provider_for_display(gdk_display_get_default(),
                                                GTK_STYLE_PROVIDER(provider),
@@ -22,9 +22,9 @@ void gapp_widget_theme_init(gboolean dark_mode)
  * @param parent   El widget padre al que se asociará la alerta.
  * @param message  El mensaje de la alerta a mostrar.
  */
-void gapp_widget_alert(GtkWidget *parent, const gchar *message)
+void gapp_widget_alert(GtkWidget* parent, const gchar* message)
 {
-    GtkAlertDialog *alert = gtk_alert_dialog_new(message);
+    GtkAlertDialog* alert = gtk_alert_dialog_new(message);
     gtk_alert_dialog_set_modal(alert, TRUE);
     gtk_alert_dialog_show(alert, parent);
 }
@@ -37,15 +37,15 @@ void gapp_widget_alert(GtkWidget *parent, const gchar *message)
  * @param data       Datos adicionales relacionados con la eliminación.
  * @param c_handler  El manejador de callback a invocar cuando se confirma la eliminación.
  */
-void gapp_widget_dialog_confirm_delete(GtkWidget *parent, const gchar *name, gpointer *data, GCallback c_handler)
+void gapp_widget_dialog_confirm_delete(GtkWidget* parent, const gchar* name, gpointer* data, GCallback c_handler)
 {
-    GtkWidget *dialog = gtk_dialog_new_with_buttons("Delete Assets", GTK_WINDOW(gtk_widget_get_root(parent)), GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR, "Delete", GTK_RESPONSE_OK, NULL);
+    GtkWidget* dialog = gtk_dialog_new_with_buttons("Delete Assets", GTK_WINDOW(gtk_widget_get_root(parent)), GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR, "Delete", GTK_RESPONSE_OK, NULL);
     gtk_window_set_resizable(dialog, FALSE);
 
-    GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    GtkWidget* box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gapp_widget_set_margin(GTK_WIDGET(box), 18);
 
-    GtkWidget *label = gtk_label_new(g_strdup_printf("Esta seguro que desea eliminar <b>%s</b> ?", name));
+    GtkWidget* label = gtk_label_new(g_strdup_printf("Esta seguro que desea eliminar <b>%s</b> ?", name));
     gtk_label_set_use_markup(label, TRUE);
     gtk_box_append(GTK_BOX(box), label);
 
@@ -63,15 +63,15 @@ void gapp_widget_dialog_confirm_delete(GtkWidget *parent, const gchar *name, gpo
  *
  * @return Un widget que representa el diálogo de entrada de texto.
  */
-GtkWidget *gapp_widget_dialog_input(GtkWidget *parent, const gchar *title, const gchar *text_default)
+GtkWidget* gapp_widget_dialog_input(GtkWidget* parent, const gchar* title, const gchar* text_default)
 {
-    GtkWidget *dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(gtk_widget_get_root(parent)), GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR, "Create", GTK_RESPONSE_OK, NULL);
+    GtkWidget* dialog = gtk_dialog_new_with_buttons(title, GTK_WINDOW(gtk_widget_get_root(parent)), GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR, "Create", GTK_RESPONSE_OK, NULL);
     gtk_window_set_resizable(dialog, FALSE);
 
-    GtkWidget *box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+    GtkWidget* box = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
     gapp_widget_set_margin(GTK_WIDGET(box), 18);
 
-    GtkWidget *entry = gtk_entry_new_with_buffer(gtk_entry_buffer_new(text_default, -1));
+    GtkWidget* entry = gtk_entry_new_with_buffer(gtk_entry_buffer_new(text_default, -1));
     gtk_box_append(GTK_BOX(box), entry);
     g_object_set_data(dialog, "entry", entry);
 
@@ -87,7 +87,7 @@ GtkWidget *gapp_widget_dialog_input(GtkWidget *parent, const gchar *title, const
  *
  * @return El texto ingresado en el diálogo de entrada de texto.
  */
-const gchar *gapp_widget_dialog_input_get_text(GtkWidget *dialog)
+const gchar* gapp_widget_dialog_input_get_text(GtkWidget* dialog)
 {
     return gtk_editable_get_text(GTK_EDITABLE(g_object_get_data(dialog, "entry")));
 }
@@ -98,7 +98,7 @@ const gchar *gapp_widget_dialog_input_get_text(GtkWidget *dialog)
  * @param widget  El widget al que se aplicará el margen.
  * @param margin  El valor del margen que se desea establecer.
  */
-void gapp_widget_set_margin(GtkWidget *widget, gint margin)
+void gapp_widget_set_margin(GtkWidget* widget, gint margin)
 {
     gapp_widget_set_margin_start(widget, margin);
     gapp_widget_set_margin_end(widget, margin);
@@ -114,15 +114,15 @@ void gapp_widget_set_margin(GtkWidget *widget, gint margin)
  *
  * @return Un nuevo widget de botón con icono y etiqueta.
  */
-GtkWidget *gapp_widget_button_new_icon_with_label(const gchar *icon_name, const gchar *label)
+GtkWidget* gapp_widget_button_new_icon_with_label(const gchar* icon_name, const gchar* label)
 {
-    GtkWidget *button = gtk_button_new();
+    GtkWidget* button = gtk_button_new();
     gtk_button_set_has_frame(button, FALSE);
     {
-        GtkWidget *hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+        GtkWidget* hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
         gtk_button_set_child(button, hbox_parent);
 
-        GtkWidget *image_icon = gtk_image_new_from_icon_name(icon_name);
+        GtkWidget* image_icon = gtk_image_new_from_icon_name(icon_name);
         gtk_image_set_icon_size(image_icon, GTK_ICON_SIZE_INHERIT);
         gtk_box_append(GTK_BOX(hbox_parent), image_icon);
 
@@ -141,24 +141,24 @@ GtkWidget *gapp_widget_button_new_icon_with_label(const gchar *icon_name, const 
  *
  * @return Un nuevo widget de botón de información.
  */
-GtkWidget *gapp_widget_button_new_info(const gchar *title, const gchar *desc)
+GtkWidget* gapp_widget_button_new_info(const gchar* title, const gchar* desc)
 {
-    GtkWidget *button = gtk_button_new();
+    GtkWidget* button = gtk_button_new();
     gtk_button_set_has_frame(button, FALSE);
     {
-        GtkWidget *hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+        GtkWidget* hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
         gtk_button_set_child(button, hbox_parent);
 
-        GtkWidget *image_icon = gtk_image_new_from_icon_name("input-gaming");
+        GtkWidget* image_icon = gtk_image_new_from_icon_name("input-gaming");
         gtk_image_set_icon_size(image_icon, GTK_ICON_SIZE_LARGE);
         gtk_box_append(GTK_BOX(hbox_parent), image_icon);
 
         gtk_box_append(GTK_BOX(hbox_parent), gtk_separator_new(GTK_ORIENTATION_VERTICAL));
 
-        GtkWidget *hbox_text = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+        GtkWidget* hbox_text = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
         gtk_box_append(GTK_BOX(hbox_parent), hbox_text);
 
-        GtkWidget *label_title = gtk_label_new(NULL);
+        GtkWidget* label_title = gtk_label_new(NULL);
         gtk_label_set_markup(GTK_LABEL(label_title), g_strdup_printf("<b><big>%s</big></b>", title));
         gtk_widget_set_halign(label_title, GTK_ALIGN_START);
         gtk_box_append(GTK_BOX(hbox_text), label_title);
@@ -177,9 +177,9 @@ GtkWidget *gapp_widget_button_new_info(const gchar *title, const gchar *desc)
  *
  * @return Un nuevo widget de paneles (paned).
  */
-GtkWidget *gapp_widget_paned_new(GtkOrientation orientation, gboolean start)
+GtkWidget* gapp_widget_paned_new(GtkOrientation orientation, gboolean start)
 {
-    GtkWidget *paned;
+    GtkWidget* paned;
 
     paned = gtk_paned_new(orientation);
     if (start)
@@ -211,9 +211,9 @@ GtkWidget *gapp_widget_paned_new(GtkOrientation orientation, gboolean start)
  *
  * @return Un nuevo widget de paneles con pestañas.
  */
-GtkWidget *gapp_widget_paned_new_with_notebook(GtkOrientation orientation, gboolean rink_start, GtkWidget *label_start, GtkWidget *start, GtkWidget *label_end, GtkWidget *end)
+GtkWidget* gapp_widget_paned_new_with_notebook(GtkOrientation orientation, gboolean rink_start, GtkWidget* label_start, GtkWidget* start, GtkWidget* label_end, GtkWidget* end)
 {
-    GtkWidget *paned, *notebook;
+    GtkWidget* paned, * notebook;
 
     paned = gapp_widget_paned_new(orientation, rink_start);
 
@@ -242,9 +242,9 @@ GtkWidget *gapp_widget_paned_new_with_notebook(GtkOrientation orientation, gbool
  *
  * @return Una nueva barra de herramientas.
  */
-GtkWidget *gapp_widget_toolbar_new(void)
+GtkWidget* gapp_widget_toolbar_new(void)
 {
-    GtkWidget *self;
+    GtkWidget* self;
     self = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
     gtk_widget_add_css_class(self, "toolbar");
     gapp_widget_set_margin(self, 3);
@@ -256,9 +256,9 @@ GtkWidget *gapp_widget_toolbar_new(void)
  *
  * @param toolbar  La barra de herramientas a la que se agregará el separador.
  */
-void gapp_widget_toolbar_separator_new(GtkWidget *toolbar)
+void gapp_widget_toolbar_separator_new(GtkWidget* toolbar)
 {
-    GtkWidget *self;
+    GtkWidget* self;
     self = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     // gapp_widget_set_margin_end(self, 2);
     // gapp_widget_set_margin_start(self, 2);
@@ -270,7 +270,7 @@ void gapp_widget_toolbar_separator_new(GtkWidget *toolbar)
  *
  * @return Un nuevo separador vertical.
  */
-GtkWidget *gapp_widget_separator_v(void)
+GtkWidget* gapp_widget_separator_v(void)
 {
     return gtk_separator_new(GTK_ORIENTATION_VERTICAL);
 }
@@ -280,7 +280,7 @@ GtkWidget *gapp_widget_separator_v(void)
  *
  * @return Un nuevo separador horizontal.
  */
-GtkWidget *gapp_widget_separator_h(void)
+GtkWidget* gapp_widget_separator_h(void)
 {
     return gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
 }
@@ -293,9 +293,9 @@ GtkWidget *gapp_widget_separator_h(void)
  *
  * @return Un nuevo widget que representa el expansor con el widget interno.
  */
-GtkWidget *gapp_widget_expander_with_widget(const gchar *title, GtkWidget *widget)
+GtkWidget* gapp_widget_expander_with_widget(const gchar* title, GtkWidget* widget)
 {
-    GtkWidget *box, *expand, *label;
+    GtkWidget* box, * expand, * label;
 
     box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     {
@@ -318,4 +318,21 @@ GtkWidget *gapp_widget_expander_with_widget(const gchar *title, GtkWidget *widge
     }
 
     return expand;
+}
+
+void gapp_widget_entry_set_text(GtkEntry* entry, const gchar* text)
+{
+    gtk_entry_buffer_set_text(gtk_entry_get_buffer(entry), text, strlen(text));
+}
+
+void gapp_widget_view_set_text(GtkTextView* view, const gchar* text)
+{
+    gtk_text_buffer_set_text(gtk_text_view_get_buffer(view), text, strlen(text));
+}
+
+gchar* gapp_widget_view_get_text(GtkTextBuffer* buffer)
+{
+    GtkTextIter start, end;
+    gtk_text_buffer_get_bounds(buffer, &start, &end);
+    return gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
 }

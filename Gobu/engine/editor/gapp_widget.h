@@ -55,4 +55,8 @@ void gapp_widget_toolbar_separator_new(GtkWidget *toolbar);
 
 GtkWidget *gapp_widget_expander_with_widget(const gchar *title, GtkWidget *widget);
 
+void gapp_widget_entry_set_text(GtkEntry *entry, const gchar* text);
+void gapp_widget_view_set_text(GtkTextView* view, const gchar* text);
+gchar* gapp_widget_view_get_text(GtkTextBuffer* buffer);
+
 #endif // __GAPP_WIDGET_H__

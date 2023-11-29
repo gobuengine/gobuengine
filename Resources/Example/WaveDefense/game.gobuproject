@@ -1,63 +1,22 @@
-{
-  "project": {
-    "description": {
-      "about": {
-        "projectthumbnail": "",
-        "description": "",
-        "projectid": "{36CBC363-47E8-46B1-2914-2E8EB4E5E6D9}",
-        "projectname": "WaveDefense",
-        "projectversion": ""
-      },
-      "publisher": {
-        "companyName": "",
-        "companyDistinguishedName": "",
-        "homePage": "",
-        "supportContact": ""
-      },
-      "legal": {
-        "copyrightNotice": "Fill out your copyright notice in the Description page of Project Settings.",
-        "licensingTerms": "",
-        "privacyPolicy": ""
-      },
-      "displayed": {
-        "projectDisplayedTitle": "",
-        "projectDisplayedTitleInfo": ""
-      },
-      "setting": {
-        "shouldWindowPresserveAspectRation": true,
-        "useBorderlessWindow": false,
-        "allowWindowResize": false,
-        "allowClose": true,
-        "allowMaximize": true,
-        "allowMinimize": true
-      }
-    },
-    "maps": {
-        "editorStartupMap": "",
-        "gameDefaultMap": "",
-        "transitionMap": ""
-    }
-  },
-  "platforms": {
-    "linux": {
-      "icon": ""
-    },
-    "mac": {
-      "icon": ""
-    },
-    "windows": {
-      "icon": ""
-    }
-  },
-  "setting": {
-    "name": "WaveDefense",
-    "width": 1280,
-    "height": 720,
-    "mode": [
-      "Windowed",
-      "Minimized",
-      "Maximized",
-      "Fullscreen"
-    ]
-  }
-}
+[project]
+thumbnail=Saved/thumbnail.png
+name=WaveDefense
+description=Un juego de disparo 2d estilo contra
+author=Jhonson Ozuna - hbiblia@gmail.com
+license=
+version=0.0.1
+
+[display.resolution]
+width=1280
+height=720
+
+[display.window]
+mode=0
+resizable=true
+borderless=false
+alwayontop=false
+transparent=false
+nofocus=false
+highdpi=true
+vsync=false
+aspectration=true

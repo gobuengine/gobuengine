@@ -90,6 +90,7 @@ void gapp_project_editor_window_new(GtkApplication* app)
     EditorCore->window = gtk_application_window_new(app);
     // gtk_window_set_title(GTK_WINDOW(EditorCore->window), gb_strdups("[%s] - GobuEngine", gb_project_get_name()));
     gtk_window_set_default_size(GTK_WINDOW(EditorCore->window), 1280, 720);
+    gtk_widget_set_size_request(GTK_WIDGET(EditorCore->window), 1280, 720);
     gtk_window_maximize(GTK_WINDOW(EditorCore->window));
     g_signal_connect(EditorCore->window, "realize", G_CALLBACK(project_editor_process), NULL);
     g_signal_connect(EditorCore->window, "destroy", G_CALLBACK(project_editor_free), NULL);
