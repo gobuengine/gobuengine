@@ -124,8 +124,8 @@ void gb_project_config_set_height(int height)
 
 void gb_project_config_set_mode(int mode)
 {
-    g_key_file_set_integer(project.setting, "display.resolution", "mode", mode);
-    project.mode = g_key_file_get_integer(project.setting, "display.resolution", "mode", NULL);
+    g_key_file_set_integer(project.setting, "display.window", "mode", mode);
+    project.mode = g_key_file_get_integer(project.setting, "display.window", "mode", NULL);
 }
 
 void gb_project_config_set_resizable(bool resizable)
