@@ -5,6 +5,7 @@
 #include "gapp_tool_console.h"
 #include "gapp_widget.h"
 
+
 struct _GappLevelEditor
 {
     GtkWidget parent;
@@ -116,7 +117,7 @@ static void signal_viewport_init(GappLevelEditor* self, gpointer data)
 
     // cargamos el archivo .level
     // unsigned char* level_buffer = LoadFileData(self->filename, &level_buffer_size);
-    gchar *level_buffer = gb_fs_get_contents(self->filename, &level_buffer_size);
+    gchar* level_buffer = gb_fs_get_contents(self->filename, &level_buffer_size);
 
     GCamera* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), GCamera);
     camera->mode = CAMERA_EDITOR;
@@ -144,32 +145,6 @@ static void signal_viewport_init(GappLevelEditor* self, gpointer data)
     });
 }
 
-
-// // 
-// static void gapp_level_outliner_init(ecs_world_t* world, ecs_entity_t root)
-// {
-//     // ecs_iter_t it = ecs_children(world, root);
-//     // while (ecs_children_next(&it)) {
-//     //     signal_observer_state_world(&it);
-//     // }
-
-//     // ecs_query_t* q = ecs_query(world, {
-//     //     .filter.terms = {
-//     //         { ecs_id(GPosition) },
-//     //         {.id = ecs_pair(EcsChildOf, root)}
-//     //     }
-//     // });
-
-//     // ecs_iter_t it = ecs_query_iter(world, q);
-//     // while (ecs_query_next(&it)) {
-//     //     signal_observer_state_world(&it);
-//     // }
-
-//     // ecs_query_fini(q);
-// }
-
-// -------------- --------------
-
 GappLevelEditor* gapp_level_editor_new(const gchar* filename)
 {
     GappLevelEditor* self = g_object_new(GAPP_LEVEL_TYPE_EDITOR, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
@@ -188,4 +163,3 @@ ecs_world_t* gapp_level_editor_get_world(GappLevelEditor* self)
 {
     return self->world;
 }
-

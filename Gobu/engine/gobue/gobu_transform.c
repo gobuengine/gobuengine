@@ -28,9 +28,12 @@ void GobuTransformImport(ecs_world_t* world)
         }
     });
 
-    ecs_primitive(world, {
+    ecs_struct(world, {
         .entity = ecs_id(GRotation),
-        .kind = ecs_id(ecs_f32_t)
+        .members = {
+            {.name = "x", .type = ecs_id(ecs_f32_t) },
+            {.name = "y", .type = ecs_id(ecs_f32_t) },
+        }
     });
 }
 

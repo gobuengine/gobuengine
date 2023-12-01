@@ -23,7 +23,7 @@ static void GobuAutoRotate_Update(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        rotation[i] += autoRotate[i].speed * it->delta_time;
+        rotation[i].x += autoRotate[i].speed * it->delta_time;
     }
 }
 

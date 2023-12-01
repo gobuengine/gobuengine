@@ -18,6 +18,8 @@
 #include "gobu_camera.h"
 #include "gobu_input.h"
 #include "gobu_custom.h"
+#include "gobu_bounding.h"
+#include "gobu_gizmos.h"
 
 void gobu_import_all(ecs_world_t* world);
 

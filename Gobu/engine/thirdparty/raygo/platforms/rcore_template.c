@@ -46,6 +46,17 @@
 *
 **********************************************************************************************/
 
+#define GLFW_KEY_F12 
+#define GLFW_MOD_CONTROL    0x0002
+#define GLFW_KEY_F12        301
+#define GLFW_TRUE           1
+#define GLFW_FALSE          0
+#define GLFW_REPEAT         2
+#define GLFW_PRESS          1
+#define GLFW_RELEASE        0
+#define GLFW_MOD_CAPS_LOCK       0x0010
+#define GLFW_MOD_NUM_LOCK        0x0020
+
 // TODO: Include the platform specific libraries
 
 //----------------------------------------------------------------------------------
@@ -356,6 +367,57 @@ void OpenURL(const char* url)
 //----------------------------------------------------------------------------------
 // Module Functions Definition: Inputs
 //----------------------------------------------------------------------------------
+
+static const int keymap_raylib[] =
+    {0, 1, 2, 3, 4, 5, 6, 7, KEY_BACKSPACE, KEY_TAB, 10, 11, 12, KEY_ENTER, 14, 15,
+     KEY_LEFT_SHIFT, KEY_LEFT_CONTROL, KEY_LEFT_ALT, KEY_PAUSE, KEY_CAPS_LOCK, 21, 22,
+     23, 24, 25, 26, KEY_ESCAPE, 28, 29, 30, 31, KEY_SPACE, KEY_PAGE_UP, KEY_PAGE_DOWN,
+     KEY_END, KEY_HOME, KEY_LEFT, KEY_UP, KEY_RIGHT, KEY_DOWN, 41, 42, 43, KEY_PRINT_SCREEN,
+     KEY_INSERT, KEY_DELETE, 47, 48, KEY_ONE, KEY_TWO, KEY_THREE, KEY_FOUR, KEY_FIVE, KEY_SIX,
+     KEY_SEVEN, KEY_EIGHT, KEY_NINE, 58, 59, 60, 61, 62, 63, 64, KEY_A, KEY_B, KEY_C, KEY_D,
+     KEY_E, KEY_F, KEY_G, KEY_H, KEY_I, KEY_J, KEY_K, KEY_L, KEY_M, KEY_N, KEY_O, KEY_P, KEY_Q, KEY_R,
+     KEY_S, KEY_T, KEY_U, KEY_V, KEY_W, KEY_X, KEY_Y, KEY_Z, KEY_KB_MENU,
+     KEY_KB_MENU, 93, 94, 95, KEY_KP_0, KEY_KP_1, KEY_KP_2, KEY_KP_3, KEY_KP_4,
+     KEY_KP_5, KEY_KP_6, KEY_KP_7, KEY_KP_8, KEY_KP_9, KEY_KP_MULTIPLY, KEY_KP_ADD, 108,
+     KEY_KP_SUBTRACT, KEY_KP_DECIMAL, KEY_KP_DIVIDE, KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
+     KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10, KEY_F11, KEY_F12, 124, 125,
+     126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+     KEY_NUM_LOCK, KEY_SCROLL_LOCK, 146, 147, 148, 149, 150, 151, 152,
+     153, 154, 155, 156, 157, 158, 159, 160, KEY_RIGHT_SHIFT,
+     162, KEY_RIGHT_CONTROL, 164, KEY_RIGHT_ALT, 166, 167, 168, 169, 170,
+     171, 172, 173, 174, 175, 176, 177, 178, 179,
+     180, 181, 182, 183, 184, 185, KEY_SEMICOLON, KEY_EQUAL, KEY_COMMA,
+     KEY_MINUS, KEY_PERIOD, KEY_SLASH, 192, 193, 194, 195, 196, 197,
+     198, 199, 200, 201, 202, 203, 204, 205, 206,
+     207, 208, 209, 210, 211, 212, 213, 214, 215,
+     216, 217, 218, KEY_LEFT_BRACKET, KEY_BACKSLASH, KEY_RIGHT_BRACKET, 222, 223, 224,
+     225, 226, 227, 228, 229, 230, 231, 232, 233,
+     234, 235, 236, 237, 238, 239, 240, 241, 242,
+     243, 244, 245, 246, 247, 248, 249};
+
+void keycallback(int key, int scancode, int action, int mods)
+{
+    int kkey = keymap_raylib[key];
+    if (kkey < 0) return;    // Security check, macOS fn key generates -1
+
+    // WARNING: GLFW could return GLFW_REPEAT, we need to consider it as 1
+    // to work properly with our implementation (IsKeyDown/IsKeyUp checks)
+    if (action == GLFW_RELEASE) CORE.Input.Keyboard.currentKeyState[kkey] = 0;
+    else if(action == GLFW_PRESS) CORE.Input.Keyboard.currentKeyState[kkey] = 1;
+    else if(action == GLFW_REPEAT) CORE.Input.Keyboard.keyRepeatInFrame[kkey] = 1;
+
+    // WARNING: Check if CAPS/NUM key modifiers are enabled and force down state for those keys
+    if (((kkey == KEY_CAPS_LOCK) && ((mods & GLFW_MOD_CAPS_LOCK) > 0)) ||
+        ((kkey == KEY_NUM_LOCK) && ((mods & GLFW_MOD_NUM_LOCK) > 0))) CORE.Input.Keyboard.currentKeyState[kkey] = 1;
+
+    // Check if there is space available in the key queue
+    if ((CORE.Input.Keyboard.keyPressedQueueCount < MAX_KEY_PRESSED_QUEUE) && (action == GLFW_PRESS))
+    {
+        // Add character to the queue
+        CORE.Input.Keyboard.keyPressedQueue[CORE.Input.Keyboard.keyPressedQueueCount] = kkey;
+        CORE.Input.Keyboard.keyPressedQueueCount++;
+    }
+}
 
 // Set internal gamepad mappings
 int SetGamepadMappings(const char* mappings)

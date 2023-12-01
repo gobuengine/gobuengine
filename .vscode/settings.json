@@ -34,6 +34,10 @@
         "gobu_project.h": "c",
         "gobu_controller.h": "c",
         "algorithm": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "gobu_custom.h": "c",
+        "gobu_gizmos.h": "c",
+        "gapp_level_viewport.h": "c",
+        "gapp_gobu_embed.h": "c"
     }
 }

@@ -1,0 +1,14 @@
+[project]
+name=TappyPlane
+version=0.0.1
+description=Example project Tappy Plane
+
+[display.resolution]
+width=800
+height=480
+
+[display.window]
+resizable=true
+highdpi=true
+spectration=true
+aspectration=true

@@ -23,7 +23,11 @@ typedef struct GScale
     float y;
 }GScale;
 
-typedef float GRotation;
+typedef struct GRotation
+{
+    float x;
+    float y;
+}GRotation;
 
 extern ECS_COMPONENT_DECLARE(GPosition);
 extern ECS_COMPONENT_DECLARE(GScale);

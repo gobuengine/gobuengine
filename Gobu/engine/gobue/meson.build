@@ -14,6 +14,8 @@ libcore_source = [
     files('gobu_camera.c'),
     files('gobu_input.c'),
     # files('gobu_gui.c'),
+    files('gobu_bounding.c'),
+    files('gobu_gizmos.c'),
     files('gobu_utility.c'),
     files('gobu_project.c'),
     files('gobu_gobu.c'),

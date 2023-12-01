@@ -42,6 +42,11 @@ static void GobuInputSystem_Add(ecs_iter_t* it)
         input[i].mouse.set_scale = SetMouseScale;
         input[i].mouse.get_screen_to_world = get_screen_to_world_mouse;
 
+        input[i].keyboard.down = IsKeyDown;
+        input[i].keyboard.pressed = IsKeyPressed;
+        input[i].keyboard.released = IsKeyReleased;
+        input[i].keyboard.up = IsKeyUp;
+
         input[i].get_screen_to_world = get_screen_to_world;
     }
 }

@@ -28,6 +28,15 @@ extern "C" {
             void (*set_scale)(float scaleX, float scaleY);
             Vector2(*get_screen_to_world)(GCamera camera);
         }mouse;
+
+        struct
+        {
+            bool (*down)(int key);
+            bool (*pressed)(int key);
+            bool (*released)(int key);
+            bool (*up)(int key);
+        }keyboard;
+
     }GInputSystem;
 
     extern ECS_COMPONENT_DECLARE(GInputSystem);

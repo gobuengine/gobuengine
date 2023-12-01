@@ -18,4 +18,6 @@ void gobu_import_all(ecs_world_t* world) {
     ECS_IMPORT(world, GobuText);
     ECS_IMPORT(world, GobuSprite);
 
+    ECS_IMPORT(world, GobuBoundingBox);
+    ECS_IMPORT(world, GobuGizmos);
 }

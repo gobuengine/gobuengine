@@ -18,6 +18,8 @@ static gboolean signal_viewport_zoom(GtkEventControllerScroll* controller, gdoub
 static void signal_viewport_mouse_move(GtkEventControllerMotion* controller, double x, double y, GtkWidget* widget);
 static void signal_viewport_mouse_button_pressed(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget);
 static void signal_viewport_mouse_button_released(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget);
+static void signal_viewport_key_pressed(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget);
+static void signal_viewport_key_released(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget);
 
 static void gapp_level_viewport_class_init(GappLevelViewportClass* klass)
 {
@@ -44,6 +46,11 @@ static void gapp_level_viewport_init(GappLevelViewport* self)
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(gesture), 0);
     g_signal_connect(gesture, "pressed", G_CALLBACK(signal_viewport_mouse_button_pressed), self);
     g_signal_connect(gesture, "released", G_CALLBACK(signal_viewport_mouse_button_released), self);
+
+    GtkEventControllerKey* key = gtk_event_controller_key_new();
+    gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(key));
+    g_signal_connect(key, "key-pressed", G_CALLBACK(signal_viewport_key_pressed), self);
+    g_signal_connect(key, "key-released", G_CALLBACK(signal_viewport_key_released), self);
 }
 
 /**
@@ -146,6 +153,11 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
     ecs_set_name(world, entity, gb_strdups("%s%d", name, entity));
     ecs_add_pair(world, entity, EcsChildOf, ecs_lookup(world, "World"));
     ecs_set(world, entity, GPosition, { mouseWorld.x, mouseWorld.y });
+    ecs_set(world, entity, GScale, { 1.0f, 1.0f });
+    ecs_set(world, entity, GRotation, { 0.0f, 0.0f });
+    ecs_set(world, entity, GBoundingBox, { 0.0f, 0.0f, 0.0f, 0.0f });
+    // Solo para el editor de nivel: experimental
+    ecs_set(world, entity, ecs_gizmos_t, { 0 });
 
     if (gb_fs_is_extension(filename, ".png")) {
         ecs_set(world, entity, GSprite, { .resource = name });
@@ -244,3 +256,30 @@ static void signal_viewport_mouse_button_released(GtkGestureClick* gesture, int 
     gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
 }
 
+/**
+ * @brief Función que se ejecuta cuando se presiona una tecla en el viewport.
+ *
+ * @param self El controlador de eventos de teclado.
+ * @param keyval El valor de la tecla presionada.
+ * @param keycode El código de la tecla presionada.
+ * @param state El estado de los modificadores de teclado.
+ * @param widget El widget en el que se presionó la tecla.
+ */
+static void signal_viewport_key_pressed(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget)
+{
+    keycallback(keycode, keycode, 1, 0);
+}
+
+/**
+ * @brief Función que se ejecuta cuando se suelta una tecla en el viewport.
+ *
+ * @param self El controlador de eventos de teclado.
+ * @param keyval El valor de la tecla que se soltó.
+ * @param keycode El código de la tecla que se soltó.
+ * @param state El estado de los modificadores de teclado.
+ * @param widget El widget en el que se soltó la tecla.
+ */
+static void signal_viewport_key_released(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget)
+{
+    keycallback(keycode, keycode, 0, 0);
+}

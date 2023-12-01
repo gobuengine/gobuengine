@@ -31,7 +31,7 @@ void GobuPhysicsImport(ecs_world_t* world)
         .callback = GobuPhysics_Set
     });
 
-    ECS_SYSTEM(world, GobuPhysics_Update, EcsOnUpdate, GPhysics, GPosition, ?GRotation);
+    ECS_SYSTEM(world, GobuPhysics_Update, EcsOnUpdate, GPhysics, GPosition, GRotation);
 }
 
 static void GobuPhysics_Set(ecs_iter_t* it)
@@ -43,27 +43,6 @@ static void GobuPhysics_Set(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        // PHYSACDEF PhysicsBody CreatePhysicsBodyCircle(Vector2 pos, float radius, float density);                    // Creates a new circle physics body with generic parameters
-        // PHYSACDEF PhysicsBody CreatePhysicsBodyRectangle(Vector2 pos, float width, float height, float density);    // Creates a new rectangle physics body with generic parameters
-        // PHYSACDEF PhysicsBody CreatePhysicsBodyPolygon(Vector2 pos, float radius, int sides, float density);  
-        if (event == EcsOnSet) {
-            int width = 64, height = 64, radius = 20;
-            float density = (physics[i].density == 0.0f) ? 10.0f : physics[i].density;
-
-            // Shape Rectangle
-            if (gshaperec) {
-                width = gshaperec[i].width;
-                height = gshaperec[i].height + 14;
-            }
-
-            physics[i].body = CreatePhysicsBodyRectangle((Vector2) { post[i].x, post[i].y }, width, height, density);
-
-            physics[i].body->enabled = physics[i].enabled;
-            physics[i].body->restitution = physics[i].restitution;
-            physics[i].body->freezeOrient = physics[i].freezeOrient;
-        }
-        else if (event == EcsOnRemove)
-            DestroyPhysicsBody(physics[i].body);
     }
 }
 
@@ -75,11 +54,6 @@ static void GobuPhysics_Update(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        post[i].x = physics[i].body->position.x;
-        post[i].y = physics[i].body->position.y;
-
-        if (rota)
-            rota[i] = physics[i].body->orient;
     }
 }
 

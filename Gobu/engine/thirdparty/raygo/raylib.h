@@ -1146,6 +1146,8 @@ RLAPI void PlayAutomationEvent(AutomationEvent event);                          
 // Input Handling Functions (Module: core)
 //------------------------------------------------------------------------------------
 
+RLAPI void keycallback(int key, int scancode, int action, int mods);
+
 // Input-related functions: keyboard
 RLAPI bool IsKeyPressed(int key);                             // Check if a key has been pressed once
 RLAPI bool IsKeyPressedRepeat(int key);                       // Check if a key has been pressed again (Only PLATFORM_DESKTOP)
