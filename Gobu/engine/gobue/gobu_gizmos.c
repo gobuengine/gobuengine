@@ -116,7 +116,31 @@ static void GobuGizmos_Draw(ecs_iter_t* it)
     for (int i = 0; i < it->count; i++)
     {
         if (!gizmos[i].selected) continue;
+
         Rectangle bonding = (Rectangle){ box[i].min.x, box[i].min.y, box[i].max.x, box[i].max.y };
-        DrawRectangleLinesEx(bonding, 4, RED);
+
+        DrawRectangleLinesEx(bonding, 2, SKYBLUE);
+
+        // creamos 4 rectangulos en cada esquina del bounding box para cambiar el tamaño de la entidad
+        Rectangle rect1 = (Rectangle){ bonding.x - 4, bonding.y - 4, 8, 8 };
+        Rectangle rect2 = (Rectangle){ bonding.x - 4, bonding.y + bonding.height - 4, 8, 8 };
+        Rectangle rect3 = (Rectangle){ bonding.x + bonding.width - 4, bonding.y - 4, 8, 8 };
+        Rectangle rect4 = (Rectangle){ bonding.x + bonding.width - 4, bonding.y + bonding.height - 4, 8, 8 };
+
+        DrawRectangleRec(rect1, SKYBLUE);
+        DrawRectangleRec(rect2, SKYBLUE);
+        DrawRectangleRec(rect3, SKYBLUE);
+        DrawRectangleRec(rect4, SKYBLUE);
+
+        // En cada rectangulo dibujamos un cuadrado de color blanco para poder verlo
+        DrawRectangle(rect1.x + 2.5, rect1.y + 2.5, 4, 4, WHITE);
+        DrawRectangle(rect2.x + 2.5, rect2.y + 2.5, 4, 4, WHITE);
+        DrawRectangle(rect3.x + 2.5, rect3.y + 2.5, 4, 4, WHITE);
+        DrawRectangle(rect4.x + 2.5, rect4.y + 2.5, 4, 4, WHITE);
+
+        // Creamos un círculo de línea en el centro del bounding box para rotar la entidad seleccionada
+        Vector2 center = (Vector2){ bonding.x + bonding.width / 2, (bonding.y + bonding.height / 2 ) + (bonding.height/2 + 20)};
+        DrawCircle(center.x, center.y, 5, WHITE);
+        DrawCircleLines(center.x, center.y, 5, BLACK);
     }
 }

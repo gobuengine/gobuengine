@@ -338,6 +338,12 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_delete_file), data);
+
+                gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+
+                item = gtk_button_new_with_label("Create Sprite");
+                gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                gtk_box_append(GTK_BOX(box), item);
             }
             else
             {

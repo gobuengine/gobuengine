@@ -48,16 +48,7 @@ static void gapp_level_editor_class_init(GappLevelEditorClass* klass)
 
 static void gapp_level_editor_init(GappLevelEditor* self)
 {
-    GtkWidget* paned, * paned2, * toolbar;
-
-    // toolbar
-    toolbar = gapp_widget_toolbar_new();
-    gtk_box_append(self, toolbar);
-    {
-        GtkWidget* btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save");
-        g_signal_connect(btn_s, "clicked", G_CALLBACK(signal_toolbar_click_save), self);
-        gtk_box_append(toolbar, btn_s);
-    }
+    GtkWidget* paned, * paned2, * toolbar, * vbox;
 
     paned = gapp_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, TRUE);
     gtk_box_append(self, paned);
@@ -72,9 +63,22 @@ static void gapp_level_editor_init(GappLevelEditor* self)
         paned2 = gapp_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, FALSE);
         gtk_paned_set_end_child(GTK_PANED(paned), paned2);
         {
-            // viewport
-            self->viewport = gapp_level_viewport_new(self);
-            gtk_paned_set_start_child(GTK_PANED(paned2), self->viewport);
+            // toolbar
+            vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+            gtk_paned_set_start_child(GTK_PANED(paned2), vbox);
+            {
+                toolbar = gapp_widget_toolbar_new();
+                gtk_box_append(vbox, toolbar);
+                {
+                    GtkWidget* btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save");
+                    g_signal_connect(btn_s, "clicked", G_CALLBACK(signal_toolbar_click_save), self);
+                    gtk_box_append(toolbar, btn_s);
+                }
+
+                // viewport
+                self->viewport = gapp_level_viewport_new(self);
+                gtk_box_append(vbox, self->viewport);
+            }
 
             // inspector
             self->inspector = gapp_level_inspector_new();

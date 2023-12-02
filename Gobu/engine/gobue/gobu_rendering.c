@@ -59,6 +59,7 @@ void GobuRenderingImport(ecs_world_t* world)
 
 void gobu_rendering_init(ecs_world_t* world, GWindow* window)
 {
+    // SetConfigFlags(FLAG_MSAA_4X_HINT);
     ecs_entity_t engine = ecs_new_entity(world, "Engine");
     ecs_set(world, engine, GWindow, {
         .title = window->title,         // Establece el título de la ventana
