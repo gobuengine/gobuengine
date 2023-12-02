@@ -6,4 +6,7 @@
   </a>
 </p>
 
-**[Gobu Engine](https://gobuengine.org) es un motor de juegos multiplataforma diseñado para la creación de juegos en 2D, y en un futuro cercano, también en 3D.** Actualmente, los juegos solo pueden exportarse para la plataforma Windows, pero estamos trabajando en el soporte para otras plataformas esenciales, como Linux, macOS, HTML5, Android, iOS, así como plataformas basadas en la web y consolas. Nuestro objetivo es brindar a los desarrolladores la capacidad de llevar sus creaciones a una amplia gama de dispositivos y sistemas operativos.
+[Gobu Engine](https://gobuengine.org) is a cross-platform game engine in development, specifically designed for creating 2D games. Written in C and with a GTK4-based interface, it stands out for its focus on simplifying the user experience. Unlike other 2D engines, Gobu aims to make developers' lives easier by offering tools that eliminate the need for direct programming. It uses predefined components to encompass a wide variety of game types, significantly streamlining the development process.
+
+## Free, Open Source
+Gobu is completely free and open source under the MIT license, which is extremely permissive. No strings attached, no royalties, absolutely nothing. Games created by users belong entirely to them.
