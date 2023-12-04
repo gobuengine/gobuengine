@@ -70,7 +70,7 @@ void gobu_rendering_init(ecs_world_t* world, GWindow* window)
         .show_fps = window->show_fps,   // Establece si se muestra los FPS
         .show_grid = window->show_grid  // Establece si se muestra la cuadrícula
     });
-    ecs_set(world, engine, GCamera, { 0 });
+    ecs_set(world, engine, GCamera, { .camera = {.zoom = 1.0f, .rotation = 0.0f} });
     ecs_set(world, engine, GInputSystem, { 0 });
     SetTargetFPS(window->fps ? window->fps : 60);
 }
