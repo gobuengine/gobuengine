@@ -19,11 +19,19 @@ static void unselected_all(ecs_iter_t* it, ecs_gizmos_t* gizmos)
     }
 }
 
-static float point_to_angle(Vector2 mouse, Rectangle bonding)
+static double point_to_angle(Vector2 mouse, Rectangle bonding)
 {
-    float mx = mouse.x - (bonding.x + bonding.width / 2);
-    float my = mouse.y - (bonding.y + bonding.height / 2);
-    float angle = atan2(my, mx);
+    double p = sqrt(pow(bonding.x - mouse.x, 2) + pow(bonding.y - mouse.y, 2));
+    double angle = asin((bonding.y - mouse.y) / p) * (180.0f / PI) * -1;
+
+    if (mouse.x < bonding.x)
+    {
+        angle = 180.0f - angle;
+    }
+    else if (mouse.y > bonding.y)
+    {
+        angle = 360.0f + angle;
+    }
     return angle;
 }
 
@@ -64,6 +72,7 @@ static void GobuGizmos_Update(ecs_iter_t* it)
     GInputSystem* input = ecs_get(it->world, Engine, GInputSystem);
 
     Vector2 mouse = input->mouse.get_screen_to_world(*camera);
+    Vector2 delta = input->mouse.get_delta();
 
     bool shift = input->keyboard.down(KEY_LEFT_SHIFT);
     bool ctrl = input->keyboard.down(KEY_LEFT_CONTROL);
@@ -97,11 +106,11 @@ static void GobuGizmos_Update(ecs_iter_t* it)
             if (gizmos[i].selected)
             {
                 // !TODO: Calcular el mouse con la camara para que se mueva correctamente, cuando tenemos un zoom diferente a 1.0f
-                Vector2 delta = input->mouse.get_delta();
                 // Rotamos la entidad seleccionada si tenemos Ctrl presionado
                 // pero si no lo tenemos presionado, movemos la entidad
-                if (ctrl)
-                    rot[i].x = point_to_angle(Vector2Subtract(mouse, delta), bonding) * RAD2DEG;
+                if (ctrl) {
+                    rot[i].x = point_to_angle(mouse, bonding);
+                }
                 else {
                     post[i].x += delta.x;
                     post[i].y += delta.y;
