@@ -51,6 +51,19 @@ static double point_to_angle(Vector2 mouse, Rectangle bonding)
     return angle;
 }
 
+bool pointRectCollision(Vector2 mouse, Rectangle rec, float angle)
+{
+    bool collision = false;
+
+    double cosTheta = cos(-angle);
+    double sinTheta = sin(-angle);
+    double xRotated = (mouse.x - rec.x) * cosTheta - (mouse.y - rec.y) * sinTheta + rec.x;
+    double yRotated = (mouse.x - rec.x) * sinTheta + (mouse.y - rec.y) * cosTheta + rec.y;
+
+    if ((xRotated >= rec.x) && (xRotated < (rec.x + rec.width)) && (yRotated >= rec.y) && (yRotated < (rec.y + rec.height))) collision = true;
+    return collision;
+}
+
 void GobuGizmosImport(ecs_world_t* world)
 {
     ECS_MODULE(world, GobuGizmos);
@@ -103,7 +116,7 @@ static void GobuGizmos_Update(ecs_iter_t* it)
         // seleccionamos una sola entidad por click
         if (mouse_btn_pres_left)
         {
-            if (CheckCollisionPointRec(mouse, bonding))
+            if (pointRectCollision(mouse, bonding, rot[i].x))
             {
                 gizmos[i].selected = true;
                 break;
