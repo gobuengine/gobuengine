@@ -38,6 +38,9 @@
         "gobu_custom.h": "c",
         "gobu_gizmos.h": "c",
         "gapp_level_viewport.h": "c",
-        "gapp_gobu_embed.h": "c"
+        "gapp_gobu_embed.h": "c",
+        "gobu_physics.h": "c",
+        "stdint.h": "c",
+        "gobu_bounding.h": "c"
     }
 }

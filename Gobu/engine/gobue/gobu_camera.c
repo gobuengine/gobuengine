@@ -35,8 +35,8 @@ void GobuCameraImport(ecs_world_t* world)
     ecs_struct(world, {
         .entity = ecs_id(Camera2D),
         .members = {
-            {.name = "offset", .type = ecs_id(ecs_vec2_t) },
-            {.name = "target", .type = ecs_id(ecs_vec2_t) },
+            {.name = "offset", .type = ecs_id(gb_vec2_t) },
+            {.name = "target", .type = ecs_id(gb_vec2_t) },
             {.name = "rotation", .type = ecs_id(ecs_f64_t) },
             {.name = "zoom", .type = ecs_id(ecs_f64_t) },
         }

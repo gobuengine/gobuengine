@@ -1,11 +1,9 @@
 #include "gobu_rendering.h"
-#include "gobu_transform.h"
-#include "gobu_shapes.h"
 #include "gobu_text.h"
 #include "gobu_sprite.h"
-#include "gobu_input.h"
 #include "gobu_camera.h"
 #include "gobu_bounding.h"
+#include "gobu_custom.h"
 
 #include "raygo/rlgl.h"
 #include "raygo/raymath.h"
@@ -25,10 +23,7 @@ void GobuRenderingImport(ecs_world_t* world)
     ECS_COMPONENT_DEFINE(world, GWindow);
 
     ECS_MODULE(world, GobuRendering);
-    ECS_IMPORT(world, GobuTransform);
-    ECS_IMPORT(world, GobuInputSystem);
     ECS_IMPORT(world, GobuCamera);
-    ECS_IMPORT(world, GobuShapes);
     ECS_IMPORT(world, GobuText);
     ECS_IMPORT(world, GobuSprite);
     ECS_IMPORT(world, GobuBoundingBox);
@@ -52,7 +47,7 @@ void GobuRenderingImport(ecs_world_t* world)
     });
 
     ECS_SYSTEM(world, GobuRendering_BeginDrawing, PreDraw, GWindow, GCamera);
-    ECS_SYSTEM(world, GobuRendering_Drawing, Draw, GPosition, GScale, GRotation, GBoundingBox, ? GShapeRec, ? GSprite, ? GText);
+    ECS_SYSTEM(world, GobuRendering_Drawing, Draw, gb_transform_t, GBoundingBox, ? gb_shape_rect_t, ? gb_sprite_t, ? gb_text_t);
     ECS_SYSTEM(world, GobuRendering_EndDrawing, PostDraw, GWindow);
     ECS_SYSTEM(world, GobuRendering_CheckExitRequest, PostDraw, GWindow);
 }
@@ -71,7 +66,6 @@ void gobu_rendering_init(ecs_world_t* world, GWindow* window)
         .show_grid = window->show_grid  // Establece si se muestra la cuadrícula
     });
     ecs_set(world, engine, GCamera, { .camera = {.zoom = 1.0f, .rotation = 0.0f} });
-    ecs_set(world, engine, GInputSystem, { 0 });
     SetTargetFPS(window->fps ? window->fps : 60);
 }
 
@@ -128,70 +122,61 @@ static void GobuRendering_BeginDrawing(ecs_iter_t* it)
 
 static void GobuRendering_Drawing(ecs_iter_t* it)
 {
-    GPosition* post = ecs_field(it, GPosition, 1);
-    GScale* scale = ecs_field(it, GScale, 2);
-    GRotation* rota = ecs_field(it, GRotation, 3);
-    GBoundingBox* box = ecs_field(it, GBoundingBox, 4);
+    gb_transform_t* transform = ecs_field(it, gb_transform_t, 1);
+    GBoundingBox* bounding = ecs_field(it, GBoundingBox, 2);
     // Draw
-    GShapeRec* rect = ecs_field(it, GShapeRec, 5);
-    GSprite* sprite = ecs_field(it, GSprite, 6);
-    GText* text = ecs_field(it, GText, 7);
+    gb_shape_rect_t* rect = ecs_field(it, gb_shape_rect_t, 3);
+    gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 4);
+    gb_text_t* text = ecs_field(it, gb_text_t, 5);
 
     for (int i = 0; i < it->count; i++)
     {
-        Vector2 origin = (Vector2){ 0.0f, 0.0f };
-        GPosition npost = post[i];
-        GScale nscale = scale[i];
-
+        gb_transform_t tran = transform[i];
         rlPushMatrix();
         {
-            rlTranslatef(npost.x, npost.y, 0.0f);
-            rlRotatef(rota[i].x, 0.0f, 0.0f, 1.0f);
-            rlRotatef(rota[i].y, 1.0f, 0.0f, 0.0f);
-            rlTranslatef(-origin.x, -origin.y, 0.0f);
-            rlScalef(nscale.x, nscale.y, 1.0f);
-            {
-                if (rect) {
-                    // calcular el bounding box del rectangulo
-                    if (box) {
-                        box[i].min.x = npost.x;
-                        box[i].min.y = npost.y;
-                        box[i].max.x = npost.x + rect[i].width;
-                        box[i].max.y = npost.y + rect[i].height;
-                    }
-                    DrawRectanglePro((Rectangle) { rect[i].x, rect[i].y, rect[i].width, rect[i].height }, origin, 0.0f, rect[i].color);
-                }
-                if (sprite) {
-                    // calcular el bounding box del sprite
-                    if (box) {
-                        box[i].min.x = npost.x;
-                        box[i].min.y = npost.y;
-                        box[i].max.x = sprite[i].dst.width;
-                        box[i].max.y = sprite[i].dst.height;
-                    }
-                    DrawTexturePro(sprite[i].texture, sprite[i].src, sprite[i].dst, origin, 0.0f, sprite[i].tint);
-                }
-                if (text) {
-                    // calcular el bounding box del texto
-                    if (box) {
-                        box[i].min.x = npost.x;
-                        box[i].min.y = npost.y;
-                        box[i].max.x = npost.x + MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing).x;
-                        box[i].max.y = npost.y + MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing).y;
-                    }
-                    float fontSize = (text[i].size == 0) ? 20.0f : text[i].size;
-                    float spacing = (text[i].spacing == 0.0f) ? (fontSize / 10) : text[i].spacing;
-                    Color color = (text[i].color.a == 0) ? WHITE : text[i].color;
-                    DrawTextEx(text[i].font, text[i].text, Vector2Zero(), fontSize, spacing, color);
-                }
+            rlTranslatef(trans.position.x, trans.position.y, trans.position.z);
+            rlRotatef(trans.rotation.x, 0.0f, 0.0f, 1.0f);
+            rlRotatef(trans.rotation.y, 0.0f, 1.0f, 0.0f);
+            rlRotatef(trans.rotation.z, 1.0f, 0.0f, 0.0f);
+            rlTranslatef(trans.origin.x, trans.origin.y, trans.origin.z);
+            rlScalef(trans.scale.x, trans.scale.y, trans.scale.z);
+
+            // bounding box
+            bounding[i].min.x = trans.position.x;
+            bounding[i].min.y = trans.position.y;
+
+            if (rect) {
+            // calcular el bounding box del rectangulo
+                bounding[i].max.x = rect[i].width;
+                bounding[i].max.y = rect[i].height;
+
+                DrawRectanglePro((Rectangle) { rect[i].x, rect[i].y, rect[i].width, rect[i].height }, Vector2Zero(), 0.0f, rect[i].color);
+            }
+            if (sprite) {
+                // calcular el bounding box del sprite
+                bounding[i].max.x = sprite[i].dst.width;
+                bounding[i].max.y = sprite[i].dst.height;
+
+                DrawTexturePro(sprite[i].texture, sprite[i].src, sprite[i].dst, Vector2Zero(), 0.0f, sprite[i].tint);
+            }
+            if (text) {
+                // calcular el bounding box del texto
+                bounding[i].max.x = npost.x + MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing).x;
+                bounding[i].max.y = npost.y + MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing).y;
+
+                float fontSize = (text[i].size == 0) ? 20.0f : text[i].size;
+                float spacing = (text[i].spacing == 0.0f) ? (fontSize / 10) : text[i].spacing;
+                Color color = (text[i].color.a == 0) ? WHITE : text[i].color;
+                DrawTextEx(text[i].font, text[i].text, Vector2Zero(), fontSize, spacing, color);
             }
         }
-        rlPopMatrix();
-        // ecs_iter_t child_it = ecs_children(it->world, it->entities[i]);
-        // while (ecs_children_next(&it)) {
-        //     printf("it.count: %d\n",child_it.count);
-        // }
     }
+    rlPopMatrix();
+    // ecs_iter_t child_it = ecs_children(it->world, it->entities[i]);
+    // while (ecs_children_next(&it)) {
+    //     printf("it.count: %d\n",child_it.count);
+    // }
+}
 }
 
 static void GobuRendering_EndDrawing(ecs_iter_t* it)

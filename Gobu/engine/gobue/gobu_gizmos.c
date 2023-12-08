@@ -53,15 +53,7 @@ static double point_to_angle(Vector2 mouse, Rectangle bonding)
 
 bool pointRectCollision(Vector2 mouse, Rectangle rec, float angle)
 {
-    bool collision = false;
-
-    double cosTheta = cos(-angle);
-    double sinTheta = sin(-angle);
-    double xRotated = (mouse.x - rec.x) * cosTheta - (mouse.y - rec.y) * sinTheta + rec.x;
-    double yRotated = (mouse.x - rec.x) * sinTheta + (mouse.y - rec.y) * cosTheta + rec.y;
-
-    if ((xRotated >= rec.x) && (xRotated < (rec.x + rec.width)) && (yRotated >= rec.y) && (yRotated < (rec.y + rec.height))) collision = true;
-    return collision;
+    return CheckCollisionPointRec(mouse, rec);
 }
 
 void GobuGizmosImport(ecs_world_t* world)
@@ -116,16 +108,18 @@ static void GobuGizmos_Update(ecs_iter_t* it)
         // seleccionamos una sola entidad por click
         if (mouse_btn_pres_left)
         {
-            if (pointRectCollision(mouse, bonding, rot[i].x))
-            {
-                gizmos[i].selected = true;
-                break;
-            }
+            bool selected = pointRectCollision(mouse, bonding, rot[i].x);
 
             // no deseleccionamos cuando tenemos shift presionado
             if (!shift)
             {
                 unselected_all(it, gizmos);
+            }
+
+            if (selected)
+            {
+                gizmos[i].selected = true;
+                break;
             }
         }
 
@@ -138,7 +132,7 @@ static void GobuGizmos_Update(ecs_iter_t* it)
                 // Rotamos la entidad seleccionada si tenemos Ctrl presionado
                 // pero si no lo tenemos presionado, movemos la entidad.
                 if (ctrl) {
-                    rot[i].x = point_to_angle(mouse, bonding);
+                    // rot[i].x = point_to_angle(mouse, bonding);
                 }
                 else {
                 // movemos la entidad seleccionada
@@ -170,14 +164,15 @@ static void GobuGizmos_Draw(ecs_iter_t* it)
     for (int i = 0; i < it->count; i++)
     {
         if (!gizmos[i].selected) continue;
-        Rectangle bonding = (Rectangle){ box[i].min.x, box[i].min.y, box[i].max.x, box[i].max.y };
+        Rectangle bonding = (Rectangle){ 0.0f, 0.0f, box[i].max.x, box[i].max.y };
 
         rlPushMatrix();
         {
-            rlTranslatef(bonding.x, bonding.y, 0.0f);
+            rlTranslatef(post[i].x, post[i].y, 0.0f);
             rlRotatef(rota[i].x, 0.0f, 0.0f, 1.0f);
             rlRotatef(rota[i].y, 1.0f, 0.0f, 0.0f);
-            rlTranslatef(-bonding.x, -bonding.y, 0.0f);
+            rlTranslatef(-post[i].originx, -post[i].originy, 0.0f);
+            rlScalef(sca[i].x, sca[i].y, 1.0f);
 
             DrawRectangleLinesEx(bonding, 2, SKYBLUE);
 

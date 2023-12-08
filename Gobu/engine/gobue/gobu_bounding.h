@@ -11,13 +11,14 @@ extern "C" {
 
 typedef struct GBoundingBox
 {
-    ecs_vec2_t min;
-    ecs_vec2_t max;
+    gb_vec2_t min;
+    gb_vec2_t max;
 }GBoundingBox;
 
 extern ECS_COMPONENT_DECLARE(GBoundingBox);
 
 void GobuBoundingBoxImport(ecs_world_t* world);
+Rectangle GBoundingBox_ToRectangle(GBoundingBox box);
 
 #ifdef __cplusplus
 }
