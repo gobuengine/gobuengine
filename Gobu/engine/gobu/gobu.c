@@ -22,12 +22,12 @@
 // En una version futura se podria dividir en varios archivos.
 // --------------------------------------------------------------
 
+ECS_COMPONENT_DECLARE(enumCameraMode);
 ECS_COMPONENT_DECLARE(gb_render_phases_t);
 ECS_COMPONENT_DECLARE(gb_app_t);
 ECS_COMPONENT_DECLARE(gb_color_t);
 ECS_COMPONENT_DECLARE(gb_rect_t);
 ECS_COMPONENT_DECLARE(gb_vec2_t);
-ECS_COMPONENT_DECLARE(gb_vec3_t);
 ECS_COMPONENT_DECLARE(gb_bounding_t);
 ECS_COMPONENT_DECLARE(gb_transform_t);
 ECS_COMPONENT_DECLARE(gb_info_t);
@@ -39,7 +39,6 @@ ECS_COMPONENT_DECLARE(gb_shape_circle_t);
 ECS_COMPONENT_DECLARE(gb_resource_t);
 ECS_COMPONENT_DECLARE(gb_camera_t);
 ECS_COMPONENT_DECLARE(gb_gizmos_t);
-ECS_COMPONENT_DECLARE(enumCameraMode);
 
 gb_render_phases_t render_phases;
 gb_engine_t engine;
@@ -751,9 +750,9 @@ void gb_gfx_end() { rlEnd(); }
 void gb_gfx_color4ub(gb_color_t color) { rlColor4ub(color.r, color.g, color.b, color.a); }
 void gb_gfx_vertex2f(float x, float y) { rlVertex2f(x, y); }
 void gb_gfx_vertex3f(float x, float y, float z) { rlVertex3f(x, y, z); }
-void gb_gfx_translatef(float x, float y, float z) { rlTranslatef(x, y, z); }
-void gb_gfx_rotatef(float angle, float x, float y, float z) { rlRotatef(angle, x, y, z); }
-void gb_gfx_scalef(float x, float y, float z) { rlScalef(x, y, z); }
+void gb_gfx_translate(float x, float y, float z) { rlTranslatef(x, y, z); }
+void gb_gfx_rotate(float angle, float x, float y, float z) { rlRotatef(angle, x, y, z); }
+void gb_gfx_scale(float x, float y, float z) { rlScalef(x, y, z); }
 void gb_gfx_push_matrix(void) { rlPushMatrix(); }
 void gb_gfx_pop_matrix(void) { rlPopMatrix(); }
 
@@ -805,12 +804,10 @@ void gb_rendering_draw_gismos(gb_transform_t transform, gb_bounding_t bonding_bo
 
     gb_gfx_push_matrix();
     {
-        gb_gfx_translatef(transform.position.x, transform.position.y, transform.position.z);
-        gb_gfx_rotatef(transform.rotation.x, 0.0f, 0.0f, 1.0f);
-        gb_gfx_rotatef(transform.rotation.y, 0.0f, 1.0f, 0.0f);
-        gb_gfx_rotatef(transform.rotation.z, 1.0f, 0.0f, 0.0f);
-        gb_gfx_translatef(-transform.origin.x, -transform.origin.y, 0.0f);
-        gb_gfx_scalef(transform.scale.x, transform.scale.y, 1.0f);
+        gb_gfx_translate(transform.position.x, transform.position.y, 0.0f);
+        gb_gfx_rotate(transform.rotation, 0.0f, 0.0f, 1.0f);
+        gb_gfx_translate(-transform.origin.x, -transform.origin.y, 0.0f);
+        gb_gfx_scale(transform.scale.x, transform.scale.y, 1.0f);
 
         DrawRectangleLinesEx(bonding, 2, SKYBLUE);
 
@@ -832,7 +829,7 @@ void gb_rendering_draw_gismos(gb_transform_t transform, gb_bounding_t bonding_bo
         DrawRectangle(rect4.x + 2.5, rect4.y + 2.5, 4, 4, WHITE);
 
         // Creamos un círculo de línea en el centro del bounding box para rotar la entidad seleccionada
-        Vector2 center = (Vector2){ bonding.x + bonding.width / 2, (bonding.y + bonding.height / 2) + (bonding.height / 2 + 20) };
+        gb_vec2_t center = (gb_vec2_t){ bonding.x + bonding.width / 2, (bonding.y + bonding.height / 2) + (bonding.height / 2 + 20) };
         DrawCircle(center.x, center.y, 5, WHITE);
         DrawCircleLines(center.x, center.y, 5, BLACK);
     }
@@ -898,14 +895,14 @@ void gb_rendering_draw_text(gb_text_t text)
 // sprite, un componente de tipo texto, etc.
 //
 
-static void gb_engine_component_init(ecs_world_t* world)
+static void gb_engine_component_init(gb_world_t* world)
 {
+    ECS_COMPONENT_DEFINE(world, enumCameraMode);
     ECS_COMPONENT_DEFINE(world, gb_render_phases_t);
     ECS_COMPONENT_DEFINE(world, gb_app_t);
     ECS_COMPONENT_DEFINE(world, gb_color_t);
     ECS_COMPONENT_DEFINE(world, gb_rect_t);
     ECS_COMPONENT_DEFINE(world, gb_vec2_t);
-    ECS_COMPONENT_DEFINE(world, gb_vec3_t);
     ECS_COMPONENT_DEFINE(world, gb_bounding_t);
     ECS_COMPONENT_DEFINE(world, gb_transform_t);
     ECS_COMPONENT_DEFINE(world, gb_info_t);
@@ -917,14 +914,13 @@ static void gb_engine_component_init(ecs_world_t* world)
     ECS_COMPONENT_DEFINE(world, gb_resource_t);
     ECS_COMPONENT_DEFINE(world, gb_camera_t);
     ECS_COMPONENT_DEFINE(world, gb_gizmos_t);
-    ECS_COMPONENT_DEFINE(world, enumCameraMode);
 
     ecs_enum(world, {
         .entity = ecs_id(enumCameraMode),
         .constants = {
             {.name = "NONE", .value = GB_CAMERA_NONE },
             {.name = "EDITOR", .value = GB_CAMERA_EDITOR },
-            {.name = "FOLLOWING", .value = GB_CAMERA_FOLLOWING },
+            {.name = "FOLLOWING", .value = GB_CAMERA_FOLLOWING }
         }
     });
 
@@ -937,21 +933,12 @@ static void gb_engine_component_init(ecs_world_t* world)
     });
 
     ecs_struct(world, {
-        .entity = ecs_id(gb_vec3_t),
-        .members = {
-            {.name = "x", .type = ecs_id(ecs_f32_t) },
-            {.name = "y", .type = ecs_id(ecs_f32_t) },
-            {.name = "z", .type = ecs_id(ecs_f32_t) },
-        }
-    });
-
-    ecs_struct(world, {
         .entity = ecs_id(gb_camera_t),
         .members = {
             {.name = "offset", .type = ecs_id(gb_vec2_t) },
             {.name = "target", .type = ecs_id(gb_vec2_t) },
-            {.name = "rotation", .type = ecs_id(ecs_f64_t) },
-            {.name = "zoom", .type = ecs_id(ecs_f64_t) },
+            {.name = "rotation", .type = ecs_id(ecs_f32_t) },
+            {.name = "zoom", .type = ecs_id(ecs_f32_t) },
             {.name = "mode", .type = ecs_id(enumCameraMode) },
         }
     });
@@ -979,10 +966,10 @@ static void gb_engine_component_init(ecs_world_t* world)
     ecs_struct(world, {
         .entity = ecs_id(gb_transform_t),
         .members = {
-            {.name = "position", .type = ecs_id(gb_vec3_t) },
-            {.name = "scale", .type = ecs_id(gb_vec3_t) },
-            {.name = "rotation", .type = ecs_id(gb_vec3_t) },
-            {.name = "origin", .type = ecs_id(gb_vec3_t) },
+            {.name = "position", .type = ecs_id(gb_vec2_t) },
+            {.name = "scale", .type = ecs_id(gb_vec2_t) },
+            {.name = "rotation", .type = ecs_id(ecs_f32_t) },
+            {.name = "origin", .type = ecs_id(gb_vec2_t) },
         }
     });
 
@@ -1196,7 +1183,7 @@ static void gb_ecs_update_camera_mode(ecs_iter_t* it)
             // move camera mouse movement
             if (engine.input.mouse_button_down(MOUSE_BUTTON_RIGHT))
             {
-                Vector2 delta = engine.input.mouse_delta();
+                gb_vec2_t delta = engine.input.mouse_delta();
                 camera[i].target.x -= delta.x / camera[i].zoom;
                 camera[i].target.y -= delta.y / camera[i].zoom;
             }
@@ -1205,7 +1192,7 @@ static void gb_ecs_update_camera_mode(ecs_iter_t* it)
             float wheel = engine.input.mouse_wheel();
             if (wheel != 0)
             {
-                Vector2 mouseWorld = engine.screen_to_world(camera[i], engine.input.mouse_position());
+                gb_vec2_t mouseWorld = engine.screen_to_world(camera[i], engine.input.mouse_position());
 
                 camera[i].offset = engine.input.mouse_position();
                 camera[i].target = mouseWorld;
@@ -1261,70 +1248,61 @@ static void gb_ecs_update_gismos(ecs_iter_t* it)
 {
     gb_gizmos_t* gizmos = ecs_field(it, gb_gizmos_t, 1);
     gb_transform_t* transform = ecs_field(it, gb_transform_t, 2);
+    gb_bounding_t* bounding = ecs_field(it, gb_bounding_t, 3);
 
-    // ecs_entity_t Engine = ecs_lookup(it->world, "Engine");
-    // GCamera* camera = ecs_get(it->world, Engine, GCamera);
-    // GInputSystem* input = ecs_get(it->world, Engine, GInputSystem);
+    ecs_entity_t Engine = ecs_lookup(it->world, "Engine");
+    gb_camera_t* camera = ecs_get(it->world, Engine, gb_camera_t);
 
-    // Vector2 mouse = engine.input.mouse.get_screen_to_world(*camera);
-    // Vector2 delta = engine.input.mouse.get_delta();
+    gb_vec2_t mouse = engine.screen_to_world(*camera, engine.input.mouse_position());
+    gb_vec2_t delta = engine.input.mouse_delta();
 
-    // bool shift = engine.input.keyboard.down(KEY_LEFT_SHIFT);
-    // bool ctrl = engine.input.keyboard.down(KEY_LEFT_CONTROL);
-    // bool mouse_btn_pres_left = engine.input.mouse.button_pressed(MOUSE_BUTTON_LEFT);
-    // bool mouse_btn_down_left = engine.input.mouse.button_down(MOUSE_BUTTON_LEFT);
+    bool shift = engine.input.key_down(KEY_LEFT_SHIFT);
+    bool ctrl = engine.input.key_down(KEY_LEFT_CONTROL);
+    bool mouse_btn_pres_left = engine.input.mouse_button_pressed(MOUSE_BUTTON_LEFT);
+    bool mouse_btn_down_left = engine.input.mouse_button_down(MOUSE_BUTTON_LEFT);
 
-    // for (int i = it->count - 1; i >= 0; i--)
-    // {
-    //     Rectangle bonding = (Rectangle){ box[i].min.x, box[i].min.y, box[i].max.x, box[i].max.y };
-    //     ecs_entity_t entity = it->entities[i];
+    for (int i = it->count - 1; i >= 0; i--)
+    {
+        Rectangle bonding = (Rectangle){ bounding[i].min.x, bounding[i].min.y, bounding[i].max.x, bounding[i].max.y };
+        ecs_entity_t entity = it->entities[i];
 
-    //     // seleccionamos una sola entidad por click
-    //     if (mouse_btn_pres_left)
-    //     {
-    //         bool selected = pointRectCollision(mouse, bonding, rot[i].x);
+        // seleccionamos una sola entidad por click
+        if (mouse_btn_pres_left)
+        {
+            bool selected = CheckCollisionPointRec(mouse, bonding);
 
-    //         // no deseleccionamos cuando tenemos shift presionado
-    //         if (!shift)
-    //         {
-    //             unselected_all(it, gizmos);
-    //         }
+            // no deseleccionamos cuando tenemos shift presionado
+            if (!shift)
+            {
+                // unselected_all(it, gizmos);
+            }
 
-    //         if (selected)
-    //         {
-    //             gizmos[i].selected = true;
-    //             break;
-    //         }
-    //     }
+            if (selected)
+            {
+                gizmos[i].selected = true;
+                break;
+            }
+        }
 
-    //     // movemos la entidad seleccionadas
-    //     if (mouse_btn_down_left)
-    //     {
-    //         if (gizmos[i].selected)
-    //         {
-    //             // !TODO: Calcular el mouse con la camara para que se mueva correctamente, cuando tenemos un zoom diferente a 1.0f
-    //             // Rotamos la entidad seleccionada si tenemos Ctrl presionado
-    //             // pero si no lo tenemos presionado, movemos la entidad.
-    //             if (ctrl) {
-    //                 // rot[i].x = point_to_angle(mouse, bonding);
-    //             }
-    //             else {
-    //             // movemos la entidad seleccionada
-    //                 post[i].x += delta.x;
-    //                 post[i].y += delta.y;
-    //             }
-    //         }
-    //     }
+        // movemos la entidad seleccionadas
+        if (mouse_btn_down_left)
+        {
+            if (gizmos[i].selected)
+            {
+                transform[i].position.x += delta.x;
+                transform[i].position.y += delta.y;
+            }
+        }
 
-    //     // Duplicamos la entidad seleccionadas
-    //     if (ctrl && engine.input.keyboard.pressed(KEY_D))
-    //     {
-    //         if (gizmos[i].selected)
-    //         {
-    //             ecs_clone(it->world, 0, entity, true);
-    //         }
-    //     }
-    // }
+        // Duplicamos la entidad seleccionadas
+        if (ctrl && engine.input.key_pressed(KEY_D))
+        {
+            if (gizmos[i].selected)
+            {
+                ecs_clone(it->world, 0, entity, true);
+            }
+        }
+    }
 }
 
 
@@ -1336,8 +1314,8 @@ static void gb_ecs_predraw_begin_drawing_rendering(ecs_iter_t* it)
     for (int i = 0; i < it->count; i++)
     {
         Camera2D cam = {
-            .offset = (Vector2){camera[i].offset.x, camera[i].offset.y},
-            .target = (Vector2){camera[i].target.x, camera[i].target.y},
+            .offset = camera[i].offset,
+            .target = camera[i].target,
             .rotation = camera[i].rotation,
             .zoom = camera[i].zoom,
         };
@@ -1362,15 +1340,14 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        rlPushMatrix();
+        gb_transform_t trans = transform[i];
+
+        gb_gfx_push_matrix();
         {
-            gb_transform_t trans = transform[i];
-            rlTranslatef(trans.position.x, trans.position.y, trans.position.z);
-            rlRotatef(trans.rotation.x, 0.0f, 0.0f, 1.0f);
-            rlRotatef(trans.rotation.y, 0.0f, 1.0f, 0.0f);
-            rlRotatef(trans.rotation.z, 1.0f, 0.0f, 0.0f);
-            rlTranslatef(trans.origin.x, trans.origin.y, trans.origin.z);
-            rlScalef(trans.scale.x, trans.scale.y, trans.scale.z);
+            gb_gfx_translate(trans.position.x, trans.position.y, 0.0f);
+            gb_gfx_rotate(trans.rotation, 0.0f, 0.0f, 1.0f);
+            gb_gfx_translate(trans.origin.x, trans.origin.y, 0.0f);
+            gb_gfx_scale(trans.scale.x, trans.scale.y, 1.0f);
 
             if (rect)
                 gb_rendering_draw_rect(rect[i]);
@@ -1381,7 +1358,7 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
             if (text)
                 gb_rendering_draw_text(text[i]);
         }
-        rlPopMatrix();
+        gb_gfx_pop_matrix();
     }
 }
 
@@ -1403,7 +1380,7 @@ static void gb_ecs_postdraw_enddrawing_rendering(ecs_iter_t* it)
     }
 }
 
-static void gb_engine_system_init(ecs_world_t* world)
+static void gb_engine_system_init(gb_world_t* world)
 {
     render_phases.PreDraw = ecs_new_w_id(world, EcsPhase);
     render_phases.Background = ecs_new_w_id(world, EcsPhase);
@@ -1465,7 +1442,7 @@ static void gb_engine_system_init(ecs_world_t* world)
 
     ecs_system(world, {
         .entity = ecs_entity(world, {.name = "gb_ecs_update_gismos", .add = {ecs_dependson(EcsOnUpdate)} }),
-        .query.filter.terms = { {.id = ecs_id(gb_gizmos_t)}, {.id = ecs_id(gb_transform_t)} },
+        .query.filter.terms = { {.id = ecs_id(gb_gizmos_t)}, {.id = ecs_id(gb_transform_t)}, {.id = ecs_id(gb_bounding_t)} },
         .callback = gb_ecs_update_gismos
     });
 
@@ -1509,7 +1486,7 @@ static void gb_engine_system_init(ecs_world_t* world)
  * @param path La ruta de acceso al recurso.
  * @return true si se estableció el recurso correctamente, false en caso contrario.
  */
-bool gb_resource_set(ecs_world_t* world, const char* key, const char* path)
+bool gb_resource_set(gb_world_t* world, const char* key, const char* path)
 {
     if (ecs_is_valid(world, ecs_lookup(world, key) == false)) {
         // Buscamos la ruta relativa al directorio Content
@@ -1534,7 +1511,7 @@ bool gb_resource_set(ecs_world_t* world, const char* key, const char* path)
  * @param key Clave del recurso a obtener.
  * @return Puntero al recurso correspondiente a la clave especificada, o NULL si no se encuentra.
  */
-const gb_resource_t* gb_resource(ecs_world_t* world, const char* key)
+const gb_resource_t* gb_resource(gb_world_t* world, const char* key)
 {
     ecs_entity_t resource = ecs_lookup(world, key);
     return (gb_resource_t*)ecs_get(world, resource, gb_resource_t);
@@ -1549,7 +1526,7 @@ const gb_resource_t* gb_resource(ecs_world_t* world, const char* key)
 // sprite, una entidad de tipo texto, etc.
 //
 
-ecs_entity_t gb_ecs_entity_new(ecs_world_t* world, const char* name, const gb_transform_t t)
+ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_transform_t t)
 {
     ecs_entity_t entity = ecs_new_id(world);
     gb_ecs_entity_set(world, entity, gb_info_t, { .name = gb_strdup(name) });
@@ -1557,20 +1534,24 @@ ecs_entity_t gb_ecs_entity_new(ecs_world_t* world, const char* name, const gb_tr
     gb_ecs_entity_set(world, entity, gb_bounding_t, { 0 });
     gb_ecs_entity_set(world, entity, gb_gizmos_t, { .selected = false });
 
+    ecs_add_pair(world, entity, EcsChildOf, ecs_lookup(world, "World"));
+
     return entity;
 }
 
-void gb_ecs_entity_set_parent(ecs_world_t* world, ecs_entity_t parent, ecs_entity_t child)
+void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t child)
 {
     ecs_add_pair(world, child, EcsChildOf, parent);
 }
 
-const char* gb_ecs_entity_get_name(ecs_world_t* world, ecs_entity_t entity)
+char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity)
 {
-    return gb_strdup(ecs_get(world, entity, gb_info_t)->name);
+    gb_info_t* info = ecs_get(world, entity, gb_info_t);
+    if (info == NULL) return ecs_get_name(world, entity);
+    return gb_strdup(info->name);
 }
 
-void gb_ecs_entity_set_name(ecs_world_t* world, ecs_entity_t entity, const char* name)
+void gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name)
 {
     gb_info_t* info = ecs_get(world, entity, gb_info_t);
     info->name = gb_strdup(name);
@@ -1582,9 +1563,9 @@ void gb_ecs_entity_set_name(ecs_world_t* world, ecs_entity_t entity, const char*
 // ########################################
 // Description de window app functions: 
 
-ecs_world_t* gb_app_init(gb_app_t* app)
+gb_world_t* gb_app_init(gb_app_t* app)
 {
-    ecs_world_t* world = ecs_init();
+    gb_world_t* world = ecs_init();
 
     gb_engine_component_init(world);
     gb_engine_system_init(world);
@@ -1607,12 +1588,12 @@ ecs_world_t* gb_app_init(gb_app_t* app)
     return world;
 }
 
-void gb_app_main(ecs_world_t* world)
+void gb_app_main(gb_world_t* world)
 {
     while (ecs_progress(world, GetFrameTime())) {}
 }
 
-void gb_app_progress(ecs_world_t* world)
+void gb_app_progress(gb_world_t* world)
 {
     ecs_progress(world, GetFrameTime());
 }
@@ -1626,8 +1607,8 @@ void gb_app_progress(ecs_world_t* world)
 static gb_vec2_t getscreentoworld2d(gb_camera_t camera, gb_vec2_t position)
 {
     Camera2D cam = {
-        .offset = (Vector2){camera.offset.x, camera.offset.y},
-        .target = (Vector2){camera.target.x, camera.target.y},
+        .offset = (gb_vec2_t){camera.offset.x, camera.offset.y},
+        .target = (gb_vec2_t){camera.target.x, camera.target.y},
         .rotation = camera.rotation,
         .zoom = camera.zoom,
     };
@@ -1637,15 +1618,15 @@ static gb_vec2_t getscreentoworld2d(gb_camera_t camera, gb_vec2_t position)
 static gb_vec2_t getworldtoscreen2d(gb_camera_t camera, gb_vec2_t position)
 {
     Camera2D cam = {
-        .offset = (Vector2){camera.offset.x, camera.offset.y},
-        .target = (Vector2){camera.target.x, camera.target.y},
+        .offset = (gb_vec2_t){camera.offset.x, camera.offset.y},
+        .target = (gb_vec2_t){camera.target.x, camera.target.y},
         .rotation = camera.rotation,
         .zoom = camera.zoom,
     };
     return GetWorldToScreen2D(position, cam);
 }
 
-void gb_engine_init(ecs_world_t* world)
+void gb_engine_init(gb_world_t* world)
 {
     engine.input.mouse_button_down = IsMouseButtonDown;
     engine.input.mouse_button_pressed = IsMouseButtonPressed;

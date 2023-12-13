@@ -61,20 +61,21 @@ extern "C" {
 
     typedef Vector2 gb_vec2_t;
 
-    typedef Vector3 gb_vec3_t;
-
     typedef struct gb_bounding_t
     {
-        gb_vec3_t min;
-        gb_vec3_t max;
+        gb_vec2_t min;
+        gb_vec2_t max;
+        gb_vec2_t size;
+        gb_vec2_t center;
+        gb_vec2_t extents;
     }gb_bounding_t;
 
     typedef struct gb_transform_t
     {
-        gb_vec3_t position;
-        gb_vec3_t scale;
-        gb_vec3_t rotation;
-        gb_vec3_t origin;
+        gb_vec2_t position;
+        gb_vec2_t scale;
+        float rotation;
+        gb_vec2_t origin;
     }gb_transform_t;
 
     typedef struct gb_camera_t
@@ -185,7 +186,6 @@ extern "C" {
     extern ECS_COMPONENT_DECLARE(gb_color_t);
     extern ECS_COMPONENT_DECLARE(gb_rect_t);
     extern ECS_COMPONENT_DECLARE(gb_vec2_t);
-    extern ECS_COMPONENT_DECLARE(gb_vec3_t);
     extern ECS_COMPONENT_DECLARE(gb_camera_t);
     extern ECS_COMPONENT_DECLARE(gb_transform_t);
     extern ECS_COMPONENT_DECLARE(gb_bounding_t);
@@ -198,13 +198,13 @@ extern "C" {
     extern ECS_COMPONENT_DECLARE(gb_resource_t);
     extern ECS_COMPONENT_DECLARE(gb_gizmos_t);
 
-    #define gb_ecs_world_new ecs_init
-    #define gb_ecs_entity_set ecs_set
-    #define gb_world_t ecs_world_t
+#define gb_ecs_world_new ecs_init
+#define gb_ecs_entity_set ecs_set
+#define gb_world_t ecs_world_t
 
-    // --------------------------
-    // PROJECT MODULE
-    // --------------------------
+// --------------------------
+// PROJECT MODULE
+// --------------------------
     bool gb_project_load(const char* filename);
     const char* gb_project_get_path(void);
 
@@ -300,10 +300,10 @@ extern "C" {
     // ECS MODULE
     // --------------------------
 
-#define gb_ecs_transform(x, y) (gb_transform_t){ .position = (gb_vec3_t){ x, y, 0.0f }, .scale = (gb_vec3_t){ 1.0f, 1.0f, 1.0f }, .rotation = (gb_vec3_t){ 0.0f, 0.0f, 0.0f }, .origin = (gb_vec3_t){ 0.0f, 0.0f, 0.0f } }
+#define gb_ecs_transform(x, y) (gb_transform_t){ .position = (gb_vec2_t){ x, y}, .scale = Vector2One(), .rotation = 0.0f, .origin = (gb_vec2_t){0.5f, 0.5f} }
     ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_transform_t t);
     void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t child);
-    const char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
+    char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
     void gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name);
 
     // --------------------------

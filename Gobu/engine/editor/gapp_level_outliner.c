@@ -41,7 +41,7 @@ static void object_outliner_item_class_init(ObjectOutlinerItemClass* class)
 ObjectOutlinerItem* object_outliner_item_new(ecs_world_t* world, ecs_entity_t entity)
 {
     ObjectOutlinerItem* item = g_object_new(OBJECT_TYPE_OUTLINER_ITEM, NULL);
-    item->name = gb_strdup(ecs_get_name(world, entity));
+    item->name = gb_ecs_entity_get_name(world, entity);
     item->visible = ecs_is_alive(world, entity);
     item->expand = FALSE;
     item->entity = entity;

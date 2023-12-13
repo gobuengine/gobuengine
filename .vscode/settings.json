@@ -56,6 +56,7 @@
         "cstddef": "c",
         "limits": "c",
         "sokol_app.h": "c",
-        "sokol_gl.h": "c"
+        "sokol_gl.h": "c",
+        "config.h": "c"
     }
 }
