@@ -9,6 +9,8 @@ struct _GappLevelViewport
 
 G_DEFINE_TYPE_WITH_PRIVATE(GappLevelViewport, gapp_level_viewport, GAPP_TYPE_GOBU_EMBED);
 
+extern gb_engine_t engine;
+
 static void signal_viewport_start(GappLevelViewport* viewpor, gpointer data);
 static void signal_viewport_render(GappLevelViewport* viewpor, gpointer data);
 static void signal_viewport_resize(GappLevelViewport* viewpor, int width, int height, gpointer data);
@@ -133,11 +135,13 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
     if (gb_resource_set(world, name, filename))
         gb_print_info(gb_strdups("Resource load: %s", name));
 
-    // gb_camera_t* camera = gb_camera_manager_get_main(world);
-    // gb_vec2_t mouseWorld = gb_screen_to_world(camera, x, y);
+    gb_camera_t* camera = ecs_get(world, ecs_lookup(world, "Engine"), gb_camera_t);
+    gb_vec2_t mouseWorld = engine.screen_to_world(*camera, (gb_vec2_t) { x, y });
+
+    ecs_entity_t e = gb_ecs_entity_new(world, name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
 
     if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
-        // gb_entity_spawn(world, gb_default_transform(mouseWorld.x, mouseWorld.y), gb_sprite_t, { .r = name });
+        gb_ecs_entity_set(world, e, gb_sprite_t, { .resource = name });
     }
 }
 

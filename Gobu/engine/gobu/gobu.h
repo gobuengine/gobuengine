@@ -5,8 +5,8 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include "thirdparty/flecs/flecs.h"
-// #include "thirdparty/raygo/raylib.h"
-// #include "thirdparty/raygo/raymath.h"
+#include "thirdparty/raygo/raylib.h"
+#include "thirdparty/raygo/raymath.h"
 #include "thirdparty/binn/binn_json.h"
 
 #ifdef __cplusplus
@@ -55,27 +55,13 @@ extern "C" {
         ecs_byte_t a;
     }gb_color_t;
 
-    typedef struct gb_font_t {
-        ecs_byte_t id;
-    }gb_font_t;
+    typedef Font gb_font_t;
 
-    typedef struct gb_rect_t {
-        float x;
-        float y;
-        float width;
-        float height;
-    } gb_rect_t;
+    typedef Rectangle gb_rect_t;
 
-    typedef struct gb_vec2_t {
-        float x;
-        float y;
-    }gb_vec2_t;
+    typedef Vector2 gb_vec2_t;
 
-    typedef struct gb_vec3_t {
-        float x;
-        float y;
-        float z;
-    }gb_vec3_t;
+    typedef Vector3 gb_vec3_t;
 
     typedef struct gb_bounding_t
     {
@@ -124,9 +110,7 @@ extern "C" {
         bool loop;
     }gb_animated_t;
 
-    typedef struct gb_texture_t {
-        ecs_byte_t id;
-    }gb_texture_t;
+    typedef Texture2D gb_texture_t;
 
     typedef struct gb_text_t
     {
@@ -135,7 +119,6 @@ extern "C" {
         float size;
         float spacing;
         gb_color_t color;
-        // no-serialize
         gb_font_t font;
     }gb_text_t;
 
@@ -143,7 +126,6 @@ extern "C" {
     {
         char* resource;
         gb_color_t tint;
-        // no-serialize
         gb_texture_t texture;
         gb_rect_t src;
         gb_rect_t dst;
@@ -173,7 +155,6 @@ extern "C" {
 
     typedef struct gb_resource_t {
         char* path;
-        // no serialize
         gb_texture_t texture;
         gb_font_t font;
         binn* anim2d;
@@ -216,6 +197,10 @@ extern "C" {
     extern ECS_COMPONENT_DECLARE(gb_shape_circle_t);
     extern ECS_COMPONENT_DECLARE(gb_resource_t);
     extern ECS_COMPONENT_DECLARE(gb_gizmos_t);
+
+    #define gb_ecs_world_new ecs_init
+    #define gb_ecs_entity_set ecs_set
+    #define gb_world_t ecs_world_t
 
     // --------------------------
     // PROJECT MODULE
@@ -298,7 +283,7 @@ extern "C" {
     // --------------------------
     // RENDERING MODULE
     // --------------------------
-    void gb_rendering_draw_grid_2d(int slices, float spacing, gb_color_t color1, gb_color_t color2);
+    void gb_rendering_draw_grid_2d(int slices, float spacing, gb_color_t color);
     void gb_rendering_draw_gismos(gb_transform_t transform, gb_bounding_t bonding_box);
     void gb_rendering_draw_rect(gb_shape_rect_t rect);
     void gb_rendering_draw_circle(gb_shape_circle_t circle);
@@ -308,27 +293,25 @@ extern "C" {
     // --------------------------
     // RESOURCE MODULE
     // --------------------------
-    bool gb_resource_set(ecs_world_t* world, const char* key, const char* path);
-    const gb_resource_t* gb_resource(ecs_world_t* world, const char* key);
+    bool gb_resource_set(gb_world_t* world, const char* key, const char* path);
+    const gb_resource_t* gb_resource(gb_world_t* world, const char* key);
 
     // --------------------------
     // ECS MODULE
     // --------------------------
-#define gb_ecs_world_new ecs_init
-#define gb_ecs_entity_set ecs_set
-#define gb_ecs_world_t ecs_world_t
+
 #define gb_ecs_transform(x, y) (gb_transform_t){ .position = (gb_vec3_t){ x, y, 0.0f }, .scale = (gb_vec3_t){ 1.0f, 1.0f, 1.0f }, .rotation = (gb_vec3_t){ 0.0f, 0.0f, 0.0f }, .origin = (gb_vec3_t){ 0.0f, 0.0f, 0.0f } }
-    ecs_entity_t gb_ecs_entity_new(ecs_world_t* world, const char* name, const gb_transform_t t);
-    void gb_ecs_entity_set_parent(ecs_world_t* world, ecs_entity_t parent, ecs_entity_t child);
-    const char* gb_ecs_entity_get_name(ecs_world_t* world, ecs_entity_t entity);
-    void gb_ecs_entity_set_name(ecs_world_t* world, ecs_entity_t entity, const char* name);
+    ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_transform_t t);
+    void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t child);
+    const char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
+    void gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name);
 
     // --------------------------
     // WindowAPP MODULE
     // --------------------------
-    ecs_world_t* gb_app_init(gb_app_t* app);
-    void gb_app_main(ecs_world_t* world);
-    void gb_app_progress(ecs_world_t* world);
+    gb_world_t* gb_app_init(gb_app_t* app);
+    void gb_app_main(gb_world_t* world);
+    void gb_app_progress(gb_world_t* world);
 
 #ifdef __cplusplus
 }

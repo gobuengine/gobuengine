@@ -1,14 +1,19 @@
 #include "gobu.h"
-// #include "thirdparty/raygo/rlgl.h"
+#include "thirdparty/raygo/rlgl.h"
 
-// #ifdef GOBU_LIB_IMPL
-#include "thirdparty/sokol/sokol_app.h"
-#include "thirdparty/sokol/sokol_gfx.h"
-#include "thirdparty/sokol/sokol_log.h"
-#include "thirdparty/sokol/sokol_glue.h"
-#define SOKOL_GL_IMPL
-#include "thirdparty/sokol/sokol_gl.h"
+
+// VERSION 2.0.0
+// #ifdef GOBU_LIB_APP_IMPL
+// #define SOKOL_NO_ENTRY
+// #include "thirdparty/sokol/sokol_app.h"
 // #endif
+// // #ifdef GOBU_LIB_IMPL
+// #include "thirdparty/sokol/sokol_gfx.h"
+// // #include "thirdparty/sokol/sokol_log.h"
+// #include "thirdparty/sokol/sokol_glue.h"
+// #define SOKOL_GL_IMPL
+// #include "thirdparty/sokol/sokol_gl.h"
+// // #endif
 
 // --------------------------------------------------------------
 // Cree el archivo gobu-engine para implementar la idea
@@ -741,8 +746,7 @@ char* gb_str_replace(const char* str, const char* find, const char* replace)
 // ########################################
 //
 
-
-void gb_gfx_begin() { rlBegin(int mode); }
+void gb_gfx_begin_lines(void) { rlBegin(RL_LINES); }
 void gb_gfx_end() { rlEnd(); }
 void gb_gfx_color4ub(gb_color_t color) { rlColor4ub(color.r, color.g, color.b, color.a); }
 void gb_gfx_vertex2f(float x, float y) { rlVertex2f(x, y); }
@@ -750,15 +754,11 @@ void gb_gfx_vertex3f(float x, float y, float z) { rlVertex3f(x, y, z); }
 void gb_gfx_translatef(float x, float y, float z) { rlTranslatef(x, y, z); }
 void gb_gfx_rotatef(float angle, float x, float y, float z) { rlRotatef(angle, x, y, z); }
 void gb_gfx_scalef(float x, float y, float z) { rlScalef(x, y, z); }
-void gb_gfx_load_identity(void) { rlLoadIdentity(); }
-void gb_gfx_load_matrix(float* mat) { rlLoadMatrix(mat); }
-void gb_gfx_mult_matrix(float* mat) { rlMultMatrixf(mat); }
 void gb_gfx_push_matrix(void) { rlPushMatrix(); }
 void gb_gfx_pop_matrix(void) { rlPopMatrix(); }
-void gb_gfx_init() {}
 
-void gb_window_init(int width, int height, const char* title) {}
-void gb_close(void) {}
+void gb_gfx_init() {}
+void gb_gfx_close() {}
 
 
 // ########################################
@@ -778,27 +778,17 @@ void gb_close(void) {}
  * @param color1 El color de las líneas de la cuadrícula.
  * @param color2 El color alternativo de las líneas de la cuadrícula.
  */
-void gb_rendering_draw_grid_2d(int slices, float spacing, gb_color_t color1, gb_color_t color2)
+void gb_rendering_draw_grid_2d(int slices, float spacing, gb_color_t color)
 {
     int halfSlices = slices / 2;
 
-    gb_gfx_begin(RL_LINES);
+    gb_gfx_begin_lines();
     for (int i = -halfSlices; i <= halfSlices; i++)
     {
-        if (i == 0)
-        {
-            gb_gfx_color4ub(color1);
-            gb_gfx_color4ub(color1);
-            gb_gfx_color4ub(color1);
-            gb_gfx_color4ub(color1);
-        }
-        else
-        {
-            gb_gfx_color4ub(color2);
-            gb_gfx_color4ub(color2);
-            gb_gfx_color4ub(color2);
-            gb_gfx_color4ub(color2);
-        }
+        gb_gfx_color4ub(color);
+        gb_gfx_color4ub(color);
+        gb_gfx_color4ub(color);
+        gb_gfx_color4ub(color);
 
         gb_gfx_vertex2f((float)i * spacing, (float)-halfSlices * spacing);
         gb_gfx_vertex2f((float)i * spacing, (float)halfSlices * spacing);
@@ -1358,7 +1348,7 @@ static void gb_ecs_predraw_begin_drawing_rendering(ecs_iter_t* it)
         BeginMode2D(cam);
 
         if (win[i].show_grid)
-            DrawGrid2d(win[i].width, 48);
+            gb_rendering_draw_grid_2d(win[i].width, 48, (gb_color_t) { 10, 10, 10, 255 });
     }
 }
 
@@ -1372,9 +1362,9 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        gb_transform_t trans = transform[i];
         rlPushMatrix();
         {
+            gb_transform_t trans = transform[i];
             rlTranslatef(trans.position.x, trans.position.y, trans.position.z);
             rlRotatef(trans.rotation.x, 0.0f, 0.0f, 1.0f);
             rlRotatef(trans.rotation.y, 0.0f, 1.0f, 0.0f);
@@ -1391,8 +1381,8 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
             if (text)
                 gb_rendering_draw_text(text[i]);
         }
+        rlPopMatrix();
     }
-    rlPopMatrix();
 }
 
 static void gb_ecs_postdraw_enddrawing_rendering(ecs_iter_t* it)
@@ -1562,10 +1552,10 @@ const gb_resource_t* gb_resource(ecs_world_t* world, const char* key)
 ecs_entity_t gb_ecs_entity_new(ecs_world_t* world, const char* name, const gb_transform_t t)
 {
     ecs_entity_t entity = ecs_new_id(world);
-    // gb_entity_set(world, entity, gb_info_t, { .name = gb_strdup(name) });
-    // gb_entity_set(world, entity, gb_transform_t, { .position = t.position, .scale = t.scale, .rotation = t.rotation, .origin = t.origin });
-    // gb_entity_set(world, entity, gb_bounding_t, { 0.0f, 0.0f, 0.0f, 0.0f });
-    // gb_entity_set(world, entity, gb_gizmos_t, { 0 });
+    gb_ecs_entity_set(world, entity, gb_info_t, { .name = gb_strdup(name) });
+    gb_ecs_entity_set(world, entity, gb_transform_t, { .position = t.position, .scale = t.scale, .rotation = t.rotation, .origin = t.origin });
+    gb_ecs_entity_set(world, entity, gb_bounding_t, { 0 });
+    gb_ecs_entity_set(world, entity, gb_gizmos_t, { .selected = false });
 
     return entity;
 }

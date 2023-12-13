@@ -121,8 +121,6 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
 
     self->world = gb_app_init(&(gb_app_t) { .width = width, .height = height, .show_grid = true });
 
-     // cargamos el archivo .level
-     // unsigned char* level_buffer = LoadFileData(self->filename, &level_buffer_size);
     gchar* level_buffer = gb_fs_get_contents(self->filename, &level_buffer_size);
 
     gb_camera_t* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), gb_camera_t);
@@ -134,13 +132,12 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
     }
 
     // Buscamos o creamos una entidad principal de nombre World...
+    // experimental
     self->root = ecs_lookup(self->world, "World");
     if (self->root == 0) {
         self->root = ecs_new_entity(self->world, "World");
     }
 
-    // Creamos la entidad World en el Outliner que fueron cargadas
-    // en el .level
     gapp_level_outliner_init_root(self->outliner, self->root);
 
     ecs_observer(self->world, {
