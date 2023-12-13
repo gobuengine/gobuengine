@@ -1,7 +1,5 @@
 #include "project_manager_signal.h"
 #include "project_manager_fn.h"
-#include "gobu_project.h"
-#include "gobu_utility.h"
 #include "project_editor.h"
 
 static void response_open_project_ready(GObject* source, GAsyncResult* res, GobuProjectManager* ctx)

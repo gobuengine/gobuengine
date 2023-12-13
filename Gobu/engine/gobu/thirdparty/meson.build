@@ -1,5 +1,5 @@
 subdir('raygo')
 subdir('flecs')
 subdir('binn')
-subdir('lua')
-subdir('box2c')
+# subdir('lua')
+# subdir('box2c')

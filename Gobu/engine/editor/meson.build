@@ -14,7 +14,7 @@ if host_machine.system() == 'windows'
 endif
 
 gobueditor_src = []
-gobuapp_header = ['../thirdparty/', '../gobue/','../thirdparty/box2c/include/','../thirdparty/box2c/src/']
+gobuapp_header = ['../thirdparty/', '../gobue/']
 
 gobueditor_src += [
     'gapp_main.c',
@@ -39,7 +39,7 @@ gobueditor_src += [
 executable('gobu-editor',
     gobueditor_src,
     dependencies: gobueditor_deps,
-    link_with: [libflecs, libbinn, libbox2d],
+    link_with: [libflecs, libbinn],
     include_directories:[gobuapp_header],
     install : true,
     install_dir:base_dir+'/bin/',

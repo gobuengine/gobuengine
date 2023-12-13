@@ -4,7 +4,7 @@
 #include "gapp_level_viewport.h"
 #include "gapp_tool_console.h"
 #include "gapp_widget.h"
-
+#include "gapp_main.h"
 
 struct _GappLevelEditor
 {
@@ -24,7 +24,7 @@ G_DEFINE_TYPE_WITH_PRIVATE(GappLevelEditor, gapp_level_editor, GTK_TYPE_BOX);
 
 static void signal_toolbar_click_save(GtkWidget* button, GappLevelEditor* self);
 static void signal_observer_state_world(ecs_iter_t* it);
-static void signal_viewport_init(GappLevelEditor* self, gpointer data);
+static void signal_viewport_init(GappLevelEditor* self, int width, int height, gpointer data);
 
 static void gapp_level_editor_class_finalize(GObject* object)
 {
@@ -43,7 +43,7 @@ static void gapp_level_editor_class_init(GappLevelEditorClass* klass)
 
     g_signal_new("level-viewport-init", G_TYPE_FROM_CLASS(klass),
         G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-        0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+        0, NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_INT, G_TYPE_INT);
 }
 
 static void gapp_level_editor_init(GappLevelEditor* self)
@@ -115,16 +115,18 @@ static void signal_observer_state_world(ecs_iter_t* it)
 }
 
 // Cuando el viewport esta listo, cargamos el .level en el mundo ecs
-static void signal_viewport_init(GappLevelEditor* self, gpointer data)
+static void signal_viewport_init(GappLevelEditor* self, int width, int height, gpointer data)
 {
     size_t level_buffer_size;
 
-    // cargamos el archivo .level
-    // unsigned char* level_buffer = LoadFileData(self->filename, &level_buffer_size);
+    self->world = gb_app_init(&(gb_app_t) { .width = width, .height = height, .show_grid = true });
+
+     // cargamos el archivo .level
+     // unsigned char* level_buffer = LoadFileData(self->filename, &level_buffer_size);
     gchar* level_buffer = gb_fs_get_contents(self->filename, &level_buffer_size);
 
-    GCamera* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), GCamera);
-    camera->mode = CAMERA_EDITOR;
+    gb_camera_t* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), gb_camera_t);
+    camera->mode = GB_CAMERA_EDITOR;
 
     if (level_buffer_size > 0) {
         ecs_world_from_json(self->world, level_buffer, NULL);
@@ -142,7 +144,7 @@ static void signal_viewport_init(GappLevelEditor* self, gpointer data)
     gapp_level_outliner_init_root(self->outliner, self->root);
 
     ecs_observer(self->world, {
-        .filter = {.terms = { {.id = ecs_id(GPosition)} }},
+        .filter = {.terms = { {.id = ecs_id(gb_transform_t)} }},
         .events = { EcsOnRemove, EcsOnAdd, EcsOnSet },
         .callback = signal_observer_state_world,
         .ctx = self
@@ -154,10 +156,6 @@ GappLevelEditor* gapp_level_editor_new(const gchar* filename)
     GappLevelEditor* self = g_object_new(GAPP_LEVEL_TYPE_EDITOR, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
     {
         self->filename = gb_strdup(filename);
-        // creamos el mundo ecs
-        self->world = ecs_init();
-        gobu_import_all(self->world);
-
         gapp_project_editor_append_page(GAPP_NOTEBOOK_DEFAULT, 1, gb_fs_get_name(filename, FALSE), self);
     }
     return self;

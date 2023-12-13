@@ -29,7 +29,6 @@
 #ifndef __GOBU_LEVEL_EDITOR_H__
 #define __GOBU_LEVEL_EDITOR_H__
 #include "gapp_gobu_embed.h"
-#include "gobu_gobu.h"
 
 G_BEGIN_DECLS
 

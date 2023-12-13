@@ -1,6 +1,5 @@
 #include "gapp_tool_console.h"
 #include "gapp_main.h"
-#include "gobu_utility.h"
 
 struct _GobuToolConsole
 {

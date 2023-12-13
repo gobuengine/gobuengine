@@ -1,6 +1,5 @@
 #include "gapp_level_viewport.h"
 #include "gapp_main.h"
-#include "gobu_utility.h"
 
 struct _GappLevelViewport
 {
@@ -79,11 +78,7 @@ static void signal_viewport_start(GappLevelViewport* viewport, gpointer data)
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
 
-    ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
-
-    gobu_rendering_init(world, &(GWindow){.width = width, .height = height, .viewport = true, .show_grid = true});
-
-    g_signal_emit_by_name(viewport->editor, "level-viewport-init", 0);
+    g_signal_emit_by_name(viewport->editor, "level-viewport-init", width, height, 0);
 }
 
 /**
@@ -97,7 +92,7 @@ static void signal_viewport_start(GappLevelViewport* viewport, gpointer data)
 static void signal_viewport_render(GappLevelViewport* viewport, gpointer data)
 {
     ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
-    gobu_rendering_progress(world);
+    gb_app_progress(world);
 }
 
 /**
@@ -135,33 +130,14 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, doubl
      * Establece el recurso para el mundo dado con el nombre y el nombre de archivo especificados.
      *
      */
-    if (gobu_resource_set(world, name, filename))
+    if (gb_resource_set(world, name, filename))
         gb_print_info(gb_strdups("Resource load: %s", name));
 
-    /**
-     * Obtiene la cámara principal y el sistema de entrada del sistema de componentes de entidad del mundo.
-     * Convierte las coordenadas de la pantalla a coordenadas del mundo utilizando la matriz de transformación de la cámara principal.
-     *
-     */
-    ecs_entity_t Engine = ecs_lookup(world, "Engine");
-    GCamera* cameraMain = ecs_get(world, Engine, GCamera);
-    GInputSystem* input = ecs_get(world, Engine, GInputSystem);
-    Vector2 mouseWorld = input->get_screen_to_world((Vector2) { x, y }, (*cameraMain));
+    // gb_camera_t* camera = gb_camera_manager_get_main(world);
+    // gb_vec2_t mouseWorld = gb_screen_to_world(camera, x, y);
 
-    // Crea una nueva entidad y le asigna un nombre.
-    ecs_entity_t entity = ecs_new_id(world);
-    ecs_set_name(world, entity, gb_strdups("%s%d", name, entity));
-    ecs_add_pair(world, entity, EcsChildOf, ecs_lookup(world, "World"));
-    ecs_set(world, entity, GPosition, { mouseWorld.x, mouseWorld.y });
-    ecs_set(world, entity, GScale, { 1.0f, 1.0f });
-    ecs_set(world, entity, GRotation, { 0.0f, 0.0f });
-    ecs_set(world, entity, GBoundingBox, { 0.0f, 0.0f, 0.0f, 0.0f });
-    // Solo para el editor de nivel: experimental
-    ecs_set(world, entity, ecs_gizmos_t, { 0 });
-
-    if (gb_fs_is_extension(filename, ".png")) {
-        ecs_set(world, entity, GSprite, { .resource = name });
-        gb_print_success(gb_strdups("Spawn Entity [%lld], Component Sprite [%s]", entity, name));
+    if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
+        // gb_entity_spawn(world, gb_default_transform(mouseWorld.x, mouseWorld.y), gb_sprite_t, { .r = name });
     }
 }
 

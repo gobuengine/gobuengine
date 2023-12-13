@@ -29,7 +29,6 @@
 #define __GAPP_UI_PROJECT_MANAGER_H__
 #include <gtk/gtk.h>
 #include <stdbool.h>
-#include "gobu_utility.h"
 #include "config.h"
 
 typedef struct _GobuProjectManager

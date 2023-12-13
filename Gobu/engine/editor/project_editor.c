@@ -6,8 +6,6 @@
 #include "gapp_tool_console.h"
 #include "gapp_settings.h"
 
-#include "gobu_utility.h"
-#include "gobu_project.h"
 #include "gapp_widget.h"
 
 extern GAPP* EditorCore;
@@ -88,7 +86,7 @@ void gapp_project_editor_window_new(GtkApplication* app)
     GtkWidget* paned, * paned_bottom;
 
     EditorCore->window = gtk_application_window_new(app);
-    // gtk_window_set_title(GTK_WINDOW(EditorCore->window), gb_strdups("[%s] - GobuEngine", gb_project_get_name()));
+    // gtk_window_set_title(GTK_WINDOW(EditorCore->window), gb_strdups("[%s] - GobuEngine", gb_setting_project_name()));
     gtk_window_set_default_size(GTK_WINDOW(EditorCore->window), 1280, 720);
     gtk_widget_set_size_request(GTK_WIDGET(EditorCore->window), 1280, 720);
     gtk_window_maximize(GTK_WINDOW(EditorCore->window));
@@ -100,7 +98,7 @@ void gapp_project_editor_window_new(GtkApplication* app)
     {
         {
             titlew = gtk_label_new(NULL);
-            gtk_label_set_markup(titlew, gb_strdups("[ %s ] - GobuEngine", gb_project_get_name()));
+            gtk_label_set_markup(titlew, gb_strdups("[ %s ] - GobuEngine", gb_setting_project_name()));
             gtk_header_bar_pack_start(headerbar, titlew);
         }
 

@@ -1,10 +1,10 @@
 #ifndef __GOBU_EDITOR_H__
 #define __GOBU_EDITOR_H__
+#include "config.h"
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksource.h>
-#include "config.h"
-#include "binn/binn_json.h"
+#include "../gobu/gobu.h"
 
 #include "gapp_tool_console.h"
 

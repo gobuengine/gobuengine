@@ -1,8 +1,6 @@
 #include "gapp_settings.h"
 #include "gapp_main.h"
 #include "gapp_widget.h"
-#include "gobu_project.h"
-#include "gobu_utility.h"
 
 extern GAPP* EditorCore;
 
@@ -195,25 +193,25 @@ static void signal_changed_input_str(GObject* object, GappSettingsGameInfo type)
     switch (type)
     {
     case GAPP_SETTINGS_GAME_INFO_NAME:
-        gb_project_config_set_name(text);
+        gb_setting_project_set_name(text);
         break;
     case GAPP_SETTINGS_GAME_INFO_DESCRIPTION:
-        gb_project_config_set_description(text);
+        gb_setting_project_set_description(text);
         break;
     case GAPP_SETTINGS_GAME_INFO_AUTHOR:
-        gb_project_config_set_author(text);
+        gb_setting_project_set_author(text);
         break;
     case GAPP_SETTINGS_GAME_INFO_LICENSE:
-        gb_project_config_set_license(text);
+        gb_setting_project_set_license(text);
         break;
     case GAPP_SETTINGS_GAME_INFO_VERSION:
-        gb_project_config_set_version(text);
+        gb_setting_project_set_version(text);
         break;
     default:
         break;
     }
 
-    gb_project_config_save();
+    gb_setting_save();
 }
 
 static void signal_toggle_input(GtkCheckButton* button, GappSettingsDisplay type)
@@ -223,34 +221,34 @@ static void signal_toggle_input(GtkCheckButton* button, GappSettingsDisplay type
     switch (type)
     {
     case GAPP_SETTINGS_DISPLAY_RESIZABLE:
-        gb_project_config_set_resizable(active);
+        gb_setting_project_set_resizable(active);
         break;
     case GAPP_SETTINGS_DISPLAY_BORDERLESS:
-        gb_project_config_set_borderless(active);
+        gb_setting_project_set_borderless(active);
         break;
     case GAPP_SETTINGS_DISPLAY_ALWAYONTOP:
-        gb_project_config_set_alwayontop(active);
+        gb_setting_project_set_alwayontop(active);
         break;
     case GAPP_SETTINGS_DISPLAY_TRANSPARENT:
-        gb_project_config_set_transparent(active);
+        gb_setting_project_set_transparent(active);
         break;
     case GAPP_SETTINGS_DISPLAY_NOFOCUS:
-        gb_project_config_set_nofocus(active);
+        gb_setting_project_set_nofocus(active);
         break;
     case GAPP_SETTINGS_DISPLAY_HIGHDPI:
-        gb_project_config_set_highdpi(active);
+        gb_setting_project_set_highdpi(active);
         break;
     case GAPP_SETTINGS_DISPLAY_VSYNC:
-        gb_project_config_set_vsync(active);
+        gb_setting_project_set_vsync(active);
         break;
     case GAPP_SETTINGS_DISPLAY_ASPECTRATION:
-        gb_project_config_set_aspectration(active);
+        gb_setting_project_set_aspectration(active);
         break;
     default:
         break;
     }
 
-    gb_project_config_save();
+    gb_setting_save();
 }
 
 static void signal_activate_selected(GtkDropDown* self, GParamSpec* pspec, GappSettings* setting)
@@ -261,7 +259,7 @@ static void signal_activate_selected(GtkDropDown* self, GParamSpec* pspec, GappS
     switch (type)
     {
     case GAPP_SETTINGS_DISPLAY_MODE:
-        gb_project_config_set_mode(selected);
+        gb_setting_project_set_mode(selected);
         break;
     case GAPP_SETTINGS_DISPLAY_RESOLUTION_COMMON:
         if (selected > 0) {
@@ -272,8 +270,8 @@ static void signal_activate_selected(GtkDropDown* self, GParamSpec* pspec, GappS
             gb_str_split_free(sep1);
             gb_str_split_free(sep2);
 
-            gb_project_config_set_width(width);
-            gb_project_config_set_height(height);
+            gb_setting_project_set_width(width);
+            gb_setting_project_set_height(height);
 
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(setting->display_width), width);
             gtk_spin_button_set_value(GTK_SPIN_BUTTON(setting->display_height), height);
@@ -283,7 +281,7 @@ static void signal_activate_selected(GtkDropDown* self, GParamSpec* pspec, GappS
         break;
     }
 
-    gb_project_config_save();
+    gb_setting_save();
 }
 
 static void signal_spin_input(GtkSpinButton* self, GappSettingsDisplay type)
@@ -293,30 +291,30 @@ static void signal_spin_input(GtkSpinButton* self, GappSettingsDisplay type)
     switch (type)
     {
     case GAPP_SETTINGS_DISPLAY_WIDTH:
-        gb_project_config_set_width((int)value);
+        gb_setting_project_set_width((int)value);
         break;
     case GAPP_SETTINGS_DISPLAY_HEIGHT:
-        gb_project_config_set_height((int)value);
+        gb_setting_project_set_height((int)value);
         break;
     default:
         break;
     }
 
-    gb_project_config_save();
+    gb_setting_save();
 }
 
 static void signal_clicked_resolution_orientation_toggle(GtkButton* button, GappSettings* self)
 {
-    int width = gb_project_config_get_width();
-    int height = gb_project_config_get_height();
+    int width = gb_setting_project_width();
+    int height = gb_setting_project_height();
 
-    gb_project_config_set_width(height);
-    gb_project_config_set_height(width);
+    gb_setting_project_set_width(height);
+    gb_setting_project_set_height(width);
 
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_width), height);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_height), width);
 
-    gb_project_config_save();
+    gb_setting_save();
 }
 
 static void gapp_settings_init(GappSettings* self)
@@ -440,7 +438,7 @@ static GtkWidget* gapp_setting_game_info_new(GappSettings* self)
             gtk_frame_set_child(GTK_FRAME(text_view_frame), description);
             gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(description), GTK_WRAP_WORD_CHAR);
             gtk_text_view_set_monospace(GTK_TEXT_VIEW(description), TRUE);
-            gapp_widget_view_set_text(description, gb_project_config_get_description());
+            gapp_widget_view_set_text(description, gb_setting_project_description());
             // gapp_widget_set_margin(description, 10);
             gtk_text_view_set_right_margin(GTK_TEXT_VIEW(description), 10);
             gtk_text_view_set_left_margin(GTK_TEXT_VIEW(description), 10);
@@ -451,7 +449,7 @@ static GtkWidget* gapp_setting_game_info_new(GappSettings* self)
         // Nombre del juego
         entry = gtk_entry_new();
         gtk_entry_set_placeholder_text(GTK_ENTRY(entry), "Game entry");
-        gapp_widget_entry_set_text(entry, gb_project_config_get_name());
+        gapp_widget_entry_set_text(entry, gb_setting_project_name());
         gapp_widget_set_margin_top(entry, 10);
         gtk_widget_set_hexpand(entry, TRUE);
         gtk_widget_set_tooltip_text(entry, "The project's entry");
@@ -460,7 +458,7 @@ static GtkWidget* gapp_setting_game_info_new(GappSettings* self)
 
         entry = gtk_entry_new();
         gtk_entry_set_placeholder_text(GTK_ENTRY(entry), "Version");
-        gapp_widget_entry_set_text(entry, gb_project_config_get_version());
+        gapp_widget_entry_set_text(entry, gb_setting_project_version());
         gapp_widget_set_margin_top(entry, 10);
         gtk_widget_set_hexpand(entry, TRUE);
         gtk_widget_set_tooltip_text(entry, "The project's version number.");
@@ -470,7 +468,7 @@ static GtkWidget* gapp_setting_game_info_new(GappSettings* self)
         // Author del juego
         author = gtk_entry_new();
         gtk_entry_set_placeholder_text(GTK_ENTRY(author), "Author");
-        gapp_widget_entry_set_text(author, gb_project_config_get_author());
+        gapp_widget_entry_set_text(author, gb_setting_project_author());
         gapp_widget_set_margin_top(author, 10);
         gtk_widget_set_hexpand(author, TRUE);
         gtk_widget_set_tooltip_text(author, "The project's author");
@@ -537,7 +535,7 @@ static GtkWidget* gapp_setting_display_new(GappSettings* self)
                 gtk_box_append(GTK_BOX(vbox), label);
 
                 self->display_width = gtk_spin_button_new_with_range(0, 10000, 1);
-                gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_width), gb_project_config_get_width());
+                gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_width), gb_setting_project_width());
                 gtk_widget_set_hexpand(self->display_width, TRUE);
                 gtk_box_append(GTK_BOX(vbox), self->display_width);
                 g_signal_connect(self->display_width, "value-changed", G_CALLBACK(signal_spin_input), GAPP_SETTINGS_DISPLAY_WIDTH);
@@ -555,7 +553,7 @@ static GtkWidget* gapp_setting_display_new(GappSettings* self)
                 gtk_box_append(GTK_BOX(vbox), label);
 
                 self->display_height = gtk_spin_button_new_with_range(0, 10000, 1);
-                gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_height), gb_project_config_get_height());
+                gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_height), gb_setting_project_height());
                 gtk_widget_set_hexpand(self->display_height, TRUE);
                 gtk_box_append(GTK_BOX(vbox), self->display_height);
                 g_signal_connect(self->display_height, "value-changed", G_CALLBACK(signal_spin_input), GAPP_SETTINGS_DISPLAY_HEIGHT);
@@ -575,7 +573,7 @@ static GtkWidget* gapp_setting_display_new(GappSettings* self)
         const char* const* mode[] = { "Windowed", "Minimized", "Maximized", "Fullscreen", NULL };
         dropdown = gtk_drop_down_new_from_strings(mode);
         gtk_drop_down_set_show_arrow(dropdown, TRUE);
-        gtk_drop_down_set_selected(dropdown, gb_project_config_get_mode());
+        gtk_drop_down_set_selected(dropdown, gb_setting_project_mode());
         gapp_widget_set_margin_top(dropdown, 10);
         gtk_widget_set_tooltip_text(dropdown, "The initial window mode");
         gtk_box_append(GTK_BOX(vbox_main), dropdown);
@@ -583,52 +581,52 @@ static GtkWidget* gapp_setting_display_new(GappSettings* self)
         g_signal_connect(dropdown, "notify::selected", G_CALLBACK(signal_activate_selected), self);
 
         check = gtk_check_button_new_with_label("Allow Window Resize");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_resizable());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_resizable());
         gapp_widget_set_margin_top(check, 10);
         gtk_widget_set_tooltip_text(check, "Should the user be allowed to resize the window used by the game, where not using full screen");
         gtk_box_append(GTK_BOX(vbox_main), check);
         g_signal_connect(check, "toggled", G_CALLBACK(signal_toggle_input), GAPP_SETTINGS_DISPLAY_RESIZABLE);
 
         check = gtk_check_button_new_with_label("Use Borderless Window");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_borderless());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_borderless());
         gapp_widget_set_margin_top(check, 10);
         gtk_widget_set_tooltip_text(check, "Should the game use a borderless Slate window instead of a window with system title bar and border");
         gtk_box_append(GTK_BOX(vbox_main), check);
         g_signal_connect(check, "toggled", G_CALLBACK(signal_toggle_input), GAPP_SETTINGS_DISPLAY_BORDERLESS);
 
         check = gtk_check_button_new_with_label("Always on Top");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_alwayontop());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_alwayontop());
         gapp_widget_set_margin_top(check, 10);
         gtk_widget_set_tooltip_text(check, "Should the game use a borderless Slate window instead of a window with system title bar and border");
         gtk_box_append(GTK_BOX(vbox_main), check);
         g_signal_connect(check, "toggled", G_CALLBACK(signal_toggle_input), GAPP_SETTINGS_DISPLAY_ALWAYONTOP);
 
         check = gtk_check_button_new_with_label("Transparent");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_transparent());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_transparent());
         gapp_widget_set_margin_top(check, 10);
         gtk_box_append(GTK_BOX(vbox_main), check);
         g_signal_connect(check, "toggled", G_CALLBACK(signal_toggle_input), GAPP_SETTINGS_DISPLAY_TRANSPARENT);
 
         check = gtk_check_button_new_with_label("No Focus");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_nofocus());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_nofocus());
         gapp_widget_set_margin_top(check, 10);
         gtk_box_append(GTK_BOX(vbox_main), check);
         g_signal_connect(check, "toggled", G_CALLBACK(signal_toggle_input), GAPP_SETTINGS_DISPLAY_NOFOCUS);
 
         check = gtk_check_button_new_with_label("Allow high DPI");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_highdpi());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_highdpi());
         gapp_widget_set_margin_top(check, 10);
         gtk_box_append(GTK_BOX(vbox_main), check);
         g_signal_connect(check, "toggled", G_CALLBACK(signal_toggle_input), GAPP_SETTINGS_DISPLAY_HIGHDPI);
 
         check = gtk_check_button_new_with_label("VSync");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_vsync());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_vsync());
         gapp_widget_set_margin_top(check, 10);
         gtk_box_append(GTK_BOX(vbox_main), check);
         g_signal_connect(check, "toggled", G_CALLBACK(signal_toggle_input), GAPP_SETTINGS_DISPLAY_VSYNC);
 
         check = gtk_check_button_new_with_label("Should Window Preserve Aspect Ratio");
-        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_project_config_get_aspectration());
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(check), gb_setting_project_aspectration());
         gapp_widget_set_margin_top(check, 10);
         gtk_widget_set_tooltip_text(check, "Should the game's window preserve its aspect ration when resized by user");
         gtk_box_append(GTK_BOX(vbox_main), check);

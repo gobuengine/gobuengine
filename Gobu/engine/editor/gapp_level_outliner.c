@@ -1,7 +1,6 @@
 #include "gapp_level_outliner.h"
 #include "gapp_main.h"
 #include "gapp_widget.h"
-#include "gobu_gobu.h"
 
 // -------------------------
 // BEGIN DEFINE TYPE

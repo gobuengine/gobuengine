@@ -41,6 +41,21 @@
         "gapp_gobu_embed.h": "c",
         "gobu_physics.h": "c",
         "stdint.h": "c",
-        "gobu_bounding.h": "c"
+        "gobu_bounding.h": "c",
+        "gobu_rendering.h": "c",
+        "gobu_utility.h": "c",
+        "gobu_resource.h": "c",
+        "gobu_entity.h": "c",
+        "compare": "c",
+        "tuple": "c",
+        "utility": "c",
+        "gobu_srendering.h": "c",
+        "gobu_sdefault.h": "c",
+        "gobu.h": "c",
+        "bit": "c",
+        "cstddef": "c",
+        "limits": "c",
+        "sokol_app.h": "c",
+        "sokol_gl.h": "c"
     }
 }

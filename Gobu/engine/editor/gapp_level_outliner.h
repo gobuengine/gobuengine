@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include "gapp_level_editor.h"
-#include "gobu_gobu.h"
 
 G_BEGIN_DECLS
 

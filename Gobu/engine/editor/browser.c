@@ -6,9 +6,6 @@
 #include "gapp_main.h"
 #include "gapp_widget.h"
 
-#include "gobu_gobu.h"
-#include "gobu_project.h"
-
 enum
 {
     ACTION_CREATE_FOLDER,
