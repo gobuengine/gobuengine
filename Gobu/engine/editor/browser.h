@@ -25,16 +25,16 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __BROWSER_H__
-#define __BROWSER_H__
-#include <gtk/gtk.h>
+#ifndef __GBAPP_BROWSER_H__
+#define __GBAPP_BROWSER_H__
+#include "gapp_main.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GobuEditorWorldBrowserPrivate GobuEditorWorldBrowserPrivate;
+typedef struct _GbAppBrowserPrivate GbAppBrowserPrivate;
 
-#define GOBU_EDITOR_TYPE_WORLD_BROWSER (gb_editor_world_browser_get_type())
-G_DECLARE_FINAL_TYPE(GobuEditorWorldBrowser, gb_editor_world_browser, GOBU_EDITOR, WORLD_BROWSER, GtkBox)
+#define GBAPP_TYPE_BROWSER (gbapp_browser_get_type())
+G_DECLARE_FINAL_TYPE(GbAppBrowser, gbapp_browser, GBAPP, BROWSER, GtkBox)
 
 typedef enum
 {
@@ -42,7 +42,7 @@ typedef enum
     BROWSER_CONTENT_TILED_FILE
 } BrowserContentTypeFile;
 
-struct _GobuEditorWorldBrowserPrivate
+struct _GbAppBrowserPrivate
 {
     gchar *path_default;
     gchar *path_current;
@@ -60,8 +60,8 @@ struct _GobuEditorWorldBrowserPrivate
     GtkWidget *popover;
 };
 
-GtkWidget *gb_editor_world_browser_new(void);
+GtkWidget *gbapp_browser_new(void);
 
 G_END_DECLS
 
-#endif // __BROWSER_H__
+#endif // __GBAPP_BROWSER_H__

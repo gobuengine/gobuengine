@@ -134,10 +134,6 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess
         gchar* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
         ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
-        /**
-         * Establece el recurso para el mundo dado con el nombre y el nombre de archivo especificados.
-         *
-         */
         if (gb_resource_set(world, name, filename))
             gb_print_info(gb_strdups("Resource load: %s", name));
 

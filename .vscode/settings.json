@@ -57,6 +57,9 @@
         "limits": "c",
         "sokol_app.h": "c",
         "sokol_gl.h": "c",
-        "config.h": "c"
+        "config.h": "c",
+        "gapp_script_editor.h": "c",
+        "browser.h": "c",
+        "gbapp_asheets.h": "c"
     }
 }

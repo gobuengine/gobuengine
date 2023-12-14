@@ -14,7 +14,7 @@ if host_machine.system() == 'windows'
 endif
 
 gobueditor_src = []
-gobuapp_header = ['../thirdparty/', '../gobue/']
+gobuapp_header = ['../gobu/']
 
 gobueditor_src += [
     'gapp_main.c',
@@ -32,6 +32,7 @@ gobueditor_src += [
     'gapp_level_outliner.c',
     'gapp_level_viewport.c',
     'gapp_settings.c',
+    'gbapp_asheets.c',
     libcore_source,
     libraygo_source,
 ]

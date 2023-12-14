@@ -126,7 +126,7 @@ void gapp_project_editor_window_new(GtkApplication* app)
         paned = gapp_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, TRUE);
         gtk_window_set_child(GTK_WINDOW(EditorCore->window), paned);
         {
-            gtk_paned_set_start_child(GTK_PANED(paned), gb_editor_world_browser_new());
+            gtk_paned_set_start_child(GTK_PANED(paned), gbapp_browser_new());
 
             paned_bottom = gapp_widget_paned_new(GTK_ORIENTATION_VERTICAL, FALSE);
             gtk_paned_set_end_child(GTK_PANED(paned), paned_bottom);

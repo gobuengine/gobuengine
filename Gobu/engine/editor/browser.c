@@ -1,10 +1,6 @@
 #include "browser.h"
 #include "gapp_level_editor.h"
 #include "gapp_script_editor.h"
-#include "gapp_tool_console.h"
-
-#include "gapp_main.h"
-#include "gapp_widget.h"
 
 enum
 {
@@ -20,29 +16,29 @@ typedef struct
     gchar* text;
     int response;
     gpointer data;
-} GobuEditorWorldBrowserAction;
+} GbAppBrowserAction;
 
-struct _GobuEditorWorldBrowser
+struct _GbAppBrowser
 {
     GtkWidget parent;
 };
 
 extern GAPP* EditorCore;
 
-G_DEFINE_TYPE_WITH_PRIVATE(GobuEditorWorldBrowser, gb_editor_world_browser, GTK_TYPE_BOX);
+G_DEFINE_TYPE_WITH_PRIVATE(GbAppBrowser, gbapp_browser, GTK_TYPE_BOX);
 
-static void gb_editor_world_browser_class_init(GobuEditorWorldBrowserClass* klass)
+static void gbapp_browser_class_init(GbAppBrowserClass* klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
     // GtkWidgetClass *widget_class = GTK_WIDGET_CLASS(klass);
     // gtk_widget_class_set_layout_manager_type(widget_class, GTK_TYPE_BOX_LAYOUT);
 }
 
-static GobuEditorWorldBrowserAction* gb_editor_world_browser_new_action(const gchar* title, const gchar* text, int response, gpointer data);
-static void gb_editor_world_browser_fn_open_folder(GobuEditorWorldBrowser* browser, const gchar* path, gboolean bhistory_saved);
-static void gb_editor_world_browser_fn_history_path_forward_clear(GobuEditorWorldBrowser* browser);
-static void gb_editor_world_browser_fn_history_path_back(GobuEditorWorldBrowser* browser);
-static void gb_editor_world_browser_fn_history_path_forward(GobuEditorWorldBrowser* browser);
+static GbAppBrowserAction* gbapp_browser_fn_new_action(const gchar* title, const gchar* text, int response, gpointer data);
+static void gbapp_browser_fn_open_folder(GbAppBrowser* browser, const gchar* path, gboolean bhistory_saved);
+static void gbapp_browser_fn_history_path_forward_clear(GbAppBrowser* browser);
+static void gbapp_browser_fn_history_path_back(GbAppBrowser* browser);
+static void gbapp_browser_fn_history_path_forward(GbAppBrowser* browser);
 
 /**
  * Crea una nueva acción para el explorador de mundos en el editor de Gobu.
@@ -54,9 +50,9 @@ static void gb_editor_world_browser_fn_history_path_forward(GobuEditorWorldBrows
  *
  * @return Una nueva acción para el explorador de mundos.
  */
-static GobuEditorWorldBrowserAction* gb_editor_world_browser_new_action(const gchar* title, const gchar* text, int response, gpointer data)
+static GbAppBrowserAction* gbapp_browser_fn_new_action(const gchar* title, const gchar* text, int response, gpointer data)
 {
-    GobuEditorWorldBrowserAction* action = g_new0(GobuEditorWorldBrowserAction, 1);
+    GbAppBrowserAction* action = g_new0(GbAppBrowserAction, 1);
     action->title = gb_strdup(title);
     action->text = gb_strdup(text);
     action->response = response;
@@ -64,9 +60,9 @@ static GobuEditorWorldBrowserAction* gb_editor_world_browser_new_action(const gc
     return action;
 }
 
-static GListStore* gapp_browser_get_file_seleted(GobuEditorWorldBrowser* browser)
+static GListStore* gapp_browser_get_file_seleted(GbAppBrowser* browser)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
 
     GListStore* files = g_list_store_new(G_TYPE_FILE_INFO);
 
@@ -91,7 +87,7 @@ static GListStore* gapp_browser_get_file_seleted(GobuEditorWorldBrowser* browser
  * @param image      El widget de imagen en el que se muestra el icono del archivo.
  * @param info_file  La información del archivo para la obtención del icono.
  */
-static void gb_editor_world_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_file)
+static void gbapp_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_file)
 {
     GIcon* icon;
     const char* ext_file = g_file_info_get_name(info_file);
@@ -129,9 +125,9 @@ static void gb_editor_world_browser_fn_get_icon_file(GtkWidget* image, GFileInfo
  * @param path             La ruta de la carpeta que se abre.
  * @param bhistory_saved   TRUE si la historia de navegación se guarda, FALSE en caso contrario.
  */
-static void gb_editor_world_browser_fn_open_folder(GobuEditorWorldBrowser* browser, const gchar* path, gboolean bhistory_saved)
+static void gbapp_browser_fn_open_folder(GbAppBrowser* browser, const gchar* path, gboolean bhistory_saved)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
 
     // HISTORIAL DE PATH
     if (bhistory_saved)
@@ -160,9 +156,9 @@ static void gb_editor_world_browser_fn_open_folder(GobuEditorWorldBrowser* brows
  *
  * @param browser  El explorador de mundos en el que se limpia el historial.
  */
-static void gb_editor_world_browser_fn_history_path_forward_clear(GobuEditorWorldBrowser* browser)
+static void gbapp_browser_fn_history_path_forward_clear(GbAppBrowser* browser)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
 
     if (private->path_back->len == 0 && private->path_forward != 0)
     {
@@ -175,16 +171,16 @@ static void gb_editor_world_browser_fn_history_path_forward_clear(GobuEditorWorl
  *
  * @param browser  El explorador de mundos en el que se navega hacia atrás en el historial.
  */
-static void gb_editor_world_browser_fn_history_path_back(GobuEditorWorldBrowser* browser)
+static void gbapp_browser_fn_history_path_back(GbAppBrowser* browser)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
 
     guint index_last = (private->path_back->len - 1);
     const gchar* path = g_ptr_array_index(private->path_back, index_last);
     g_ptr_array_remove_index(private->path_back, index_last);
     g_ptr_array_add(private->path_forward, gb_strdup(private->path_current));
 
-    gb_editor_world_browser_fn_open_folder(browser, path, FALSE);
+    gbapp_browser_fn_open_folder(browser, path, FALSE);
 
     gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_back), !(private->path_back->len == 0));
     gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_forward), TRUE);
@@ -195,16 +191,16 @@ static void gb_editor_world_browser_fn_history_path_back(GobuEditorWorldBrowser*
  *
  * @param browser  El explorador de mundos en el que se navega hacia adelante en el historial.
  */
-static void gb_editor_world_browser_fn_history_path_forward(GobuEditorWorldBrowser* browser)
+static void gbapp_browser_fn_history_path_forward(GbAppBrowser* browser)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
 
     guint index_last = (private->path_forward->len - 1);
     const gchar* path = g_ptr_array_index(private->path_forward, index_last);
     g_ptr_array_remove_index(private->path_forward, index_last);
     g_ptr_array_add(private->path_back, gb_strdup(private->path_current));
 
-    gb_editor_world_browser_fn_open_folder(browser, path, FALSE);
+    gbapp_browser_fn_open_folder(browser, path, FALSE);
 
     gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_forward), !(private->path_forward->len == 0));
     gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_back), TRUE);
@@ -240,7 +236,7 @@ static void signal_delete_file_response(GtkWidget* widget, int response, GListSt
 void signal_delete_file(GtkWidget* widget, gpointer data)
 {
     gchar* name_file = "\n";
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(data);
 
     GListStore* files_selected = gapp_browser_get_file_seleted(data);
     guint items_n = g_list_model_get_n_items(G_LIST_MODEL(files_selected));
@@ -260,11 +256,11 @@ void signal_delete_file(GtkWidget* widget, gpointer data)
  * Maneja la señal de creación de elementos en el explorador de mundos del editor en Gobu.
  *
  */
-static void signal_create_item_action_response(GtkDialog* dialog, int response, const GobuEditorWorldBrowserAction* action)
+static void signal_create_item_action_response(GtkDialog* dialog, int response, const GbAppBrowserAction* action)
 {
     if (response == GTK_RESPONSE_OK)
     {
-        GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(action->data);
+        GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(action->data);
         const gchar* result = gapp_widget_dialog_input_get_text(dialog);
 
         if (action->response == ACTION_CREATE_FOLDER) {
@@ -285,7 +281,7 @@ static void signal_create_item_action_response(GtkDialog* dialog, int response, 
     gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
-static void signal_create_item_action(GtkWidget* button, const GobuEditorWorldBrowserAction* action)
+static void signal_create_item_action(GtkWidget* button, const GbAppBrowserAction* action)
 {
     GtkWidget* dialog = gapp_widget_dialog_input(button, action->title, action->text);
     g_signal_connect(dialog, "response", G_CALLBACK(signal_create_item_action_response), action);
@@ -318,7 +314,7 @@ static void signal_popover(GtkWidget* button, gpointer data)
         gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
         gtk_box_append(GTK_BOX(box), item);
         g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
-        gb_editor_world_browser_new_action("Create New Folder", "New Folder", ACTION_CREATE_FOLDER, data));
+        gbapp_browser_fn_new_action("Create New Folder", "New Folder", ACTION_CREATE_FOLDER, data));
 
         gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
@@ -326,7 +322,7 @@ static void signal_popover(GtkWidget* button, gpointer data)
         gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
         gtk_box_append(GTK_BOX(box), item);
         g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
-        gb_editor_world_browser_new_action("Create New Level", "New Level", ACTION_CREATE_LEVEL, data));
+        gbapp_browser_fn_new_action("Create New Level", "New Level", ACTION_CREATE_LEVEL, data));
     }
 
     gtk_popover_popup(GTK_POPOVER(popover));
@@ -341,7 +337,7 @@ static void signal_popover(GtkWidget* button, gpointer data)
 static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x, double y, gpointer data)
 {
     GtkWidget* widget, * child;
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(data);
 
     widget = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture));
     child = gtk_widget_pick(widget, x, y, GTK_PICK_DEFAULT);
@@ -369,36 +365,61 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
             {
                 item = gtk_button_new_with_label("Delete");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                gtk_widget_set_halign(item, GTK_ALIGN_START);
+                gtk_widget_set_hexpand(item, TRUE);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_delete_file), data);
 
                 gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
                 item = gtk_button_new_with_label("Create Sprite");
+                gtk_widget_set_halign(item, GTK_ALIGN_START);
+                gtk_widget_set_hexpand(item, TRUE);
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                gtk_box_append(GTK_BOX(box), item);
+
+                gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+
+                item = gtk_button_new_with_label("Create Animation Sprite");
+                gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                // gtk_widget_set_tooltip_text(item, "Animation Sprite Sheets");
+                gtk_widget_set_halign(item, GTK_ALIGN_START);
+                gtk_widget_set_hexpand(item, TRUE);
                 gtk_box_append(GTK_BOX(box), item);
             }
             else
             {
                 item = gtk_button_new_with_label("Import to /Game");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                gtk_widget_set_halign(item, GTK_ALIGN_START);
+                gtk_widget_set_hexpand(item, TRUE);
                 gtk_box_append(GTK_BOX(box), item);
 
                 gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
                 item = gtk_button_new_with_label("New Folder");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                gtk_widget_set_halign(item, GTK_ALIGN_START);
+                gtk_widget_set_hexpand(item, TRUE);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
-                gb_editor_world_browser_new_action("Create New Folder", "New Folder", ACTION_CREATE_FOLDER, data));
+                gbapp_browser_fn_new_action("Create New Folder", "New Folder", ACTION_CREATE_FOLDER, data));
 
                 gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
                 item = gtk_button_new_with_label("New Level");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                gtk_widget_set_halign(item, GTK_ALIGN_START);
+                gtk_widget_set_hexpand(item, TRUE);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
-                gb_editor_world_browser_new_action("Create New Level", "New Level", ACTION_CREATE_LEVEL, data));
+                gbapp_browser_fn_new_action("Create New Level", "New Level", ACTION_CREATE_LEVEL, data));
+
+                item = gtk_button_new_with_label("New Animation Sprite");
+                gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                gtk_widget_set_halign(item, GTK_ALIGN_START);
+                gtk_widget_set_hexpand(item, TRUE);
+                gtk_box_append(GTK_BOX(box), item);
             }
         }
 
@@ -421,11 +442,11 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
  * @param user_data Datos adicionales proporcionados por el usuario.
  * @return gboolean Devuelve TRUE si el evento fue manejado correctamente, FALSE en caso contrario.
  */
-static gboolean signal_view_file_drop(GtkDropTarget* target, const GValue* value, double x, double y, GobuEditorWorldBrowser* browser)
+static gboolean signal_view_file_drop(GtkDropTarget* target, const GValue* value, double x, double y, GbAppBrowser* browser)
 {
     if (G_VALUE_HOLDS(value, GDK_TYPE_FILE_LIST))
     {
-        GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+        GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
 
         GList* list_files = g_value_get_boxed(value);
         for (int i = 0; i < g_list_length(list_files); i++)
@@ -456,8 +477,8 @@ static gboolean signal_view_file_drop(GtkDropTarget* target, const GValue* value
  */
 static void signal_navhome(GtkWidget* button, gpointer data)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
-    gb_editor_world_browser_fn_open_folder(data, private->path_default, TRUE);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(data);
+    gbapp_browser_fn_open_folder(data, private->path_default, TRUE);
 }
 
 /**
@@ -468,8 +489,8 @@ static void signal_navhome(GtkWidget* button, gpointer data)
  */
 static void signal_navback(GtkWidget* button, gpointer data)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
-    gb_editor_world_browser_fn_history_path_back(data);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(data);
+    gbapp_browser_fn_history_path_back(data);
 }
 
 /**
@@ -480,8 +501,8 @@ static void signal_navback(GtkWidget* button, gpointer data)
  */
 static void signal_navforward(GtkWidget* button, gpointer data)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
-    gb_editor_world_browser_fn_history_path_forward(data);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(data);
+    gbapp_browser_fn_history_path_forward(data);
 }
 
 /**
@@ -498,8 +519,8 @@ static GdkContentProvider* signal_drag_source_prepare(GtkDragSource* source, gdo
 {
     GtkWidget* box = gtk_list_item_get_child(list_item);
 
-    GobuEditorWorldBrowser* browser = GOBU_EDITOR_WORLD_BROWSER(g_object_get_data(box, "BrowserContent"));
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+    GbAppBrowser* browser = GBAPP_BROWSER(g_object_get_data(box, "BrowserContent"));
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
 
     guint pos_selected = GPOINTER_TO_UINT(g_object_get_data(box, "position_id"));
 
@@ -550,7 +571,7 @@ static void signal_drag_source_begin(GtkDragSource* source, GdkDrag* drag, GtkLi
  */
 static void signal_view_file_selected(GtkGridView* self, guint position, gpointer user_data)
 {
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(user_data);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(user_data);
 
     /* OBTENEMOS LA INFO DEL ARCHIVO SELECCIONADO CON DOUBLE-CLIC */
     GFileInfo* file_info = g_list_model_get_item(G_LIST_MODEL(gtk_grid_view_get_model(self)), position);
@@ -561,8 +582,8 @@ static void signal_view_file_selected(GtkGridView* self, guint position, gpointe
     /* COMPROBAMOS SI ES UN DIRECTORIO Y ENTRAMOS */
     if (g_file_info_get_file_type(file_info) == G_FILE_TYPE_DIRECTORY)
     {
-        gb_editor_world_browser_fn_history_path_forward_clear(user_data);
-        gb_editor_world_browser_fn_open_folder(user_data, filename, TRUE);
+        gbapp_browser_fn_history_path_forward_clear(user_data);
+        gbapp_browser_fn_open_folder(user_data, filename, TRUE);
 
         // g_object_unref(file);
     }
@@ -641,7 +662,7 @@ void signal_bind_view_file(GtkListItemFactory* factory, GtkListItem* list_item, 
     gtk_label_set_label(GTK_LABEL(label_name), gb_fs_get_name(name, true));
     gtk_widget_set_tooltip_text(box, name);
 
-    gb_editor_world_browser_fn_get_icon_file(image, info_file);
+    gbapp_browser_fn_get_icon_file(image, info_file);
     // TODO: Buscar una mejor solucion
     g_object_set_data(G_OBJECT(image), "position_id", GINT_TO_POINTER(id));
     g_object_set_data(G_OBJECT(label_name), "position_id", GINT_TO_POINTER(id));
@@ -675,12 +696,12 @@ static int sort_files_with_folders_first(GFileInfo* a, GFileInfo* b, gpointer da
  *
  * @param self  El objeto del explorador de mundos que se inicializa.
  */
-static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
+static void gbapp_browser_init(GbAppBrowser* self)
 {
     GtkWidget* vbox;
     GtkWidget* toolbar, * item;
 
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(self);
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(self);
 
     private->path_back = g_ptr_array_new();
     private->path_forward = g_ptr_array_new();
@@ -797,7 +818,7 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
  *
  * @return Un nuevo widget que representa el explorador de mundos.
  */
-GtkWidget* gb_editor_world_browser_new(void)
+GtkWidget* gbapp_browser_new(void)
 {
-    return g_object_new(GOBU_EDITOR_TYPE_WORLD_BROWSER, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
+    return g_object_new(GBAPP_TYPE_BROWSER, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
 }

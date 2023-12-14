@@ -1,7 +1,4 @@
 #include "gapp_script_editor.h"
-#include "config.h"
-#include "gapp_main.h"
-#include "gapp_widget.h"
 
 struct _GobuEditorScript
 {

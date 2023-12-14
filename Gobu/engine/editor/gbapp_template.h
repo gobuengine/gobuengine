@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gb_script_editor.h                                                           *
+ * gbapp_asheets.h                                                                *
  * ********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -25,26 +25,23 @@
  * SOFTWARE.                                                                      *
  **********************************************************************************/
 
-#ifndef __GAPP_SCRIPT_EDITOR_H__
-#define __GAPP_SCRIPT_EDITOR_H__
+#ifndef __GBAPP_ASHEETS_H__
+#define __GBAPP_ASHEETS_H__
 #include "gapp_main.h"
 
 G_BEGIN_DECLS
 
-typedef struct _GobuEditorScriptPrivate GobuEditorScriptPrivate;
+typedef struct _GbAppAsheetsPrivate GbAppAsheetsPrivate;
 
-#define GAPP_EDITOR_TYPE_SCRIPT (gapp_editor_script_get_type())
-G_DECLARE_FINAL_TYPE(GobuEditorScript, gapp_editor_script, GAPP_EDITOR, SCRIPT, GtkBox)
+#define GBAPP_TYPE_ASHEETS (gbapp_asheets_get_type())
+G_DECLARE_FINAL_TYPE(GbAppAsheets, gbapp_asheets, GBAPP, ASHEETS, GtkBox)
 
-
-struct _GobuEditorScriptPrivate
+struct _GbAppAsheetsPrivate
 {
-    GtkWidget parent_instance;
 };
 
-GobuEditorScript* gapp_editor_script_new(const gchar* filename);
+GtkWidget* gbapp_asheets_new(void);
 
 G_END_DECLS
 
-#endif // __GAPP_SCRIPT_EDITOR_H__
-
+#endif // __GBAPP_ASHEETS_H__
