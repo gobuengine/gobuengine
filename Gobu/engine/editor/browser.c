@@ -7,6 +7,7 @@ enum
     ACTION_CREATE_FOLDER,
     ACTION_CREATE_ENTITY,
     ACTION_CREATE_LEVEL,
+    ACTION_CREATE_ASHEETS,
     ACTION_LAST
 };
 
@@ -109,6 +110,10 @@ static void gbapp_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_fil
     else if (gb_fs_is_extension(ext_file, ".prefab"))
     {
         icon = EditorCore->resource.icons[GOBU_RESOURCE_ICON_ENTITY];
+    }
+    else if (gb_fs_is_extension(ext_file, ".asheets"))
+    {
+        icon = EditorCore->resource.icons[GOBU_RESOURCE_ICON_ASHEETS];
     }
     else
     {
@@ -218,7 +223,8 @@ static void signal_delete_file_response(GtkWidget* widget, int response, GListSt
         guint items_n = g_list_model_get_n_items(files);
         for (guint i = 0; i < items_n; i++)
         {
-            GFile* file = g_list_model_get_item(files, i);
+            GFileInfo* file_info = G_FILE_INFO(g_list_model_get_item(files, i));
+            GFile* file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
             if (!g_file_delete(file, NULL, &error) && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
             {
                 // gapp_widget_alert(widget, error->message);
@@ -276,6 +282,13 @@ static void signal_create_item_action_response(GtkDialog* dialog, int response, 
             g_free(path_result);
 
             gb_print_info(TF("Create Level: %s", result));
+        }
+        else if (action->response == ACTION_CREATE_ASHEETS) {
+            gchar* path_result = gb_path_join(private->path_current, TF("%s.asheets", result), NULL);
+            g_file_create_readwrite(g_file_new_for_path(path_result), G_FILE_CREATE_NONE, NULL, NULL);
+            g_free(path_result);
+
+            gb_print_info(TF("Create Animation Sprite Sheets: %s", result));
         }
     }
     gtk_window_destroy(GTK_WINDOW(dialog));
@@ -365,16 +378,14 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
             {
                 item = gtk_button_new_with_label("Delete");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-                gtk_widget_set_halign(item, GTK_ALIGN_START);
-                gtk_widget_set_hexpand(item, TRUE);
+                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_delete_file), data);
 
                 gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
                 item = gtk_button_new_with_label("Create Sprite");
-                gtk_widget_set_halign(item, GTK_ALIGN_START);
-                gtk_widget_set_hexpand(item, TRUE);
+                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_box_append(GTK_BOX(box), item);
 
@@ -383,24 +394,21 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
                 item = gtk_button_new_with_label("Create Animation Sprite");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 // gtk_widget_set_tooltip_text(item, "Animation Sprite Sheets");
-                gtk_widget_set_halign(item, GTK_ALIGN_START);
-                gtk_widget_set_hexpand(item, TRUE);
+                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
             }
             else
             {
                 item = gtk_button_new_with_label("Import to /Game");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-                gtk_widget_set_halign(item, GTK_ALIGN_START);
-                gtk_widget_set_hexpand(item, TRUE);
+                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
 
                 gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
                 item = gtk_button_new_with_label("New Folder");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-                gtk_widget_set_halign(item, GTK_ALIGN_START);
-                gtk_widget_set_hexpand(item, TRUE);
+                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
                 gbapp_browser_fn_new_action("Create New Folder", "New Folder", ACTION_CREATE_FOLDER, data));
@@ -409,17 +417,17 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
 
                 item = gtk_button_new_with_label("New Level");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-                gtk_widget_set_halign(item, GTK_ALIGN_START);
-                gtk_widget_set_hexpand(item, TRUE);
+                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
                 gbapp_browser_fn_new_action("Create New Level", "New Level", ACTION_CREATE_LEVEL, data));
 
                 item = gtk_button_new_with_label("New Animation Sprite");
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-                gtk_widget_set_halign(item, GTK_ALIGN_START);
-                gtk_widget_set_hexpand(item, TRUE);
+                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
+                g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
+                gbapp_browser_fn_new_action("Create New Animation Sprite Sheets", "SpriteSheets", ACTION_CREATE_ASHEETS, data));
             }
         }
 

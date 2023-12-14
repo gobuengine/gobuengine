@@ -3,16 +3,13 @@
 
 #include "browser.h"
 #include "gapp_level_editor.h"
-#include "gapp_tool_console.h"
 #include "gapp_settings.h"
-
-#include "gapp_widget.h"
 
 extern GAPP* EditorCore;
 
 static void project_editor_resource_load(void)
 {
-    const char* const* icon_name[] = { "component.png", "level.png", "entity.png", "folder.png", "anim2d.png" };
+    const char* const* icon_name[] = { "component.png", "level.png", "entity.png", "folder.png", "anim2d.png", "anim2d.png" };
     char* path_r = gb_path_current_dir();
 
     for (size_t i = 0; i < GOBU_RESOURCE_ICONS; i++)
