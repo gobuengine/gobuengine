@@ -64,6 +64,27 @@ static GobuEditorWorldBrowserAction* gb_editor_world_browser_new_action(const gc
     return action;
 }
 
+static GListStore* gapp_browser_get_file_seleted(GobuEditorWorldBrowser* browser)
+{
+    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
+
+    GListStore* files = g_list_store_new(G_TYPE_FILE_INFO);
+
+    GListModel* list = gtk_multi_selection_get_model(private->selection);
+    guint items_n = g_list_model_get_n_items(list);
+
+    for (int i = 0; i < items_n; i++)
+    {
+        if (gtk_selection_model_is_selected(GTK_SELECTION_MODEL(private->selection), i) == FALSE)
+            continue;
+
+        GFileInfo* file_info_selected = G_FILE_INFO(g_list_model_get_item(list, i));
+        g_list_store_append(files, file_info_selected);
+    }
+
+    return files;
+}
+
 /**
  * Obtiene el icono de un archivo en el explorador de mundos del editor en Gobu.
  *
@@ -193,20 +214,24 @@ static void gb_editor_world_browser_fn_history_path_forward(GobuEditorWorldBrows
  * Maneja la señal de borrar elementos en el explorador de mundos del editor en Gobu.
  *
  */
-static void signal_delete_file_response(GtkWidget* widget, int response, gpointer data)
+static void signal_delete_file_response(GtkWidget* widget, int response, GListStore* files)
 {
     if (response == GTK_RESPONSE_OK)
     {
         GError* error = NULL;
-        GFile* file = G_FILE(data);
-        if (!g_file_delete(file, NULL, &error) && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+        guint items_n = g_list_model_get_n_items(files);
+        for (guint i = 0; i < items_n; i++)
         {
-            gapp_widget_alert(widget, error->message);
-            gb_print_error(TF("Failed to delete %s\n", g_file_peek_path(file)), error->message);
-            return;
-        }
+            GFile* file = g_list_model_get_item(files, i);
+            if (!g_file_delete(file, NULL, &error) && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
+            {
+                // gapp_widget_alert(widget, error->message);
+                gb_print_error(TF("Failed to delete [ %s ]", g_file_peek_path(file)), error->message);
+                return;
+            }
 
-        gb_print_success(TF("File delete %s\n", g_file_peek_path(file)));
+            gb_print_success(TF("File delete [ %s ]", g_file_peek_path(file)));
+        }
     }
 
     gtk_window_destroy(widget);
@@ -214,12 +239,20 @@ static void signal_delete_file_response(GtkWidget* widget, int response, gpointe
 
 void signal_delete_file(GtkWidget* widget, gpointer data)
 {
+    gchar* name_file = "\n";
     GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(data);
 
-    GFileInfo* file_selected = G_FILE_INFO(gtk_single_selection_get_selected_item(private->selection));
-    GFile* file = G_FILE(g_file_info_get_attribute_object(file_selected, "standard::file"));
+    GListStore* files_selected = gapp_browser_get_file_seleted(data);
+    guint items_n = g_list_model_get_n_items(G_LIST_MODEL(files_selected));
+    for (int i = 0; i < items_n; i++)
+    {
+        GFileInfo* file_info = G_FILE_INFO(g_list_model_get_item(G_LIST_MODEL(files_selected), i));
+        GFile* file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
+        name_file = g_strconcat(name_file, g_file_info_get_name(file_info), "\n", NULL);
+    }
 
-    gapp_widget_dialog_confirm_delete(widget, g_file_info_get_name(file_selected), file, signal_delete_file_response);
+    gapp_widget_dialog_confirm_delete(widget, name_file, files_selected, signal_delete_file_response);
+    g_free(name_file);
     gtk_popover_popdown(GTK_POPOVER(private->popover));
 }
 
@@ -318,7 +351,10 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
         GtkWidget* popover, * box, * item;
 
         gint p = GPOINTER_TO_UINT(g_object_get_data(child, "position_id"));
-        gtk_single_selection_set_selected(private->selection, p);
+        bool is_selected = gtk_selection_model_is_selected(GTK_SELECTION_MODEL(private->selection), p);
+        // Si tenemos seleccionado el item aun que tengamos mas de uno no se deseleccionaran, pero
+        // si seleccionamos otro item se deseleccionaran todos los que esten seleccionados.
+        gtk_selection_model_select_item(GTK_SELECTION_MODEL(private->selection), p, !is_selected);
 
         private->popover = gtk_popover_new();
         gtk_popover_set_cascade_popdown(GTK_POPOVER(private->popover), TRUE);
@@ -371,7 +407,7 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
 
     if (child == widget)
     {
-        gtk_single_selection_set_selected(private->selection, -1);
+        gtk_selection_model_unselect_all(GTK_SELECTION_MODEL(private->selection));
     }
 }
 
@@ -462,18 +498,28 @@ static GdkContentProvider* signal_drag_source_prepare(GtkDragSource* source, gdo
 {
     GtkWidget* box = gtk_list_item_get_child(list_item);
 
-    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(g_object_get_data(box, "BrowserContent"));
+    GobuEditorWorldBrowser* browser = GOBU_EDITOR_WORLD_BROWSER(g_object_get_data(box, "BrowserContent"));
+    GobuEditorWorldBrowserPrivate* private = gb_editor_world_browser_get_instance_private(browser);
 
     guint pos_selected = GPOINTER_TO_UINT(g_object_get_data(box, "position_id"));
-    gtk_single_selection_set_selected(private->selection, pos_selected);
 
-    GFileInfo* info = G_FILE_INFO(gtk_list_item_get_item(list_item));
-    GFile* file = G_FILE(g_file_info_get_attribute_object(info, "standard::file"));
+    GListStore* files_selected = gapp_browser_get_file_seleted(browser);
+    guint items_n = g_list_model_get_n_items(G_LIST_MODEL(files_selected));
 
-    return gdk_content_provider_new_union((GdkContentProvider * [2]) {
-        gdk_content_provider_new_typed(G_TYPE_FILE, file),
-            gdk_content_provider_new_typed(G_TYPE_FILE_INFO, info),
-    }, 2);
+    // 1 - Si no tenemos ningun item seleccionado, seleccionamos el item que se esta arrastrando.
+    // 1.1 - Cargamos la lista de nuevo para que se actualice la seleccion.
+    // 2 - Si el item que se esta arrastrando esta seleccionado, no hacemos nada.
+    // Reglas:
+    // items_n == 0 -> no hay ningun item seleccionado.
+    // items_n == 1 -> hay un item seleccionado pero no es el que se esta arrastrando.
+    if (items_n <= 1 && !gtk_selection_model_is_selected(GTK_SELECTION_MODEL(private->selection), pos_selected)) {
+        gtk_selection_model_select_item(GTK_SELECTION_MODEL(private->selection), pos_selected, TRUE);
+        files_selected = gapp_browser_get_file_seleted(browser);
+    }
+
+    return gdk_content_provider_new_union((GdkContentProvider * [1]) {
+        gdk_content_provider_new_typed(G_TYPE_LIST_STORE, files_selected),
+    }, 1);
 }
 
 /**
@@ -488,8 +534,10 @@ static GdkContentProvider* signal_drag_source_prepare(GtkDragSource* source, gdo
 static void signal_drag_source_begin(GtkDragSource* source, GdkDrag* drag, GtkListItem* list_item)
 {
     GtkWidget* box = gtk_list_item_get_child(list_item);
+
     GtkWidget* paintable = gtk_widget_paintable_new(gtk_widget_get_first_child(box));
     gtk_drag_source_set_icon(source, paintable, 0, 0);
+
     g_object_unref(paintable);
 }
 
@@ -545,9 +593,6 @@ static void signal_setup_view_file(GtkListItemFactory* factory, GtkListItem* lis
     GtkWidget* box, * imagen, * label, * entry;
     GtkExpression* expression;
     GtkDragSource* source;
-    // expression = gtk_constant_expression_new(GTK_TYPE_LIST_ITEM, list_item);
-
-    //GFileInfo *info_file = gtk_list_item_get_item(list_item);
 
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_list_item_set_child(list_item, box);
@@ -722,9 +767,9 @@ static void gb_editor_world_browser_init(GobuEditorWorldBrowser* self)
 
         GtkSorter* sorter = GTK_SORTER(gtk_custom_sorter_new((GCompareDataFunc)sort_files_with_folders_first, NULL, NULL));
 
-        private->selection = gtk_single_selection_new(gtk_sort_list_model_new(G_LIST_MODEL(private->directory_list), sorter));
-        gtk_single_selection_set_can_unselect(private->selection, TRUE);
-        gtk_single_selection_set_autoselect(private->selection, FALSE);
+        private->selection = gtk_multi_selection_new(gtk_sort_list_model_new(G_LIST_MODEL(private->directory_list), sorter));
+        // gtk_single_selection_set_can_unselect(private->selection, TRUE);
+        // gtk_single_selection_set_autoselect(private->selection, FALSE);
 
         private->factory = gtk_signal_list_item_factory_new();
         g_signal_connect(private->factory, "setup", G_CALLBACK(signal_setup_view_file), self);

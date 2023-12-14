@@ -14,7 +14,7 @@ extern gb_engine_t engine;
 static void signal_viewport_start(GappLevelViewport* viewpor, gpointer data);
 static void signal_viewport_render(GappLevelViewport* viewpor, gpointer data);
 static void signal_viewport_resize(GappLevelViewport* viewpor, int width, int height, gpointer data);
-static void signal_viewport_drop(GappLevelViewport* viewpor, GFile* file, double x, double y, gpointer data);
+static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess, double x, double y, gpointer data);
 static gboolean signal_viewport_zoom(GtkEventControllerScroll* controller, gdouble dx, gdouble dy, GtkWidget* widget);
 static void signal_viewport_mouse_move(GtkEventControllerMotion* controller, double x, double y, GtkWidget* widget);
 static void signal_viewport_mouse_button_pressed(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget);
@@ -122,26 +122,33 @@ static void signal_viewport_resize(GappLevelViewport* viewport, int width, int h
  * @param y La posición y donde se soltó el archivo.
  * @param data Datos adicionales pasados al manejador de señales.
  */
-static void signal_viewport_drop(GappLevelViewport* viewport, GFile* file, double x, double y, gpointer data)
+static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess, double x, double y, gpointer data)
 {
-    gchar* filename = g_file_get_path(file);
-    gchar* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
-    ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
+    guint items_n = g_list_model_get_n_items(G_LIST_MODEL(filess));
+    for (int i = 0; i < items_n; i++)
+    {
+        GFileInfo* file_info = G_FILE_INFO(g_list_model_get_item(G_LIST_MODEL(filess), i));
+        GFile* file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
 
-    /**
-     * Establece el recurso para el mundo dado con el nombre y el nombre de archivo especificados.
-     *
-     */
-    if (gb_resource_set(world, name, filename))
-        gb_print_info(gb_strdups("Resource load: %s", name));
+        gchar* filename = g_file_get_path(file);
+        gchar* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
+        ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
-    gb_camera_t* camera = ecs_get(world, ecs_lookup(world, "Engine"), gb_camera_t);
-    gb_vec2_t mouseWorld = engine.screen_to_world(*camera, (gb_vec2_t) { x, y });
+        /**
+         * Establece el recurso para el mundo dado con el nombre y el nombre de archivo especificados.
+         *
+         */
+        if (gb_resource_set(world, name, filename))
+            gb_print_info(gb_strdups("Resource load: %s", name));
 
-    ecs_entity_t e = gb_ecs_entity_new(world, name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
+        gb_camera_t* camera = ecs_get(world, ecs_lookup(world, "Engine"), gb_camera_t);
+        gb_vec2_t mouseWorld = engine.screen_to_world(*camera, (gb_vec2_t) { x, y });
 
-    if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
-        gb_ecs_entity_set(world, e, gb_sprite_t, { .resource = name });
+        ecs_entity_t e = gb_ecs_entity_new(world, name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
+
+        if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
+            gb_ecs_entity_set(world, e, gb_sprite_t, { .resource = name });
+        }
     }
 }
 

@@ -48,7 +48,7 @@ static void gapp_gobu_embed_class_init(GappGobuEmbedClass* klass)
                                           G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                                           NULL, NULL, NULL,
                                           0,
-                                          G_TYPE_NONE, 3, G_TYPE_FILE, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
+                                          G_TYPE_NONE, 3, G_TYPE_LIST_STORE, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
 }
 
 static void gapp_gobu_embed_signal_resize(GtkWidget* viewport, gint width, gint height, gpointer data)
@@ -109,9 +109,9 @@ static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer 
 
 static gboolean gapp_gobu_embed_drop(GtkDropTarget* target, const GValue* value, double x, double y, gpointer user_data)
 {
-    if (G_VALUE_HOLDS(value, G_TYPE_FILE))
+    if (G_VALUE_HOLDS(value, G_TYPE_LIST_STORE))
     {
-        g_signal_emit(user_data, w_signals[SIGNAL_DROP], 0, G_FILE(g_value_get_object(value)), x, y);
+        g_signal_emit(user_data, w_signals[SIGNAL_DROP], 0, G_LIST_STORE(g_value_get_object(value)), x, y);
         return TRUE;
     }
     return FALSE;
@@ -142,7 +142,8 @@ static void gapp_gobu_embed_init(GappGobuEmbed* self)
     g_signal_connect(self, "resize", G_CALLBACK(gapp_gobu_embed_signal_resize), NULL);
     g_signal_connect(self, "render", G_CALLBACK(gapp_gobu_embed_signal_render), NULL);
 
-    target = gtk_drop_target_new(G_TYPE_FILE, GDK_ACTION_COPY);
+    // TODO: separar del emebed
+    target = gtk_drop_target_new(G_TYPE_LIST_STORE, GDK_ACTION_COPY);
     g_signal_connect(target, "drop", G_CALLBACK(gapp_gobu_embed_drop), self);
     gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(target));
 

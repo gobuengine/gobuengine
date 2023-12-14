@@ -56,7 +56,7 @@ struct _GobuEditorWorldBrowserPrivate
 
     GtkListItemFactory *factory;
     GtkDirectoryList *directory_list;
-    GtkSingleSelection *selection;
+    GtkMultiSelection *selection;
     GtkWidget *popover;
 };
 
