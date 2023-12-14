@@ -48,12 +48,7 @@ extern "C" {
         bool show_grid;
     }gb_app_t;
 
-    typedef struct gb_color_t {
-        ecs_byte_t r;
-        ecs_byte_t g;
-        ecs_byte_t b;
-        ecs_byte_t a;
-    }gb_color_t;
+    typedef Color gb_color_t;
 
     typedef Font gb_font_t;
 
@@ -302,7 +297,7 @@ extern "C" {
 
 #define gb_ecs_transform(x, y) (gb_transform_t){ .position = (gb_vec2_t){ x, y}, .scale = Vector2One(), .rotation = 0.0f, .origin = (gb_vec2_t){0.5f, 0.5f} }
     ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_transform_t t);
-    void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t child);
+    void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t entity);
     char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
     void gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name);
 

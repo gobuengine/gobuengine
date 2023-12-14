@@ -23,6 +23,7 @@ struct _GappLevelEditor
 G_DEFINE_TYPE_WITH_PRIVATE(GappLevelEditor, gapp_level_editor, GTK_TYPE_BOX);
 
 static void signal_toolbar_click_save(GtkWidget* button, GappLevelEditor* self);
+static void signal_toolbar_click_zoomo(GtkWidget* button, GappLevelEditor* self);
 static void signal_observer_state_world(ecs_iter_t* it);
 static void signal_viewport_init(GappLevelEditor* self, int width, int height, gpointer data);
 
@@ -73,6 +74,10 @@ static void gapp_level_editor_init(GappLevelEditor* self)
                     GtkWidget* btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save");
                     g_signal_connect(btn_s, "clicked", G_CALLBACK(signal_toolbar_click_save), self);
                     gtk_box_append(toolbar, btn_s);
+
+                    GtkWidget* btn_reset_zoom = gapp_widget_button_new_icon_with_label("zoom-original-symbolic", "Zoom Reset");
+                    g_signal_connect(btn_reset_zoom, "clicked", G_CALLBACK(signal_toolbar_click_zoomo), self);
+                    gtk_box_append(toolbar, btn_reset_zoom);
                 }
 
                 // viewport
@@ -100,6 +105,12 @@ static void signal_toolbar_click_save(GtkWidget* button, GappLevelEditor* self)
     ecs_os_free(json);
 
     gb_print_success(TF("Save level %s", filename));
+}
+
+static void signal_toolbar_click_zoomo(GtkWidget* button, GappLevelEditor* self)
+{
+    gb_camera_t* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), gb_camera_t);
+    camera->zoom = 1.0f;
 }
 
 static void signal_observer_state_world(ecs_iter_t* it)

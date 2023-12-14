@@ -68,13 +68,14 @@ struct gb_setting_project_t {
 }project;
 
 
+static bool gb_setting_load(const char* filename);
+static void gb_input_init(gb_world_t* world);
+
 // ########################################
 // Project functions
 // ########################################
 // Description de project functions:
 //
-
-static bool gb_setting_load(const char* filename);
 
 bool gb_project_load(const char* filename)
 {
@@ -755,7 +756,6 @@ void gb_gfx_rotate(float angle, float x, float y, float z) { rlRotatef(angle, x,
 void gb_gfx_scale(float x, float y, float z) { rlScalef(x, y, z); }
 void gb_gfx_push_matrix(void) { rlPushMatrix(); }
 void gb_gfx_pop_matrix(void) { rlPopMatrix(); }
-
 void gb_gfx_init() {}
 void gb_gfx_close() {}
 
@@ -804,34 +804,7 @@ void gb_rendering_draw_gismos(gb_transform_t transform, gb_bounding_t bonding_bo
 
     gb_gfx_push_matrix();
     {
-        gb_gfx_translate(transform.position.x, transform.position.y, 0.0f);
-        gb_gfx_rotate(transform.rotation, 0.0f, 0.0f, 1.0f);
-        gb_gfx_translate(-transform.origin.x, -transform.origin.y, 0.0f);
-        gb_gfx_scale(transform.scale.x, transform.scale.y, 1.0f);
-
         DrawRectangleLinesEx(bonding, 2, SKYBLUE);
-
-        // creamos 4 rectangulos en cada esquina del bounding box para cambiar el tamaño de la entidad
-        Rectangle rect1 = (Rectangle){ bonding.x - 4, bonding.y - 4, 8, 8 };
-        Rectangle rect2 = (Rectangle){ bonding.x - 4, bonding.y + bonding.height - 4, 8, 8 };
-        Rectangle rect3 = (Rectangle){ bonding.x + bonding.width - 4, bonding.y - 4, 8, 8 };
-        Rectangle rect4 = (Rectangle){ bonding.x + bonding.width - 4, bonding.y + bonding.height - 4, 8, 8 };
-
-        DrawRectangleRec(rect1, SKYBLUE);
-        DrawRectangleRec(rect2, SKYBLUE);
-        DrawRectangleRec(rect3, SKYBLUE);
-        DrawRectangleRec(rect4, SKYBLUE);
-
-        // En cada rectangulo dibujamos un cuadrado de color blanco para poder verlo
-        DrawRectangle(rect1.x + 2.5, rect1.y + 2.5, 4, 4, WHITE);
-        DrawRectangle(rect2.x + 2.5, rect2.y + 2.5, 4, 4, WHITE);
-        DrawRectangle(rect3.x + 2.5, rect3.y + 2.5, 4, 4, WHITE);
-        DrawRectangle(rect4.x + 2.5, rect4.y + 2.5, 4, 4, WHITE);
-
-        // Creamos un círculo de línea en el centro del bounding box para rotar la entidad seleccionada
-        gb_vec2_t center = (gb_vec2_t){ bonding.x + bonding.width / 2, (bonding.y + bonding.height / 2) + (bonding.height / 2 + 20) };
-        DrawCircle(center.x, center.y, 5, WHITE);
-        DrawCircleLines(center.x, center.y, 5, BLACK);
     }
     gb_gfx_pop_matrix();
 }
@@ -843,8 +816,7 @@ void gb_rendering_draw_gismos(gb_transform_t transform, gb_bounding_t bonding_bo
  */
 void gb_rendering_draw_rect(gb_shape_rect_t rect)
 {
-    Color color = (Color){ rect.color.r, rect.color.g, rect.color.b, rect.color.a };
-    DrawRectangle(rect.x, rect.y, rect.width, rect.height, color);
+    DrawRectangle(rect.x, rect.y, rect.width, rect.height, rect.color);
 }
 
 /**
@@ -854,8 +826,7 @@ void gb_rendering_draw_rect(gb_shape_rect_t rect)
  */
 void gb_rendering_draw_circle(gb_shape_circle_t circle)
 {
-    Color color = (Color){ circle.color.r, circle.color.g, circle.color.b, circle.color.a };
-    DrawCircle(circle.x, circle.y, circle.radius, color);
+    DrawCircle(circle.x, circle.y, circle.radius, circle.color);
 }
 
 /**
@@ -865,10 +836,9 @@ void gb_rendering_draw_circle(gb_shape_circle_t circle)
  */
 void gb_rendering_draw_sprite(gb_sprite_t sprite)
 {
-    Color color = (Color){ sprite.tint.r, sprite.tint.g, sprite.tint.b, sprite.tint.a };
     Rectangle src = (Rectangle){ sprite.src.x, sprite.src.y, sprite.src.width, sprite.src.height };
     Rectangle dst = (Rectangle){ sprite.dst.x, sprite.dst.y, sprite.dst.width, sprite.dst.height };
-    DrawTexturePro(sprite.texture, src, dst, Vector2Zero(), 0.0f, color);
+    DrawTexturePro(sprite.texture, src, dst, Vector2Zero(), 0.0f, sprite.tint);
 }
 
 
@@ -879,11 +849,7 @@ void gb_rendering_draw_sprite(gb_sprite_t sprite)
  */
 void gb_rendering_draw_text(gb_text_t text)
 {
-    float fontSize = (text.size == 0) ? 20.0f : text.size;
-    float spacing = (text.spacing == 0.0f) ? (fontSize / 10) : text.spacing;
-
-    Color color = (Color){ text.color.r, text.color.g, text.color.b, text.color.a };
-    DrawTextEx(text.font, text.text, Vector2Zero(), fontSize, spacing, color);
+    DrawTextEx(text.font, text.text, Vector2Zero(), text.size, text.spacing, text.color);
 }
 
 
@@ -1100,7 +1066,7 @@ static void gb_ecs_observe_set_sprite(ecs_iter_t* it)
         sprite[i].texture = gb_resource(it->world, sprite[i].resource)->texture;
         sprite[i].src = (gb_rect_t){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
         sprite[i].dst = (gb_rect_t){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
-        sprite[i].tint = (sprite[i].tint.a == 0) ? (gb_color_t) { 245, 245, 245, 255 } : sprite[i].tint;
+        sprite[i].tint = (sprite[i].tint.a == 0) ? (gb_color_t) { 255, 255, 255, 255 } : sprite[i].tint;
     }
 }
 
@@ -1111,6 +1077,8 @@ static void gb_ecs_observe_set_text(ecs_iter_t* it)
     for (int i = 0; i < it->count; i++)
     {
         text[i].font = gb_resource(it->world, text[i].resource)->font;
+        text[i].size = (text[i].size <= 0) ? 20.0f : text[i].size;
+        text[i].spacing = (text[i].spacing <= 0.0f) ? (text[i].size / 10) : text[i].spacing;
     }
 }
 
@@ -1244,6 +1212,22 @@ static void gb_ecs_update_animated(ecs_iter_t* it)
     }
 }
 
+static void gb_ecs_update_bounding(ecs_iter_t* it)
+{
+    gb_bounding_t* bounding = ecs_field(it, gb_bounding_t, 1);
+    gb_transform_t* transform = ecs_field(it, gb_transform_t, 2);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        bounding[i].min.x = transform[i].position.x;
+        bounding[i].min.y = transform[i].position.y;
+        bounding[i].max.x = bounding[i].size.x;
+        bounding[i].max.y = bounding[i].size.y;
+        bounding[i].center.x = bounding[i].min.x + (bounding[i].size.x / 2);
+        bounding[i].center.y = bounding[i].min.y + (bounding[i].size.y / 2);
+    }
+}
+
 static void gb_ecs_update_gismos(ecs_iter_t* it)
 {
     gb_gizmos_t* gizmos = ecs_field(it, gb_gizmos_t, 1);
@@ -1257,7 +1241,7 @@ static void gb_ecs_update_gismos(ecs_iter_t* it)
     gb_vec2_t delta = engine.input.mouse_delta();
 
     bool shift = engine.input.key_down(KEY_LEFT_SHIFT);
-    bool ctrl = engine.input.key_down(KEY_LEFT_CONTROL);
+    // bool ctrl = engine.input.key_down(KEY_LEFT_CONTROL);
     bool mouse_btn_pres_left = engine.input.mouse_button_pressed(MOUSE_BUTTON_LEFT);
     bool mouse_btn_down_left = engine.input.mouse_button_down(MOUSE_BUTTON_LEFT);
 
@@ -1274,7 +1258,10 @@ static void gb_ecs_update_gismos(ecs_iter_t* it)
             // no deseleccionamos cuando tenemos shift presionado
             if (!shift)
             {
-                // unselected_all(it, gizmos);
+                for (int n = it->count - 1; n >= 0; n--)
+                {
+                    gizmos[n].selected = false;
+                }
             }
 
             if (selected)
@@ -1284,22 +1271,12 @@ static void gb_ecs_update_gismos(ecs_iter_t* it)
             }
         }
 
-        // movemos la entidad seleccionadas
         if (mouse_btn_down_left)
         {
             if (gizmos[i].selected)
             {
                 transform[i].position.x += delta.x;
                 transform[i].position.y += delta.y;
-            }
-        }
-
-        // Duplicamos la entidad seleccionadas
-        if (ctrl && engine.input.key_pressed(KEY_D))
-        {
-            if (gizmos[i].selected)
-            {
-                ecs_clone(it->world, 0, entity, true);
             }
         }
     }
@@ -1333,10 +1310,13 @@ static void gb_ecs_predraw_begin_drawing_rendering(ecs_iter_t* it)
 static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
 {
     gb_transform_t* transform = ecs_field(it, gb_transform_t, 1);
+    gb_bounding_t* bounding = ecs_field(it, gb_bounding_t, 2);
+    gb_gizmos_t* gismos = ecs_field(it, gb_gizmos_t, 3);
+
     // Drawing
-    gb_shape_rect_t* rect = ecs_field(it, gb_shape_rect_t, 2);
-    gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 3);
-    gb_text_t* text = ecs_field(it, gb_text_t, 4);
+    gb_shape_rect_t* rect = ecs_field(it, gb_shape_rect_t, 4);
+    gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 5);
+    gb_text_t* text = ecs_field(it, gb_text_t, 6);
 
     for (int i = 0; i < it->count; i++)
     {
@@ -1349,14 +1329,24 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
             gb_gfx_translate(trans.origin.x, trans.origin.y, 0.0f);
             gb_gfx_scale(trans.scale.x, trans.scale.y, 1.0f);
 
-            if (rect)
+            if (rect) {
                 gb_rendering_draw_rect(rect[i]);
+                bounding[i].size = (gb_vec2_t){ rect[i].width, rect[i].height };
+            }
 
-            if (sprite)
+            if (sprite) {
                 gb_rendering_draw_sprite(sprite[i]);
+                bounding[i].size = (gb_vec2_t){ sprite[i].dst.width, sprite[i].dst.height };
+            }
 
-            if (text)
+            if (text) {
                 gb_rendering_draw_text(text[i]);
+                bounding[i].size = MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing);
+            }
+
+            if (gismos[i].selected) {
+                gb_rendering_draw_gismos(trans, bounding[i]);
+            }
         }
         gb_gfx_pop_matrix();
     }
@@ -1429,6 +1419,12 @@ static void gb_engine_system_init(gb_world_t* world)
     });
 
     ecs_system(world, {
+        .entity = ecs_entity(world, {.name = "gb_ecs_update_bounding", .add = {ecs_dependson(EcsPreUpdate)} }),
+        .query.filter.terms = { {.id = ecs_id(gb_bounding_t)}, {.id = ecs_id(gb_transform_t)} },
+        .callback = gb_ecs_update_bounding
+    });
+
+    ecs_system(world, {
         .entity = ecs_entity(world, {.name = "gb_ecs_update_camera_mode", .add = {ecs_dependson(EcsOnUpdate)} }),
         .query.filter.terms = { {.id = ecs_id(gb_camera_t)} },
         .callback = gb_ecs_update_camera_mode
@@ -1454,7 +1450,7 @@ static void gb_engine_system_init(gb_world_t* world)
 
     ecs_system(world, {
         .entity = ecs_entity(world, {.name = "gb_ecs_postdraw_drawing_rendering", .add = {ecs_dependson(render_phases.Draw)} }),
-        .query.filter.terms = { {.id = ecs_id(gb_transform_t)}, {.id = ecs_id(gb_shape_rect_t), .oper = EcsOptional}, {.id = ecs_id(gb_sprite_t), .oper = EcsOptional}, {.id = ecs_id(gb_text_t), .oper = EcsOptional} },
+        .query.filter.terms = { {.id = ecs_id(gb_transform_t)}, {.id = ecs_id(gb_bounding_t)}, {.id = ecs_id(gb_gizmos_t)}, {.id = ecs_id(gb_shape_rect_t), .oper = EcsOptional}, {.id = ecs_id(gb_sprite_t), .oper = EcsOptional}, {.id = ecs_id(gb_text_t), .oper = EcsOptional} },
         .callback = gb_ecs_postdraw_drawing_rendering
     });
 
@@ -1534,14 +1530,14 @@ ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_tra
     gb_ecs_entity_set(world, entity, gb_bounding_t, { 0 });
     gb_ecs_entity_set(world, entity, gb_gizmos_t, { .selected = false });
 
-    ecs_add_pair(world, entity, EcsChildOf, ecs_lookup(world, "World"));
+    gb_ecs_entity_set_parent(world, ecs_lookup(world, "World"), entity);
 
     return entity;
 }
 
-void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t child)
+void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t entity)
 {
-    ecs_add_pair(world, child, EcsChildOf, parent);
+    ecs_add_pair(world, entity, EcsChildOf, parent);
 }
 
 char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity)
@@ -1567,6 +1563,7 @@ gb_world_t* gb_app_init(gb_app_t* app)
 {
     gb_world_t* world = ecs_init();
 
+    gb_input_init(world);
     gb_engine_component_init(world);
     gb_engine_system_init(world);
 
@@ -1582,8 +1579,6 @@ gb_world_t* gb_app_init(gb_app_t* app)
     });
     ecs_set(world, Engine, gb_camera_t, { .zoom = 1.0f, .rotation = 0.0f });
     SetTargetFPS(app->fps ? app->fps : 60);
-
-    gb_engine_init(world);
 
     return world;
 }
@@ -1626,7 +1621,7 @@ static gb_vec2_t getworldtoscreen2d(gb_camera_t camera, gb_vec2_t position)
     return GetWorldToScreen2D(position, cam);
 }
 
-void gb_engine_init(gb_world_t* world)
+static void gb_input_init(gb_world_t* world)
 {
     engine.input.mouse_button_down = IsMouseButtonDown;
     engine.input.mouse_button_pressed = IsMouseButtonPressed;
