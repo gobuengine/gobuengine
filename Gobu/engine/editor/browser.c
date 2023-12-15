@@ -602,6 +602,9 @@ static void signal_view_file_selected(GtkGridView* self, guint position, gpointe
         else if (gb_fs_is_extension(filename, ".gbscript")) {
             gapp_editor_script_new(filename);
         }
+        else if (gb_fs_is_extension(filename, ".asheets")) {
+            gbapp_asheets_new(filename);
+        }
         else {
             return;
         }

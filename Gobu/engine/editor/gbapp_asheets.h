@@ -38,9 +38,10 @@ G_DECLARE_FINAL_TYPE(GbAppAsheets, gbapp_asheets, GBAPP, ASHEETS, GtkBox)
 
 struct _GbAppAsheetsPrivate
 {
+    GtkWidget parent_instance;
 };
 
-GtkWidget* gbapp_asheets_new(void);
+GtkWidget* gbapp_asheets_new(const gchar *filename);
 
 G_END_DECLS
 

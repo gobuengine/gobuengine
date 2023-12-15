@@ -18,6 +18,15 @@ static guint w_signals[SIGNAL_LAST] = { 0 };
 
 G_DEFINE_TYPE_WITH_PRIVATE(GappGobuEmbed, gapp_gobu_embed, GTK_TYPE_GL_AREA);
 
+static void signal_embed_resize(GappGobuEmbed* viewport, int width, int height, gpointer data);
+static gboolean signal_embed_mouse_wheel(GtkEventControllerScroll* controller, gdouble dx, gdouble dy, GtkWidget* widget);
+static void signal_embed_mouse_move(GtkEventControllerMotion* controller, double x, double y, GtkWidget* widget);
+static void signal_embed_mouse_button_pressed(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget);
+static void signal_embed_mouse_button_released(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget);
+static void signal_embed_key_pressed(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget);
+static void signal_embed_key_released(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget);
+
+
 static void gapp_gobu_embed_class_init(GappGobuEmbedClass* klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
@@ -142,6 +151,25 @@ static void gapp_gobu_embed_init(GappGobuEmbed* self)
     g_signal_connect(self, "resize", G_CALLBACK(gapp_gobu_embed_signal_resize), NULL);
     g_signal_connect(self, "render", G_CALLBACK(gapp_gobu_embed_signal_render), NULL);
 
+    GtkEventController* wheel = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
+    gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(wheel));
+    g_signal_connect(wheel, "scroll", G_CALLBACK(signal_embed_mouse_wheel), self);
+
+    GtkEventController* motion = gtk_event_controller_motion_new();
+    gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(motion));
+    g_signal_connect(motion, "motion", G_CALLBACK(signal_embed_mouse_move), self);
+
+    GtkGesture* gesture = gtk_gesture_click_new();
+    gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(gesture));
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(gesture), 0);
+    g_signal_connect(gesture, "pressed", G_CALLBACK(signal_embed_mouse_button_pressed), self);
+    g_signal_connect(gesture, "released", G_CALLBACK(signal_embed_mouse_button_released), self);
+
+    GtkEventControllerKey* key = gtk_event_controller_key_new();
+    gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(key));
+    g_signal_connect(key, "key-pressed", G_CALLBACK(signal_embed_key_pressed), self);
+    g_signal_connect(key, "key-released", G_CALLBACK(signal_embed_key_released), self);
+
     // TODO: separar del emebed
     target = gtk_drop_target_new(G_TYPE_LIST_STORE, GDK_ACTION_COPY);
     g_signal_connect(target, "drop", G_CALLBACK(gapp_gobu_embed_drop), self);
@@ -173,3 +201,135 @@ int gapp_gobu_embed_get_height(GappGobuEmbed* embed)
     return priv->height;
 }
 
+
+/**
+ * @brief Función que se ejecuta cuando se redimensiona el viewport.
+ *
+ * @param viewport El viewport que se está redimensionando.
+ * @param width El nuevo ancho del viewport.
+ * @param height La nueva altura del viewport.
+ * @param data Datos adicionales pasados a la función.
+ */
+static void signal_embed_resize(GappGobuEmbed* viewport, int width, int height, gpointer data)
+{
+    ViewportSizeCallback(width, height);
+}
+
+/**
+ * @brief Función que maneja la señal de zoom en el viewport.
+ *
+ * Esta función se encarga de manejar la señal de zoom en el viewport de la aplicación.
+ *
+ * @param controller El controlador de eventos de desplazamiento.
+ * @param dx La cantidad de desplazamiento horizontal.
+ * @param dy La cantidad de desplazamiento vertical.
+ * @param widget El widget del viewport.
+ * @return gboolean Devuelve TRUE si el evento fue manejado correctamente, FALSE en caso contrario.
+ */
+static gboolean signal_embed_mouse_wheel(GtkEventControllerScroll* controller, gdouble dx, gdouble dy, GtkWidget* widget)
+{
+    SetMouseWheelMove(0.0f, dy);
+    return FALSE;
+}
+
+/**
+ * @brief Maneja el evento de movimiento del mouse en el viewport.
+ *
+ * @param controller El controlador del evento de movimiento del mouse.
+ * @param x La coordenada x del mouse.
+ * @param y La coordenada y del mouse.
+ * @param widget El widget en el que se produce el evento.
+ */
+static void signal_embed_mouse_move(GtkEventControllerMotion* controller, double x, double y, GtkWidget* widget)
+{
+    gtk_widget_set_can_focus(GTK_GL_AREA(widget), true);
+    gtk_widget_grab_focus(widget);
+    SetMouse(x, y);
+}
+
+/**
+ * @brief Función que se ejecuta cuando se presiona un botón del mouse en el viewport.
+ *
+ * @param gesture El gesto de clic asociado al evento.
+ * @param n_press El número de veces que se ha presionado el botón del mouse.
+ * @param x La coordenada X del punto donde se ha presionado el botón del mouse.
+ * @param y La coordenada Y del punto donde se ha presionado el botón del mouse.
+ * @param widget El widget en el que se ha producido el evento.
+ */
+static void signal_embed_mouse_button_pressed(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget)
+{
+    gint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
+    switch (button)
+    {
+    case 1:
+        SetMouseButton(MOUSE_BUTTON_LEFT, 1);
+        break;
+    case 2:
+        SetMouseButton(MOUSE_BUTTON_MIDDLE, 1);
+        break;
+    case 3:
+        SetMouseButton(MOUSE_BUTTON_RIGHT, 1);
+        break;
+    default:
+    }
+
+    gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+}
+
+/**
+ * @brief Función que se ejecuta cuando se suelta un botón del mouse en el viewport.
+ *
+ * @param gesture El gesto de clic que se activó.
+ * @param n_press El número de veces que se presionó el botón del mouse.
+ * @param x La coordenada x del punto donde se soltó el botón del mouse.
+ * @param y La coordenada y del punto donde se soltó el botón del mouse.
+ * @param widget El widget en el que se soltó el botón del mouse.
+ */
+static void signal_embed_mouse_button_released(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget)
+{
+    gint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
+
+    switch (button)
+    {
+    case 1:
+        SetMouseButton(MOUSE_BUTTON_LEFT, 0);
+        break;
+    case 2:
+        SetMouseButton(MOUSE_BUTTON_MIDDLE, 0);
+        break;
+    case 3:
+        SetMouseButton(MOUSE_BUTTON_RIGHT, 0);
+        break;
+    default:
+    }
+
+    gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+}
+
+/**
+ * @brief Función que se ejecuta cuando se presiona una tecla en el viewport.
+ *
+ * @param self El controlador de eventos de teclado.
+ * @param keyval El valor de la tecla presionada.
+ * @param keycode El código de la tecla presionada.
+ * @param state El estado de los modificadores de teclado.
+ * @param widget El widget en el que se presionó la tecla.
+ */
+static void signal_embed_key_pressed(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget)
+{
+    keycallback(keycode, keycode, 1, 0);
+}
+
+/**
+ * @brief Función que se ejecuta cuando se suelta una tecla en el viewport.
+ *
+ * @param self El controlador de eventos de teclado.
+ * @param keyval El valor de la tecla que se soltó.
+ * @param keycode El código de la tecla que se soltó.
+ * @param state El estado de los modificadores de teclado.
+ * @param widget El widget en el que se soltó la tecla.
+ */
+static void signal_embed_key_released(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget)
+{
+    keycallback(keycode, keycode, 0, 0);
+}
