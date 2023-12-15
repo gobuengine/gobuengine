@@ -60,6 +60,14 @@ static void gapp_gobu_embed_class_init(GappGobuEmbedClass* klass)
                                           G_TYPE_NONE, 3, G_TYPE_LIST_STORE, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
 }
 
+static void gapp_gobu_embed_signal_focus(GtkWidget* viewport, gpointer data)
+{
+    // gtk_widget_set_can_focus(GTK_GL_AREA(viewport), true);
+    // gtk_widget_grab_focus(viewport);
+
+    printf("focus\n");
+}
+
 static void gapp_gobu_embed_signal_resize(GtkWidget* viewport, gint width, gint height, gpointer data)
 {
     if (gtk_gl_area_get_error(viewport) != NULL)
@@ -71,6 +79,8 @@ static void gapp_gobu_embed_signal_resize(GtkWidget* viewport, gint width, gint 
     GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(viewport);
     priv->width = width;
     priv->height = height;
+
+    ViewportSizeCallback(width, height);
 
     g_signal_emit(viewport, w_signals[SIGNAL_RESIZE], 0, width, height);
 }
@@ -110,6 +120,9 @@ static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer 
         g_signal_emit(viewport, w_signals[SIGNAL_START], 0);
         priv->initialize = TRUE;
     }
+
+    // TODO: Temporal hasta que se implemente el renderizado por contexto
+    ViewportSizeCallback(priv->width, priv->height);
 
     g_signal_emit(viewport, w_signals[SIGNAL_RENDER], 0);
 
@@ -199,20 +212,6 @@ int gapp_gobu_embed_get_height(GappGobuEmbed* embed)
 {
     GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->height;
-}
-
-
-/**
- * @brief Función que se ejecuta cuando se redimensiona el viewport.
- *
- * @param viewport El viewport que se está redimensionando.
- * @param width El nuevo ancho del viewport.
- * @param height La nueva altura del viewport.
- * @param data Datos adicionales pasados a la función.
- */
-static void signal_embed_resize(GappGobuEmbed* viewport, int width, int height, gpointer data)
-{
-    ViewportSizeCallback(width, height);
 }
 
 /**
