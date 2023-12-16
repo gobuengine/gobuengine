@@ -1,6 +1,16 @@
 #include "gbapp_asheets.h"
 #include "gapp_gobu_embed.h"
 
+#define ASSERT_FRAME_SELECTED(position) \
+    if (position == -1) { \
+        g_message("No frame selected"); \
+        return; \
+    }
+
+typedef enum ASheetsDirectionMoveFrame {
+    ASHEETS_DIRECTION_MOVE_FRAME_LEFT = -1,
+    ASHEETS_DIRECTION_MOVE_FRAME_RIGHT = 1
+}ASheetsDirectionMoveFrame;
 
 typedef struct asheets_resources {
     gchar* path;
@@ -10,13 +20,15 @@ typedef struct asheets_resources {
     int y;
 }asheets_resources;
 
+typedef struct asheets_animation_frame {
+    gchar* id;
+    double duration;
+}asheets_animation_frame;
+
 typedef struct asheets_animations {
     int fps;
     bool loop;
-    struct {
-        gchar* id;
-        double duration;
-    }frames[100];
+    asheets_animation_frame frames[100];
     int frames_count;
 }asheets_animations;
 
@@ -34,13 +46,25 @@ struct _GbAppAsheets
     GtkStringList* list_frame;
     GtkWidget* list_view_frame;
     GtkWidget* list_view_anim;
+    GtkWidget* frame_duration;
     GtkSingleSelection* selection_anim;
+    GtkSingleSelection* selection_frame;
     //
     gchar* filename;
     asheets_file asheets;
+    asheets_animation_frame frame_copy; // experimental
 };
 
 extern GAPP* EditorCore;
+
+static void fn_clear_string_list(GtkStringList* list);
+static gboolean fn_animation_new(GbAppAsheets* self, const gchar* name);
+static gboolean fn_animation_remove(GbAppAsheets* self, guint post);
+static void fn_create_resource(GbAppAsheets* self, const gchar* key, const gchar* path, int x, int y, int width, int height);
+static asheets_animations* fn_get_animation_by_name(GbAppAsheets* self, const gchar* name);
+static gchar* fn_get_animation_default(GbAppAsheets* self);
+static const gchar* fn_get_animation_selected(GbAppAsheets* self);
+static void fn_animation_add_frame(GbAppAsheets* self, asheets_animations* anim, const gchar* id, double duration);
 
 G_DEFINE_TYPE_WITH_PRIVATE(GbAppAsheets, gbapp_asheets, GTK_TYPE_BOX);
 
@@ -56,7 +80,9 @@ static void gbapp_asheets_init(GbAppAsheets* self)
 
 static void fn_clear_string_list(GtkStringList* list)
 {
-    gtk_string_list_splice(list, 0, g_list_model_get_n_items(list), NULL);
+    g_return_if_fail(list != NULL);
+    guint n = g_list_model_get_n_items(G_LIST_MODEL(list));
+    gtk_string_list_splice(list, 0, n, NULL);
 }
 
 static gboolean fn_animation_new(GbAppAsheets* self, const gchar* name)
@@ -68,8 +94,8 @@ static gboolean fn_animation_new(GbAppAsheets* self, const gchar* name)
     if (g_hash_table_contains(self->asheets.animations, name))
         return FALSE;
 
-    g_hash_table_insert(self->asheets.animations, name, anim);
-    gtk_string_list_append(self->list_anim, name);
+    g_hash_table_insert(self->asheets.animations, gb_strdup(name), anim);
+    gtk_string_list_append(self->list_anim, gb_strdup(name));
 
     return TRUE;
 }
@@ -77,7 +103,7 @@ static gboolean fn_animation_new(GbAppAsheets* self, const gchar* name)
 static gboolean fn_animation_remove(GbAppAsheets* self, guint post)
 {
     gchar* name = gtk_string_list_get_string(self->list_anim, post);
-    asheets_animations* anim = g_hash_table_lookup(self->asheets.animations, name);
+    asheets_animations* anim = fn_get_animation_by_name(self, name);
     if (anim == NULL)
         return FALSE;
 
@@ -89,19 +115,105 @@ static gboolean fn_animation_remove(GbAppAsheets* self, guint post)
     return TRUE;
 }
 
-static void fn_sheets_create_resource(const gchar* key, const gchar* path, int width, int height, int x, int y)
+static void fn_create_resource(GbAppAsheets* self, const gchar* key, const gchar* path, int x, int y, int width, int height)
 {
+    // TODO: Mejorar esto
+    char* npath = strstr(path, "Content");
+    if (npath != NULL) {
+        npath += strlen("Content");
+    }
+    else npath = gb_strdup(path);
+
     asheets_resources* resource = g_new0(asheets_resources, 1);
-    resource->path = gb_strdup(path);
-    resource->width = width;
-    resource->height = height;
+    resource->path = gb_strdup(npath);
     resource->x = x;
     resource->y = y;
+    resource->width = width;
+    resource->height = height;
 
     g_hash_table_insert(self->asheets.resources, gb_strdup(key), resource);
 }
 
-static void fn_sheets_load_data(GbAppAsheets* self)
+static asheets_animations* fn_get_animation_by_name(GbAppAsheets* self, const gchar* name)
+{
+    return g_hash_table_lookup(self->asheets.animations, name);
+}
+
+static gchar* fn_get_animation_default(GbAppAsheets* self)
+{
+    return self->asheets.default_animation;
+}
+
+static guint fn_get_animation_selected_post(GbAppAsheets* self)
+{
+    return gtk_single_selection_get_selected(self->selection_anim);
+}
+
+static const gchar* fn_get_animation_selected(GbAppAsheets* self)
+{
+    guint post = fn_get_animation_selected_post(self);
+    return gtk_string_list_get_string(self->list_anim, post);
+}
+
+static void fn_animation_add_frame(GbAppAsheets* self, asheets_animations* anim, const gchar* id, double duration)
+{
+    anim->frames[anim->frames_count].duration = duration;
+    anim->frames[anim->frames_count].id = gb_strdup(id);
+    anim->frames_count++;
+
+    gtk_string_list_append(self->list_frame, gb_strdup(id));
+}
+
+static void fn_animation_remove_frame(GbAppAsheets* self, asheets_animations* anim, guint post)
+{
+    g_free(anim->frames[post].id);
+    anim->frames_count--;
+
+    // movemos los frames a la izquierda
+    for (int i = post; i < anim->frames_count; i++)
+    {
+        anim->frames[i].duration = anim->frames[i + 1].duration;
+        anim->frames[i].id = gb_strdup(anim->frames[i + 1].id);
+    }
+
+    gtk_string_list_remove(self->list_frame, post);
+}
+
+static void fn_animation_load_frames(GbAppAsheets* self, asheets_animations* anim)
+{
+    fn_clear_string_list(self->list_frame);
+
+    for (int i = 0; i < anim->frames_count; i++)
+    {
+        gtk_string_list_append(self->list_frame, gb_strdup(anim->frames[i].id));
+    }
+}
+
+static void fn_animation_frame_move_direction(GbAppAsheets* self, ASheetsDirectionMoveFrame direction)
+{
+    guint position = gtk_single_selection_get_selected(self->selection_frame);
+    ASSERT_FRAME_SELECTED(position);
+    const gchar* anim_name = fn_get_animation_selected(self);
+
+    asheets_animations* anim = fn_get_animation_by_name(self, anim_name);
+    if (anim == NULL)
+        return;
+
+    int new_pos = position + direction;
+    if (new_pos > (anim->frames_count - 1) || new_pos < 0)
+        return;
+
+    // movemos el frame a la nueva direccion
+    asheets_animation_frame frame = anim->frames[position];
+    anim->frames[position] = anim->frames[new_pos];
+    anim->frames[new_pos] = frame;
+
+    // Es mas facil recargar los datos y seleccionar el frame...
+    fn_animation_load_frames(self, anim);
+    gtk_single_selection_set_selected(self->selection_frame, new_pos);
+}
+
+static void fn_asheets_load_data(GbAppAsheets* self)
 {
     self->list_anim = gtk_string_list_new(NULL);
     self->list_frame = gtk_string_list_new(NULL);
@@ -122,8 +234,14 @@ static void fn_sheets_load_data(GbAppAsheets* self)
         // resources
         binn_object_foreach2(resources, key, value)
         {
-            fn_sheets_create_resource(key, resource->path, resource->width, resource->height, resource->x, resource->y);
+            char* path = binn_object_str(&value, "path");
+            int x = binn_object_int32(&value, "x");
+            int y = binn_object_int32(&value, "y");
+            int width = binn_object_int32(&value, "width");
+            int height = binn_object_int32(&value, "height");
+            fn_create_resource(self, key, path, x, y, width, height);
         }
+        // binn_free(resources);
 
         // animations
         binn_object_foreach(animations, key, value)
@@ -139,56 +257,23 @@ static void fn_sheets_load_data(GbAppAsheets* self)
                 binn* frame_props = binn_list_object(frames, i);
                 {
                     anim->frames[i - 1].duration = binn_object_double(frame_props, "duration");
-                    anim->frames[i - 1].id = binn_object_str(frame_props, "id");
+                    anim->frames[i - 1].id = gb_strdup(binn_object_str(frame_props, "id"));
                     // por defecto la animacion 0 es la que se selecciona
                     // por eso se agrega a la lista de frames.
                     if (iter.current == 1)
-                        gtk_string_list_append(self->list_frame, anim->frames[i - 1].id);
+                        gtk_string_list_append(self->list_frame, gb_strdup(anim->frames[i - 1].id));
                 }
+                // binn_free(frame_props);
             }
+            // binn_free(frames);
 
             if (g_hash_table_insert(self->asheets.animations, gb_strdup(key), anim))
-                gtk_string_list_append(self->list_anim, key);
+                gtk_string_list_append(self->list_anim, gb_strdup(key));
         }
+        // binn_free(animations);
     }
+    binn_free(asheets_s);
 }
-
-static void signal_toolbar_click_new_animation(GtkWidget* widget, GbAppAsheets* self)
-{
-    bool r = fn_animation_new(self, gb_strdups("Animation%d", g_list_model_get_n_items(self->list_anim), NULL));
-}
-
-static void signal_toolbar_click_remove_animation(GtkWidget* widget, GbAppAsheets* self)
-{
-    guint post = gtk_single_selection_get_selected(self->selection_anim);
-    bool r = fn_animation_remove(self, post);
-}
-
-static void signal_toolbar_click_default_animation(GtkWidget* widget, GbAppAsheets* self)
-{
-    guint post = gtk_single_selection_get_selected(self->selection_anim);
-    gchar* name = gtk_string_list_get_string(self->list_anim, post);
-
-    self->asheets.default_animation = gb_strdup(name);
-}
-
-static void signal_list_anim_selection_selected(GtkSingleSelection* selection, GParamSpec* pspec, GbAppAsheets* self)
-{
-    guint post = gtk_single_selection_get_selected(selection);
-    gchar* name = gtk_string_list_get_string(self->list_anim, post);
-
-    fn_clear_string_list(self->list_frame);
-
-    asheets_animations* anim = g_hash_table_lookup(self->asheets.animations, name);
-    if (anim == NULL)
-        return;
-
-    for (int i = 0; i < anim->frames_count; i++)
-    {
-        gtk_string_list_append(self->list_frame, gb_strdup(anim->frames[i].id));
-    }
-}
-
 
 static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
 {
@@ -204,6 +289,34 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
 static void signal_viewport_render(GtkWidget* viewport, GbAppAsheets* asheets)
 {
     gb_app_progress(asheets->world);
+}
+
+static void signal_toolbar_click_new_animation(GtkWidget* widget, GbAppAsheets* self)
+{
+    fn_animation_new(self, gb_strdups("Animation%d", g_list_model_get_n_items(self->list_anim), NULL));
+}
+
+static void signal_toolbar_click_remove_animation(GtkWidget* widget, GbAppAsheets* self)
+{
+    guint post = gtk_single_selection_get_selected(self->selection_anim);
+    fn_animation_remove(self, post);
+}
+
+static void signal_toolbar_click_default_animation(GtkWidget* widget, GbAppAsheets* self)
+{
+    const gchar* name = fn_get_animation_selected(self);
+    self->asheets.default_animation = gb_strdup(name);
+}
+
+static void signal_list_anim_selection_selected(GtkSingleSelection* selection, GParamSpec* pspec, GbAppAsheets* self)
+{
+    const gchar* name = fn_get_animation_selected(self);
+
+    asheets_animations* anim = fn_get_animation_by_name(self, name);
+    if (anim == NULL)
+        return;
+
+    fn_animation_load_frames(self, anim);
 }
 
 static void signal_animation_list_factory_setup(GtkListItemFactory* factory, GtkListItem* item, GbAppAsheets* self)
@@ -251,7 +364,7 @@ static void signal_animation_list_factory_bind(GtkListItemFactory* factory, GtkL
     GtkCheckButton* loop = GTK_CHECK_BUTTON(gtk_widget_get_next_sibling(fps));
 
     gchar* anim_name = gtk_string_object_get_string(string_object);
-    asheets_animations* anim = g_hash_table_lookup(self->asheets.animations, anim_name);
+    asheets_animations* anim = fn_get_animation_by_name(self, anim_name);
 
     bool is_default = strcmp(self->asheets.default_animation, anim_name) == 0;
     if (is_default)
@@ -295,6 +408,7 @@ static void signal_frames_list_factory_bind(GtkListItemFactory* factory, GtkList
     if (resource == NULL)
         return;
 
+    // TODO: Mejorar esto
     char* path = gb_path_join(gb_project_get_path(), "Content", resource->path, NULL);
     path = gb_path_normalize(path);
 
@@ -308,6 +422,9 @@ static gboolean signal_list_frames_drop_file(GtkDropTarget* target, const GValue
     {
         GListStore* filess = G_LIST_STORE(g_value_get_object(value));
 
+        const gchar* name_anim = fn_get_animation_selected(self);
+        asheets_animations* anim = fn_get_animation_by_name(self, name_anim);
+
         guint items_n = g_list_model_get_n_items(G_LIST_MODEL(filess));
         for (int i = 0; i < items_n; i++)
         {
@@ -318,13 +435,95 @@ static gboolean signal_list_frames_drop_file(GtkDropTarget* target, const GValue
             if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
                 gchar* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
 
-                gtk_string_list_append(self->list_frame, name);
+                // crea el resource si no existe
+                GdkTexture* texture = gdk_texture_new_from_filename(filename, NULL);
+                int w = gdk_texture_get_width(texture);
+                int h = gdk_texture_get_height(texture);
+                fn_create_resource(self, name, filename, 0, 0, w, h);
+                g_object_unref(texture);
+
+                // agrega el frame a la animacion
+                fn_animation_add_frame(self, anim, name, 1.0);
             }
         }
 
         return TRUE;
     }
     return FALSE;
+}
+
+static void signal_selected_frame_selection(GtkSingleSelection* selection, GParamSpec* pspec, GbAppAsheets* self)
+{
+    guint position = gtk_single_selection_get_selected(selection);
+    ASSERT_FRAME_SELECTED(position);
+
+    asheets_animations* anim = fn_get_animation_by_name(self, fn_get_animation_selected(self));
+    if (anim == NULL)
+        return;
+
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->frame_duration), anim->frames[position].duration);
+}
+
+static void signal_value_changed_frame_duraction(GtkSpinButton* spin_button, GbAppAsheets* self)
+{
+    guint position = gtk_single_selection_get_selected(self->selection_frame);
+    ASSERT_FRAME_SELECTED(position);
+    const gchar* anim_name = fn_get_animation_selected(self);
+
+    asheets_animations* anim = fn_get_animation_by_name(self, anim_name);
+    if (anim == NULL)
+        return;
+
+    anim->frames[position].duration = (float)gtk_spin_button_get_value(spin_button);
+}
+
+static void signal_toolbar_click_remove_frame(GtkWidget* widget, GbAppAsheets* self)
+{
+    guint position = gtk_single_selection_get_selected(self->selection_frame);
+    ASSERT_FRAME_SELECTED(position);
+    const gchar* anim_name = fn_get_animation_selected(self);
+
+    asheets_animations* anim = fn_get_animation_by_name(self, anim_name);
+    if (anim == NULL)
+        return;
+
+    fn_animation_remove_frame(self, anim, position);
+}
+
+static void signal_toolbar_click_frame_move_left(GtkWidget* widget, GbAppAsheets* self)
+{
+    fn_animation_frame_move_direction(self, ASHEETS_DIRECTION_MOVE_FRAME_LEFT);
+}
+
+static void signal_toolbar_click_frame_move_right(GtkWidget* widget, GbAppAsheets* self)
+{
+    fn_animation_frame_move_direction(self, ASHEETS_DIRECTION_MOVE_FRAME_RIGHT);
+}
+
+static void signal_toolbar_click_frame_copy(GtkWidget* widget, GbAppAsheets* self)
+{
+    guint position = gtk_single_selection_get_selected(self->selection_frame);
+    ASSERT_FRAME_SELECTED(position);
+    const gchar* anim_name = fn_get_animation_selected(self);
+
+    asheets_animations* anim = fn_get_animation_by_name(self, anim_name);
+    if (anim == NULL)
+        return;
+
+    self->frame_copy = anim->frames[position];
+}
+
+static void signal_toolbar_click_frame_paste(GtkWidget* widget, GbAppAsheets* self)
+{
+    guint position = gtk_single_selection_get_selected(self->selection_frame);
+    ASSERT_FRAME_SELECTED(position);
+    const gchar* anim_name = fn_get_animation_selected(self);
+
+    asheets_animations* anim = fn_get_animation_by_name(self, anim_name);
+    if (anim == NULL)
+        return;
+
+    fn_animation_add_frame(self, anim, self->frame_copy.id, self->frame_copy.duration);
 }
 
 static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
@@ -408,43 +607,51 @@ static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
                 GtkWidget* btn_cframe = gapp_widget_button_new_icon_with_label("edit-copy-symbolic", NULL);
                 gtk_widget_set_tooltip_text(btn_cframe, "Copy Frame");
                 gtk_box_append(toolbar, btn_cframe);
+                g_signal_connect(btn_cframe, "clicked", G_CALLBACK(signal_toolbar_click_frame_copy), self);
 
                 GtkWidget* btn_pframe = gapp_widget_button_new_icon_with_label("edit-paste-symbolic", NULL);
                 gtk_widget_set_tooltip_text(btn_pframe, "Paste Frame");
                 gtk_box_append(toolbar, btn_pframe);
+                g_signal_connect(btn_pframe, "clicked", G_CALLBACK(signal_toolbar_click_frame_paste), self);
 
                 gtk_box_append(toolbar, gapp_widget_separator_h());
 
                 GtkWidget* btn_ml = gapp_widget_button_new_icon_with_label("go-previous-symbolic", NULL);
                 gtk_widget_set_tooltip_text(btn_ml, "Move frame left");
                 gtk_box_append(toolbar, btn_ml);
+                g_signal_connect(btn_ml, "clicked", G_CALLBACK(signal_toolbar_click_frame_move_left), self);
 
                 GtkWidget* btn_mr = gapp_widget_button_new_icon_with_label("go-next-symbolic", NULL);
                 gtk_widget_set_tooltip_text(btn_mr, "Move frame right");
                 gtk_box_append(toolbar, btn_mr);
+                g_signal_connect(btn_mr, "clicked", G_CALLBACK(signal_toolbar_click_frame_move_right), self);
 
                 GtkWidget* btn_r = gapp_widget_button_new_icon_with_label("user-trash-symbolic", NULL);
                 gtk_widget_set_tooltip_text(btn_r, "Remove frame");
                 gtk_box_append(toolbar, btn_r);
+                g_signal_connect(btn_r, "clicked", G_CALLBACK(signal_toolbar_click_remove_frame), self);
 
                 gtk_box_append(toolbar, gapp_widget_separator_h());
 
                 gtk_box_append(toolbar, gtk_label_new("Frame Duration:"));
 
-                GtkWidget* duration = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
-                gtk_spin_button_set_value(GTK_SPIN_BUTTON(duration), 1.0);
-                gtk_widget_set_tooltip_text(duration, "Frame Duration");
-                gtk_box_append(toolbar, duration);
+                self->frame_duration = gtk_spin_button_new_with_range(0.0, 100.0, 1.0);
+                gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->frame_duration), 1.0);
+                gtk_widget_set_tooltip_text(self->frame_duration, "Frame Duration");
+                gtk_box_append(toolbar, self->frame_duration);
+                g_signal_connect(self->frame_duration, "value-changed", G_CALLBACK(signal_value_changed_frame_duraction), self);
             }
 
             GtkListItemFactory* factory = gtk_signal_list_item_factory_new();
             g_signal_connect(factory, "setup", G_CALLBACK(signal_frames_list_factory_setup), self);
             g_signal_connect(factory, "bind", G_CALLBACK(signal_frames_list_factory_bind), self);
 
-            self->list_view_frame = gtk_grid_view_new(gtk_single_selection_new(self->list_frame), factory);
+            self->selection_frame = gtk_single_selection_new(self->list_frame);
+            self->list_view_frame = gtk_grid_view_new(self->selection_frame, factory);
             gtk_widget_add_css_class(self->list_view_frame, "navigation-sidebar");
             gtk_grid_view_set_max_columns(self->list_view_frame, 15);
             gtk_grid_view_set_min_columns(self->list_view_frame, 2);
+            g_signal_connect(self->selection_frame, "notify::selected", G_CALLBACK(signal_selected_frame_selection), self);
 
             scroll = gtk_scrolled_window_new();
             gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
@@ -479,7 +686,7 @@ GtkWidget* gbapp_asheets_new(const gchar* filename)
     self->filename = gb_strdup(filename);
     char* name = gb_fs_get_name(filename, false);
 
-    fn_sheets_load_data(self);
+    fn_asheets_load_data(self);
 
     gapp_project_editor_append_page(GAPP_NOTEBOOK_DEFAULT, 0, name, gbapp_asheets_template(self));
 

@@ -1486,6 +1486,7 @@ bool gb_resource_set(gb_world_t* world, const char* key, const char* path)
 {
     if (ecs_is_valid(world, ecs_lookup(world, key) == false)) {
         // Buscamos la ruta relativa al directorio Content
+        // TODO: Mejorar esto
         char* npath = strstr(path, "Content");
         if (npath != NULL) {
             npath += strlen("Content");

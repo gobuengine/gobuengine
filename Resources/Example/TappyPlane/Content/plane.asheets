@@ -13,7 +13,7 @@
                 {"duration": 1.0, "id":"planeRed3"}
             ]
         },
-        "idle2":{
+        "green":{
             "fps":10, "loop":true, "frames":[
             {"duration": 1.0, "id":"planeRed2"}, 
             {"duration": 1.0, "id":"planeRed2"}, 
