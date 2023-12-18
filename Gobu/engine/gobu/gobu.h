@@ -28,6 +28,16 @@ extern "C" {
         GB_CAMERA_FOLLOWING,
     }enumCameraMode;
 
+    typedef Color gb_color_t;
+
+    typedef Font gb_font_t;
+
+    typedef Rectangle gb_rect_t;
+
+    typedef Vector2 gb_vec2_t;
+
+    typedef Texture2D gb_texture_t;
+
     typedef struct gb_render_phases_t
     {
         ecs_entity_t PreDraw;
@@ -47,14 +57,6 @@ extern "C" {
         bool show_fps;
         bool show_grid;
     }gb_app_t;
-
-    typedef Color gb_color_t;
-
-    typedef Font gb_font_t;
-
-    typedef Rectangle gb_rect_t;
-
-    typedef Vector2 gb_vec2_t;
 
     typedef struct gb_bounding_t
     {
@@ -106,7 +108,6 @@ extern "C" {
         bool loop;
     }gb_animated_t;
 
-    typedef Texture2D gb_texture_t;
 
     typedef struct gb_text_t
     {
@@ -153,8 +154,34 @@ extern "C" {
         char* path;
         gb_texture_t texture;
         gb_font_t font;
-        binn* anim2d;
+        binn* json;
     }gb_resource_t;
+
+    typedef struct gb_animate_frame_t
+    {
+        char* resource;
+        int duration;
+        float x;
+        float y;
+        float width;
+        float height;
+    }gb_animate_frame_t;
+
+    typedef struct gb_animate_animation_t
+    {
+        char* name;
+        int fps;
+        bool loop;
+        gb_animate_frame_t* frames;
+        int count;
+    }gb_animate_animation_t;
+
+    typedef struct gb_animate_sprite_t
+    {
+        char* resource;
+        char* animation;
+        gb_animate_animation_t* animations;
+    }gb_animate_sprite_t;
 
     typedef struct gb_engine_t {
         struct {
@@ -188,6 +215,9 @@ extern "C" {
     extern ECS_COMPONENT_DECLARE(gb_animated_t);
     extern ECS_COMPONENT_DECLARE(gb_text_t);
     extern ECS_COMPONENT_DECLARE(gb_sprite_t);
+    extern ECS_COMPONENT_DECLARE(gb_animate_frame_t);
+    extern ECS_COMPONENT_DECLARE(gb_animate_animation_t);
+    extern ECS_COMPONENT_DECLARE(gb_animate_sprite_t);
     extern ECS_COMPONENT_DECLARE(gb_shape_rect_t);
     extern ECS_COMPONENT_DECLARE(gb_shape_circle_t);
     extern ECS_COMPONENT_DECLARE(gb_resource_t);
@@ -248,6 +278,7 @@ extern "C" {
     // --------------------------
     // UTILITY MODULE
     // --------------------------
+    char* gb_path_relative_content(const char* path);
     char* gb_path_normalize(const char* path);
     char* gb_path_join(const char* first_path, ...);
     char* gb_path_basename(const char* filename);
@@ -288,7 +319,7 @@ extern "C" {
     // --------------------------
     // RESOURCE MODULE
     // --------------------------
-    bool gb_resource_set(gb_world_t* world, const char* key, const char* path);
+    const char* gb_resource_set(gb_world_t* world, const char* path);
     const gb_resource_t* gb_resource(gb_world_t* world, const char* key);
 
     // --------------------------

@@ -12,7 +12,7 @@ bool project_manager_fn_create_project(const char* name, const char* path)
         char* config_file = g_strdup_printf("[project]\nname=%s\nversion=0.0.1\n\n[display.resolution]\nwidth=1280\nheight=720\n\n[display.window]\nresizable=true\nhighdpi=true\nspectration=true", name);
 
         gb_fs_mkdir(project);
-        gb_fs_mkdir(g_build_filename(project, "Content", NULL)); // Resource
+        gb_fs_mkdir(g_build_filename(project, FOLDER_CONTENT_PROJECT, NULL)); // Resource
         gb_fs_mkdir(g_build_filename(project, "Saved", NULL));   // Saved
         gb_fs_write_file(g_build_filename(project, "game.gobuproject", NULL), config_file);
 

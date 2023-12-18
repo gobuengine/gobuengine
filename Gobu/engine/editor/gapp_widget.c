@@ -325,6 +325,11 @@ void gapp_widget_entry_set_text(GtkEntry* entry, const gchar* text)
     gtk_entry_buffer_set_text(gtk_entry_get_buffer(entry), text, strlen(text));
 }
 
+const gchar* gapp_widget_entry_get_text(GtkEntry* entry)
+{
+    return gtk_entry_buffer_get_text(gtk_entry_get_buffer(entry));
+}
+
 void gapp_widget_view_set_text(GtkTextView* view, const gchar* text)
 {
     gtk_text_buffer_set_text(gtk_text_view_get_buffer(view), text, strlen(text));

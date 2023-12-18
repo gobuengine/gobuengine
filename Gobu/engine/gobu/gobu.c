@@ -1,5 +1,6 @@
 #include "gobu.h"
 #include "thirdparty/raygo/rlgl.h"
+#include "config.h"
 
 
 // VERSION 2.0.0
@@ -34,6 +35,9 @@ ECS_COMPONENT_DECLARE(gb_info_t);
 ECS_COMPONENT_DECLARE(gb_animated_t);
 ECS_COMPONENT_DECLARE(gb_text_t);
 ECS_COMPONENT_DECLARE(gb_sprite_t);
+ECS_COMPONENT_DECLARE(gb_animate_frame_t);
+ECS_COMPONENT_DECLARE(gb_animate_animation_t);
+ECS_COMPONENT_DECLARE(gb_animate_sprite_t);
 ECS_COMPONENT_DECLARE(gb_shape_rect_t);
 ECS_COMPONENT_DECLARE(gb_shape_circle_t);
 ECS_COMPONENT_DECLARE(gb_resource_t);
@@ -353,6 +357,27 @@ bool gb_setting_project_aspectration(void)
 // de Gobu para realizar tareas específicas, como por ejemplo, obtener el nombre
 // de un archivo, verificar si existe, etc.
 //
+
+/**
+ * @brief Retorna el contenido de una ruta relativa.
+ *
+ * Esta función toma una ruta relativa como entrada y devuelve el contenido de ese archivo.
+ *
+ * @param path La ruta relativa del archivo.
+ * @return El contenido del archivo como una cadena de caracteres.
+ */
+char* gb_path_relative_content(const char* path)
+{
+    char* npath = strstr(path, FOLDER_CONTENT_PROJECT);
+    if (npath != NULL) {
+        npath += strlen(FOLDER_CONTENT_PROJECT);
+    }
+    else {
+        npath = gb_strdup(path);
+    }
+
+    return npath;
+}
 
 /**
  * @brief Normaliza una ruta de archivo.
@@ -875,6 +900,9 @@ static void gb_engine_component_init(gb_world_t* world)
     ECS_COMPONENT_DEFINE(world, gb_animated_t);
     ECS_COMPONENT_DEFINE(world, gb_text_t);
     ECS_COMPONENT_DEFINE(world, gb_sprite_t);
+    ECS_COMPONENT_DEFINE(world, gb_animate_frame_t);
+    ECS_COMPONENT_DEFINE(world, gb_animate_animation_t);
+    ECS_COMPONENT_DEFINE(world, gb_animate_sprite_t);
     ECS_COMPONENT_DEFINE(world, gb_shape_rect_t);
     ECS_COMPONENT_DEFINE(world, gb_shape_circle_t);
     ECS_COMPONENT_DEFINE(world, gb_resource_t);
@@ -1020,14 +1048,25 @@ static void gb_engine_component_init(gb_world_t* world)
 // un sistema de animación, etc.
 //
 
-static void gb_ecs_observe_set_animated(ecs_iter_t* it)
+static void gb_ecs_observe_set_gb_animate_sprite_t(ecs_iter_t* it)
+{
+    gb_animate_sprite_t* animate = ecs_field(it, gb_animate_sprite_t, 1);
+    gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 2);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        binn* asheets_s = gb_resource(it->world, animate[i].resource)->json;
+    }
+}
+
+static void gb_ecs_observe_set_gb_animated_t(ecs_iter_t* it)
 {
     gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 1);
     gb_animated_t* animated = ecs_field(it, gb_animated_t, 2);
 
     for (int i = 0; i < it->count; i++)
     {
-        binn* resource = gb_resource(it->world, animated[i].resource)->anim2d;
+        binn* resource = gb_resource(it->world, animated[i].resource)->json;
 
         char* anim_id = (animated[i].animation == NULL) ? binn_object_str(resource, "default") : animated[i].animation;
         animated[i].width = binn_object_int32(resource, "width");
@@ -1057,20 +1096,21 @@ static void gb_ecs_observe_set_animated(ecs_iter_t* it)
     }
 }
 
-static void gb_ecs_observe_set_sprite(ecs_iter_t* it)
+static void gb_ecs_observe_set_gb_sprite_t(ecs_iter_t* it)
 {
     gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 1);
 
     for (int i = 0; i < it->count; i++)
     {
         sprite[i].texture = gb_resource(it->world, sprite[i].resource)->texture;
+        g_return_if_fail(sprite[i].texture.id != 0);
         sprite[i].src = (gb_rect_t){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
         sprite[i].dst = (gb_rect_t){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
         sprite[i].tint = (sprite[i].tint.a == 0) ? (gb_color_t) { 255, 255, 255, 255 } : sprite[i].tint;
     }
 }
 
-static void gb_ecs_observe_set_text(ecs_iter_t* it)
+static void gb_ecs_observe_set_gb_text_t(ecs_iter_t* it)
 {
     gb_text_t* text = ecs_field(it, gb_text_t, 1);
 
@@ -1082,7 +1122,7 @@ static void gb_ecs_observe_set_text(ecs_iter_t* it)
     }
 }
 
-static void gb_ecs_observe_set_resource(ecs_iter_t* it)
+static void gb_ecs_observe_set_gb_resource_t(ecs_iter_t* it)
 {
     ecs_entity_t event = it->event;
     gb_resource_t* resource = ecs_field(it, gb_resource_t, 1);
@@ -1097,8 +1137,8 @@ static void gb_ecs_observe_set_resource(ecs_iter_t* it)
                 resource[i].texture = LoadTexture(path);
             if (IsFileExtension(path, ".ttf"))
                 resource[i].font = LoadFont(path);
-            if (IsFileExtension(path, ".anim"))
-                resource[i].anim2d = binn_serialize_from_file(path);
+            if (IsFileExtension(path, ".anim") || IsFileExtension(path, ".asheets"))
+                resource[i].json = binn_serialize_from_file(path);
 
         }
         else if (event == EcsOnRemove) {
@@ -1107,14 +1147,14 @@ static void gb_ecs_observe_set_resource(ecs_iter_t* it)
             if (IsFileExtension(path, ".ttf"))
                 UnloadFont(resource[i].font);
             if (IsFileExtension(path, ".anim"))
-                binn_free(resource[i].anim2d);
+                binn_free(resource[i].json);
         }
 
         free(path);
     }
 }
 
-static void gb_ecs_observer_set_window_init(ecs_iter_t* it)
+static void gb_ecs_observer_set_gb_app_t(ecs_iter_t* it)
 {
     ecs_entity_t event = it->event;
     gb_app_t* win = ecs_field(it, gb_app_t, 1);
@@ -1128,7 +1168,7 @@ static void gb_ecs_observer_set_window_init(ecs_iter_t* it)
     }
 }
 
-static void gb_ecs_observer_set_camera_init(ecs_iter_t* it)
+static void gb_ecs_observer_set_gb_camera_t(ecs_iter_t* it)
 {
     gb_camera_t* camera = ecs_field(it, gb_camera_t, 1);
     for (int i = 0; i < it->count; i++)
@@ -1137,7 +1177,7 @@ static void gb_ecs_observer_set_camera_init(ecs_iter_t* it)
     }
 }
 
-static void gb_ecs_update_camera_mode(ecs_iter_t* it)
+static void gb_ecs_update_gb_camera_t(ecs_iter_t* it)
 {
     gb_camera_t* camera = ecs_field(it, gb_camera_t, 1);
 
@@ -1171,7 +1211,7 @@ static void gb_ecs_update_camera_mode(ecs_iter_t* it)
     }
 }
 
-static void gb_ecs_update_animated(ecs_iter_t* it)
+static void gb_ecs_update_gb_animated_t(ecs_iter_t* it)
 {
     gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 1);
     gb_animated_t* animated = ecs_field(it, gb_animated_t, 2);
@@ -1212,7 +1252,7 @@ static void gb_ecs_update_animated(ecs_iter_t* it)
     }
 }
 
-static void gb_ecs_update_bounding(ecs_iter_t* it)
+static void gb_ecs_update_gb_bounding_t(ecs_iter_t* it)
 {
     gb_bounding_t* bounding = ecs_field(it, gb_bounding_t, 1);
     gb_transform_t* transform = ecs_field(it, gb_transform_t, 2);
@@ -1228,7 +1268,7 @@ static void gb_ecs_update_bounding(ecs_iter_t* it)
     }
 }
 
-static void gb_ecs_update_gismos(ecs_iter_t* it)
+static void gb_ecs_update_gb_gizmos_t(ecs_iter_t* it)
 {
     gb_gizmos_t* gizmos = ecs_field(it, gb_gizmos_t, 1);
     gb_transform_t* transform = ecs_field(it, gb_transform_t, 2);
@@ -1334,12 +1374,12 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
                 bounding[i].size = (gb_vec2_t){ rect[i].width, rect[i].height };
             }
 
-            if (sprite) {
+            if (sprite && sprite[i].texture.id != 0) {
                 gb_rendering_draw_sprite(sprite[i]);
                 bounding[i].size = (gb_vec2_t){ sprite[i].dst.width, sprite[i].dst.height };
             }
 
-            if (text) {
+            if (text && text[i].font.texture.id != 0) {
                 gb_rendering_draw_text(text[i]);
                 bounding[i].size = MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing);
             }
@@ -1385,61 +1425,67 @@ static void gb_engine_system_init(gb_world_t* world)
     ecs_observer(world, {
         .filter = {.terms = { {.id = ecs_id(gb_sprite_t)} }},
         .events = { EcsOnSet },
-        .callback = gb_ecs_observe_set_sprite
+        .callback = gb_ecs_observe_set_gb_sprite_t
     });
 
     ecs_observer(world, {
         .filter = {.terms = { {.id = ecs_id(gb_text_t)} }},
         .events = { EcsOnSet },
-        .callback = gb_ecs_observe_set_text
+        .callback = gb_ecs_observe_set_gb_text_t
     });
 
     ecs_observer(world, {
         .filter = {.terms = { {.id = ecs_id(gb_sprite_t)}, {.id = ecs_id(gb_animated_t)} }},
         .events = { EcsOnSet },
-        .callback = gb_ecs_observe_set_animated
+        .callback = gb_ecs_observe_set_gb_animated_t
+    });
+
+    ecs_observer(world, {
+        .filter = {.terms = { {.id = ecs_id(gb_animate_sprite_t)}, {.id = ecs_id(gb_sprite_t)} }},
+        .events = { EcsOnSet },
+        .callback = gb_ecs_observe_set_gb_animate_sprite_t
     });
 
     ecs_observer(world, {
         .filter = {.terms = {{.id = ecs_id(gb_resource_t)}}},
         .events = { EcsOnSet, EcsOnRemove },
-        .callback = gb_ecs_observe_set_resource
+        .callback = gb_ecs_observe_set_gb_resource_t
     });
 
     ecs_observer(world, {
         .filter = {.terms = {{.id = ecs_id(gb_app_t)}}},
         .events = { EcsOnSet, EcsOnRemove },
-        .callback = gb_ecs_observer_set_window_init
+        .callback = gb_ecs_observer_set_gb_app_t
     });
 
     ecs_observer(world, {
         .filter = {.terms = {{.id = ecs_id(gb_camera_t)}}},
         .events = { EcsOnSet },
-        .callback = gb_ecs_observer_set_camera_init
+        .callback = gb_ecs_observer_set_gb_camera_t
     });
 
     ecs_system(world, {
-        .entity = ecs_entity(world, {.name = "gb_ecs_update_bounding", .add = {ecs_dependson(EcsPreUpdate)} }),
+        .entity = ecs_entity(world, {.name = "gb_ecs_update_gb_bounding_t", .add = {ecs_dependson(EcsPreUpdate)} }),
         .query.filter.terms = { {.id = ecs_id(gb_bounding_t)}, {.id = ecs_id(gb_transform_t)} },
-        .callback = gb_ecs_update_bounding
+        .callback = gb_ecs_update_gb_bounding_t
     });
 
     ecs_system(world, {
-        .entity = ecs_entity(world, {.name = "gb_ecs_update_camera_mode", .add = {ecs_dependson(EcsOnUpdate)} }),
+        .entity = ecs_entity(world, {.name = "gb_ecs_update_gb_camera_t", .add = {ecs_dependson(EcsOnUpdate)} }),
         .query.filter.terms = { {.id = ecs_id(gb_camera_t)} },
-        .callback = gb_ecs_update_camera_mode
+        .callback = gb_ecs_update_gb_camera_t
     });
 
     ecs_system(world, {
-        .entity = ecs_entity(world, {.name = "gb_ecs_update_animated", .add = {ecs_dependson(EcsOnUpdate)} }),
+        .entity = ecs_entity(world, {.name = "gb_ecs_update_gb_animated_t", .add = {ecs_dependson(EcsOnUpdate)} }),
         .query.filter.terms = { {.id = ecs_id(gb_sprite_t)}, {.id = ecs_id(gb_animated_t)} },
-        .callback = gb_ecs_update_animated
+        .callback = gb_ecs_update_gb_animated_t
     });
 
     ecs_system(world, {
-        .entity = ecs_entity(world, {.name = "gb_ecs_update_gismos", .add = {ecs_dependson(EcsOnUpdate)} }),
+        .entity = ecs_entity(world, {.name = "gb_ecs_update_gb_gizmos_t", .add = {ecs_dependson(EcsOnUpdate)} }),
         .query.filter.terms = { {.id = ecs_id(gb_gizmos_t)}, {.id = ecs_id(gb_transform_t)}, {.id = ecs_id(gb_bounding_t)} },
-        .callback = gb_ecs_update_gismos
+        .callback = gb_ecs_update_gb_gizmos_t
     });
 
     ecs_system(world, {
@@ -1482,21 +1528,20 @@ static void gb_engine_system_init(gb_world_t* world)
  * @param path La ruta de acceso al recurso.
  * @return true si se estableció el recurso correctamente, false en caso contrario.
  */
-bool gb_resource_set(gb_world_t* world, const char* key, const char* path)
+const char* gb_resource_set(gb_world_t* world, const char* path)
 {
-    if (ecs_is_valid(world, ecs_lookup(world, key) == false)) {
-        // Buscamos la ruta relativa al directorio Content
-        // TODO: Mejorar esto
-        char* npath = strstr(path, "Content");
-        if (npath != NULL) {
-            npath += strlen("Content");
-        }
+    const char* path_relative = gb_path_relative_content(path);
+    const char* kkey = gb_path_normalize(gb_strdups("resource://%s", gb_str_replace(path_relative, ".", "!")));
 
-        ecs_entity_t resource = ecs_new_entity(world, key);
-        ecs_set(world, resource, gb_resource_t, { .path = npath });
-        return true;
+    if (ecs_is_valid(world, ecs_lookup(world, kkey)) == false) {
+        ecs_entity_t resource = ecs_new_entity(world, kkey);
+        ecs_set(world, resource, gb_resource_t, { .path = path_relative });
     }
-    return false;
+    else {
+        ecs_entity_t resource = ecs_lookup(world, kkey);
+        ecs_set(world, resource, gb_resource_t, { .path = path_relative });
+    }
+    return kkey;
 }
 
 /**
@@ -1511,6 +1556,7 @@ bool gb_resource_set(gb_world_t* world, const char* key, const char* path)
 const gb_resource_t* gb_resource(gb_world_t* world, const char* key)
 {
     ecs_entity_t resource = ecs_lookup(world, key);
+    if (resource == 0) return NULL;
     return (gb_resource_t*)ecs_get(world, resource, gb_resource_t);
 }
 
@@ -1531,7 +1577,7 @@ ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_tra
     gb_ecs_entity_set(world, entity, gb_bounding_t, { 0 });
     gb_ecs_entity_set(world, entity, gb_gizmos_t, { .selected = false });
 
-    gb_ecs_entity_set_parent(world, ecs_lookup(world, "World"), entity);
+    // gb_ecs_entity_set_parent(world, ecs_lookup(world, "World"), entity);
 
     return entity;
 }

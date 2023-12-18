@@ -21,7 +21,6 @@ extern GAPP* EditorCore;
  */
 static void gapp_tool_console_print(const gchar* msg)
 {
-
     if (EditorCore != NULL && EditorCore->console != NULL) {
         GobuToolConsolePrivate* private = gapp_tool_console_get_instance_private(EditorCore->console);
 
@@ -86,6 +85,7 @@ GobuToolConsole* gapp_tool_console_new(void)
 void gb_print_error(const gchar* msg, const gchar* error)
 {
     gapp_tool_console_print(gb_strdups("<span color='#FF453A'><b>ERROR:</b></span> %s <span color='#FF453A'><b>%s</b></span>", msg, error));
+    g_error("%s %s", msg, error);
 }
 
 /**
@@ -98,6 +98,7 @@ void gb_print_error(const gchar* msg, const gchar* error)
 void gb_print_warning(const gchar* msg)
 {
     gapp_tool_console_print(gb_strdups("<span color='#FFEB3B'><b>WARNING:</b></span> %s", msg));
+    g_warning("%s", msg);
 }
 
 /**
@@ -108,6 +109,7 @@ void gb_print_warning(const gchar* msg)
 void gb_print_success(const gchar* msg)
 {
     gapp_tool_console_print(gb_strdups("<span color='#4CAF50'><b>SUCCESS:</b></span> %s", msg));
+    g_message("%s", msg);
 }
 
 /**
@@ -118,4 +120,5 @@ void gb_print_success(const gchar* msg)
 void gb_print_info(const gchar* msg)
 {
     gapp_tool_console_print(gb_strdups("<span color='#2196F3'><b>INFO:</b></span> %s", msg));
+    g_info("%s", msg);
 }
