@@ -145,7 +145,7 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
     // experimental
     self->root = ecs_lookup(self->world, "World");
     if (self->root == 0) {
-        self->root = ecs_new_entity(self->world, "World");
+        self->root = gb_ecs_entity_new(self->world, "World", gb_ecs_transform(0,0));
     }
 
     gapp_level_outliner_init_root(self->outliner, self->root);

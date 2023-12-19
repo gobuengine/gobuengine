@@ -1000,6 +1000,8 @@ static void gb_engine_component_init(gb_world_t* world)
         .members = {
             {.name = "resource", .type = ecs_id(ecs_string_t) },
             {.name = "tint", .type = ecs_id(gb_color_t) },
+            {.name = "src", .type = ecs_id(gb_rect_t) },
+            {.name = "dst", .type = ecs_id(gb_rect_t) },
         }
     });
 
@@ -1037,6 +1039,33 @@ static void gb_engine_component_init(gb_world_t* world)
             {.name = "path", .type = ecs_id(ecs_string_t) },
         }
     });
+
+    ecs_struct(world, {
+        .entity = ecs_id(gb_animate_frame_t),
+        .members = {
+            {.name = "duration", .type = ecs_id(ecs_i32_t) },
+            {.name = "sprite", .type = ecs_id(gb_sprite_t) },
+        }
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(gb_animate_animation_t),
+        .members = {
+            {.name = "name", .type = ecs_id(ecs_string_t) },
+            {.name = "fps", .type = ecs_id(ecs_i16_t) },
+            {.name = "loop", .type = ecs_id(ecs_bool_t) },
+            {.name = "frames", .type = ecs_vector(world, {.entity = ecs_entity(world, {.name = "gb_animate_frame_t" }),.type = ecs_id(gb_animate_frame_t)})},
+        }
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(gb_animate_sprite_t),
+        .members = {
+            {.name = "resource", .type = ecs_id(ecs_string_t) },
+            {.name = "animation", .type = ecs_id(ecs_string_t) },
+            {.name = "animations", .type = ecs_vector(world, {.entity = ecs_entity(world, {.name = "gb_animate_animation_t" }),.type = ecs_id(gb_animate_animation_t)})},
+        }
+    });
 }
 
 
@@ -1055,10 +1084,14 @@ static void gb_ecs_observe_set_gb_animate_sprite_t(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        binn* asheets_s = gb_resource(it->world, animate[i].resource)->json;
+        // gb_resource_t* resource = gb_resource(it->world, animate[i].resource);
+        // g_return_if_fail(resource != NULL);
+        // binn* json = resource->json;
+        ecs_vec_init(NULL, &animate->animations, ecs_id(gb_animate_animation_t), 200);
     }
 }
 
+// deprecated: Ahora el sistema sera por frame....
 static void gb_ecs_observe_set_gb_animated_t(ecs_iter_t* it)
 {
     gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 1);
@@ -1066,11 +1099,13 @@ static void gb_ecs_observe_set_gb_animated_t(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        binn* resource = gb_resource(it->world, animated[i].resource)->json;
+        gb_resource_t* resource = gb_resource(it->world, animated[i].resource);
+        g_return_if_fail(resource != NULL);
+        binn* json = resource->json;
 
-        char* anim_id = (animated[i].animation == NULL) ? binn_object_str(resource, "default") : animated[i].animation;
-        animated[i].width = binn_object_int32(resource, "width");
-        animated[i].height = binn_object_int32(resource, "height");
+        char* anim_id = (animated[i].animation == NULL) ? binn_object_str(json, "default") : animated[i].animation;
+        animated[i].width = binn_object_int32(json, "width");
+        animated[i].height = binn_object_int32(json, "height");
 
         sprite[i].src.width = animated[i].width;
         sprite[i].src.height = animated[i].height;
@@ -1078,7 +1113,7 @@ static void gb_ecs_observe_set_gb_animated_t(ecs_iter_t* it)
         sprite[i].dst.width = animated[i].width;
         sprite[i].dst.height = animated[i].height;
 
-        binn* animation = binn_object_object(binn_object_object(resource, "animations"), anim_id);
+        binn* animation = binn_object_object(binn_object_object(json, "animations"), anim_id);
         {
             animated[i].loop = binn_object_bool(animation, "loop");
             animated[i].speed = binn_object_int32(animation, "speed");
@@ -1102,10 +1137,21 @@ static void gb_ecs_observe_set_gb_sprite_t(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        sprite[i].texture = gb_resource(it->world, sprite[i].resource)->texture;
-        g_return_if_fail(sprite[i].texture.id != 0);
-        sprite[i].src = (gb_rect_t){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
-        sprite[i].dst = (gb_rect_t){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
+        gb_resource_t* resource = gb_resource(it->world, sprite[i].resource);
+        g_return_if_fail(resource != NULL);
+        sprite[i].texture = resource->texture;
+
+        // clip sprite
+        float x = sprite[i].src.x;
+        float y = sprite[i].src.y;
+        float w = sprite[i].dst.width;
+        float h = sprite[i].dst.height;
+
+        float clip_width = (w == 0) ? sprite[i].texture.width : w;
+        float clip_height = (h == 0) ? sprite[i].texture.height : h;
+
+        sprite[i].src = (gb_rect_t){ x, y, sprite[i].texture.width, sprite[i].texture.height };
+        sprite[i].dst = (gb_rect_t){ 0.0f, 0.0f, clip_width, clip_height };
         sprite[i].tint = (sprite[i].tint.a == 0) ? (gb_color_t) { 255, 255, 255, 255 } : sprite[i].tint;
     }
 }
@@ -1211,6 +1257,7 @@ static void gb_ecs_update_gb_camera_t(ecs_iter_t* it)
     }
 }
 
+// deprecated: Ahora el sistema sera por frame....
 static void gb_ecs_update_gb_animated_t(ecs_iter_t* it)
 {
     gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 1);
@@ -1556,7 +1603,7 @@ const char* gb_resource_set(gb_world_t* world, const char* path)
 const gb_resource_t* gb_resource(gb_world_t* world, const char* key)
 {
     ecs_entity_t resource = ecs_lookup(world, key);
-    if (resource == 0) return NULL;
+    g_return_val_if_fail(resource != 0, NULL);
     return (gb_resource_t*)ecs_get(world, resource, gb_resource_t);
 }
 
@@ -1577,7 +1624,9 @@ ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_tra
     gb_ecs_entity_set(world, entity, gb_bounding_t, { 0 });
     gb_ecs_entity_set(world, entity, gb_gizmos_t, { .selected = false });
 
-    // gb_ecs_entity_set_parent(world, ecs_lookup(world, "World"), entity);
+    char* name_id = ecs_lookup(world, name) == 0 ? gb_strdup(name) : gb_strdups("%s%lld", name, entity);
+    gb_ecs_entity_set_name(world, entity, name_id);
+    ecs_os_free(name_id);
 
     return entity;
 }
@@ -1589,17 +1638,46 @@ void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity
 
 char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity)
 {
-    gb_info_t* info = ecs_get(world, entity, gb_info_t);
-    if (info == NULL) return ecs_get_name(world, entity);
-    return gb_strdup(info->name);
+    return ecs_get_name(world, entity);
 }
 
-void gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name)
+ecs_entity_t gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name)
 {
-    gb_info_t* info = ecs_get(world, entity, gb_info_t);
-    info->name = gb_strdup(name);
+    return ecs_set_name(world, entity, name);
 }
 
+void gb_ecs_vec_remove(ecs_vec_t* v, ecs_size_t size,int32_t index)
+{
+    ecs_san_assert(size == v->elem_size, ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(index < v->count, ECS_OUT_OF_RANGE, NULL);
+    if (index == --v->count) {
+        return;
+    }
+
+    for (int32_t i = index; i < v->count; i++) {
+        ecs_os_memcpy(
+            ECS_ELEM(v->array, size, i),
+            ECS_ELEM(v->array, size, i + 1),
+            size);
+    }
+}
+
+void gb_ecs_vec_swap(ecs_vec_t* v, ecs_size_t size, int32_t index_a, int32_t index_b)
+{
+    ecs_san_assert(size == v->elem_size, ECS_INVALID_PARAMETER, NULL);
+    ecs_assert(index_a < v->count, ECS_OUT_OF_RANGE, NULL);
+    ecs_assert(index_b < v->count, ECS_OUT_OF_RANGE, NULL);
+
+    if (index_a == index_b) {
+        return;
+    }
+
+    void* buffer = ecs_os_malloc(size);
+    ecs_os_memcpy(buffer, ECS_ELEM(v->array, size, index_a), size);
+    ecs_os_memcpy(ECS_ELEM(v->array, size, index_a), ECS_ELEM(v->array, size, index_b), size);
+    ecs_os_memcpy(ECS_ELEM(v->array, size, index_b), buffer, size);
+    ecs_os_free(buffer);
+}
 
 // ########################################
 // APP functions

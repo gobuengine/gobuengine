@@ -159,28 +159,24 @@ extern "C" {
 
     typedef struct gb_animate_frame_t
     {
-        char* resource;
+        int index_;
         int duration;
-        float x;
-        float y;
-        float width;
-        float height;
+        gb_sprite_t sprite;
     }gb_animate_frame_t;
 
     typedef struct gb_animate_animation_t
     {
-        char* name;
-        int fps;
-        bool loop;
-        gb_animate_frame_t* frames;
-        int count;
+        ecs_string_t name;
+        ecs_i16_t fps;
+        ecs_bool_t loop;
+        ecs_vec_t frames;
     }gb_animate_animation_t;
 
     typedef struct gb_animate_sprite_t
     {
-        char* resource;
-        char* animation;
-        gb_animate_animation_t* animations;
+        ecs_string_t resource;
+        ecs_string_t animation;
+        ecs_vec_t animations;
     }gb_animate_sprite_t;
 
     typedef struct gb_engine_t {
@@ -225,6 +221,8 @@ extern "C" {
 
 #define gb_ecs_world_new ecs_init
 #define gb_ecs_entity_set ecs_set
+#define gb_ecs_entity_get ecs_get
+#define gb_ecs_entity ecs_new_entity
 #define gb_world_t ecs_world_t
 
 // --------------------------
@@ -326,11 +324,19 @@ extern "C" {
     // ECS MODULE
     // --------------------------
 
+#define gb_ecs_vec_remove_t(vec, T, elem) \
+    gb_ecs_vec_remove(vec, ECS_SIZEOF(T), elem)
+
+#define gb_ecs_vec_swap_t(vec, T, elem, elem2) \
+    gb_ecs_vec_swap(vec, ECS_SIZEOF(T), elem, elem2)
+
 #define gb_ecs_transform(x, y) (gb_transform_t){ .position = (gb_vec2_t){ x, y}, .scale = Vector2One(), .rotation = 0.0f, .origin = (gb_vec2_t){0.5f, 0.5f} }
     ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_transform_t t);
     void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t entity);
     char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
-    void gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name);
+    ecs_entity_t gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name);
+    void gb_ecs_vec_remove(ecs_vec_t* v, ecs_size_t size, int32_t index);
+    void gb_ecs_vec_swap(ecs_vec_t* v, ecs_size_t size, int32_t index_a, int32_t index_b);
 
     // --------------------------
     // WindowAPP MODULE
