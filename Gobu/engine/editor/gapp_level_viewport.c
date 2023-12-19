@@ -90,8 +90,8 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess
         GFile* file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
 
         gchar* filename = g_file_get_path(file);
-        gchar* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
-        ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
+        char* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
+        gb_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
         const char *key = gb_resource_set(world, filename);
         gb_print_info(gb_strdups("Resource load: %s", key));
@@ -99,8 +99,7 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess
         gb_camera_t* camera = ecs_get(world, ecs_lookup(world, "Engine"), gb_camera_t);
         gb_vec2_t mouseWorld = engine.screen_to_world(*camera, (gb_vec2_t) { x, y });
 
-        ecs_entity_t e = gb_ecs_entity_new(world, name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
-        gb_ecs_entity_set_parent(world, e, ecs_lookup(world, "World"));
+        ecs_entity_t e = gb_ecs_entity_new(world, ecs_lookup(world, "World"), name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
 
         if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
             gb_ecs_entity_set(world, e, gb_sprite_t, { .resource = key });

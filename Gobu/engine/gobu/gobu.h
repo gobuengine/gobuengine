@@ -336,9 +336,10 @@ extern "C" {
     gb_ecs_vec_swap(vec, ECS_SIZEOF(T), elem, elem2)
 
 #define gb_ecs_transform(x, y) (gb_transform_t){ .position = (gb_vec2_t){ x, y}, .scale = Vector2One(), .rotation = 0.0f, .origin = (gb_vec2_t){0.5f, 0.5f} }
-    ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_transform_t t);
+    
+    ecs_entity_t gb_ecs_entity_new(gb_world_t* world, ecs_entity_t parent, const char* name, const gb_transform_t t);
     void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t entity);
-    char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
+    const char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
     ecs_entity_t gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name);
     void gb_ecs_vec_remove(ecs_vec_t* v, ecs_size_t size, int32_t index);
     void gb_ecs_vec_swap(ecs_vec_t* v, ecs_size_t size, int32_t index_a, int32_t index_b);

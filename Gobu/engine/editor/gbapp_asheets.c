@@ -482,9 +482,10 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
 
     const char* key = gb_resource_set(asheets->world, asheets->filename);
 
-    asheets->entity = gb_ecs_entity_new(asheets->world, "AnimationSprite", gb_ecs_transform(0, 0));
+    asheets->entity = gb_ecs_entity_new(asheets->world, 0, "AnimationSprite", gb_ecs_transform(0, 0));
     gb_ecs_entity_set(asheets->world, asheets->entity, gb_animate_sprite_t, { .resource = key });
     gb_ecs_entity_set(asheets->world, asheets->entity, gb_sprite_t, { 0 });
+    // ecs_delete(asheets->world, ecs_lookup(asheets->world, "Engine"));
 
     asheets->animate_sprite = ecs_get(asheets->world, asheets->entity, gb_animate_sprite_t);
 }

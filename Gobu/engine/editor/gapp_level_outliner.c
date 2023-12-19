@@ -16,6 +16,7 @@ struct _ObjectOutlinerItem
     ecs_entity_t entity;
     ecs_entity_t root;
     ecs_world_t* world;
+    GListStore* store;
 };
 
 G_DEFINE_TYPE(ObjectOutlinerItem, object_outliner_item, G_TYPE_OBJECT);
@@ -41,7 +42,7 @@ static void object_outliner_item_class_init(ObjectOutlinerItemClass* class)
 ObjectOutlinerItem* object_outliner_item_new(ecs_world_t* world, ecs_entity_t entity)
 {
     ObjectOutlinerItem* item = g_object_new(OBJECT_TYPE_OUTLINER_ITEM, NULL);
-    item->name = gb_ecs_entity_get_name(world, entity);
+    item->name = gb_strdup(gb_ecs_entity_get_name(world, entity));
     item->visible = ecs_is_alive(world, entity);
     item->expand = FALSE;
     item->entity = entity;
@@ -55,14 +56,6 @@ static gboolean equal_func(gpointer a, gpointer b)
     ObjectOutlinerItem* bb = OBJECT_OUTLINER_ITEM(b);
 
     return (aa->entity == bb->entity);
-}
-
-void object_outliner_item_set_parent(ObjectOutlinerItem* item, ObjectOutlinerItem* parent)
-{
-    if (parent->entity != item->entity)
-    {
-        ecs_add_pair(item->world, item->entity, EcsChildOf, parent->entity);
-    }
 }
 
 // -------------------------
@@ -88,8 +81,6 @@ struct _GappLevelOutliner
 
 G_DEFINE_TYPE_WITH_PRIVATE(GappLevelOutliner, gapp_level_outliner, GTK_TYPE_BOX);
 
-static void _outliner_hack_tree_list_refresh(GappLevelOutliner* self);
-
 static void gapp_level_outliner_class_init(GappLevelOutlinerClass* klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
@@ -99,21 +90,21 @@ static GListModel* fn_factory_tree_list_model_create(GObject* object, GappLevelO
 {
     ObjectOutlinerItem* item = OBJECT_OUTLINER_ITEM(object);
 
-    ecs_world_t* world = gapp_level_editor_get_world(outliner->editor);
+    // ecs_world_t* world = gapp_level_editor_get_world(outliner->editor);
 
-    ecs_iter_t it = ecs_children(world, item->entity);
-    while (ecs_children_next(&it)) {
-        GListStore* store = g_list_store_new(OBJECT_TYPE_OUTLINER_ITEM);
-        for (int i = 0; i < it.count; i++)
-        {
-            ecs_entity_t entity = it.entities[i];
-            ObjectOutlinerItem* nitem = object_outliner_item_new(world, entity);
-            g_list_store_append(store, nitem);
-
-            fn_factory_tree_list_model_create(nitem, outliner);
-        }
-        return G_LIST_MODEL(store);
-    }
+    // ecs_iter_t it = ecs_children(world, item->entity);
+    // while (ecs_children_next(&it)) {
+    //     printf("aaaa\n");
+    //     GListStore* store = g_list_store_new(OBJECT_TYPE_OUTLINER_ITEM);
+    //     for (int i = 0; i < it.count; i++)
+    //     {
+    //         ecs_entity_t entity = it.entities[i];
+    //         ObjectOutlinerItem* nitem = object_outliner_item_new(world, entity);
+    //         g_list_store_append(store, nitem);
+    //         fn_factory_tree_list_model_create(nitem, outliner);
+    //     }
+    //     return G_LIST_MODEL(store);
+    // }
 
     return NULL;
 }
@@ -124,8 +115,6 @@ static gboolean signal_drop(GtkDropTarget* target, const GValue* value, double x
     {
         ObjectOutlinerItem* parent = OBJECT_OUTLINER_ITEM(gtk_tree_list_row_get_item(gtk_list_item_get_item(list_item)));
         ObjectOutlinerItem* children = g_value_get_object(value);
-        object_outliner_item_set_parent(children, parent);
-
         return TRUE;
     }
     return FALSE;
@@ -150,9 +139,9 @@ static void signal_factory_setup_name(GtkSignalListItemFactory* factory, GtkList
     expander = gtk_tree_expander_new();
     gtk_list_item_set_child(GTK_LIST_ITEM(listitem), expander);
 
-    drop = gtk_drop_target_new(OBJECT_TYPE_OUTLINER_ITEM, GDK_ACTION_MOVE);
-    g_signal_connect(drop, "drop", G_CALLBACK(signal_drop), listitem);
-    gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(drop));
+    // drop = gtk_drop_target_new(OBJECT_TYPE_OUTLINER_ITEM, GDK_ACTION_MOVE);
+    // g_signal_connect(drop, "drop", G_CALLBACK(signal_drop), listitem);
+    // gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(drop));
 
     drag = gtk_drag_source_new();
     gtk_drag_source_set_actions(drag, GDK_ACTION_MOVE);
@@ -203,8 +192,6 @@ static void signal_selection_selected(GObject* object, GParamSpec* pspec, GappLe
 {
     gint post = gtk_single_selection_get_selected(GTK_SINGLE_SELECTION(object));
     ObjectOutlinerItem* item = gtk_tree_list_row_get_item(gtk_single_selection_get_selected_item(GTK_SINGLE_SELECTION(object)));
-
-    printf("Selected: %d, %s\n", post, item->name);
 }
 
 static void signal_toolbar_clicked_add_prefab(GtkWidget* widget, GappLevelOutliner* self)
@@ -280,17 +267,6 @@ GappLevelOutliner* gapp_level_outliner_new(GappLevelEditor* editor)
     return self;
 }
 
-void gapp_level_outliner_events(GappLevelOutliner* self, ecs_entity_t event, ecs_entity_t entity, ecs_world_t* world)
-{
-    _outliner_hack_tree_list_refresh(self);
-}
-
-void gapp_level_outliner_init_root(GappLevelOutliner* self, ecs_entity_t entity)
-{
-    ecs_world_t* world = gapp_level_editor_get_world(self->editor);
-    g_list_store_append(self->store, object_outliner_item_new(world, entity));
-}
-
 // Hack: set_expanded actualiza la lista borrándola y creándola de nuevo.
 // Aprovechamos esta funcionalidad para realizar una actualización rápida...
 // En las pruebas realizadas hasta el momento de este comentario, no se han observado parpadeos.
@@ -300,11 +276,39 @@ static gboolean _outliner_hack_update_expanded(GtkTreeListRow* row)
     return FALSE;
 }
 
-static void _outliner_hack_tree_list_refresh(GappLevelOutliner* self)
+void gapp_level_outliner_append_entity(GappLevelOutliner* self, ecs_entity_t entity)
 {
-    GtkTreeListRow* row = gtk_tree_list_model_get_child_row(self->tree_model, 0);
-    gtk_tree_list_row_set_expanded(row, FALSE);
-    g_timeout_add(1, _outliner_hack_update_expanded, row);
+    gb_world_t* world = gapp_level_editor_get_world(self->editor);
+
+    ObjectOutlinerItem* item = object_outliner_item_new(world, entity);
+
+    GList* list = g_list_first(self->store);
+    while (list != NULL)
+    {
+        ObjectOutlinerItem* other_item = list->data;
+        if (other_item->entity == item->root)
+        {
+            g_list_store_append(self->store, item);
+            break;
+        }
+        list = g_list_next(list);
+    }
+    // gtk_tree_list_row_set_expanded(gtk_tree_list_row_new(item), TRUE);
+}
+
+void gapp_level_outliner_remove_entity(GappLevelOutliner* self, ecs_entity_t entity)
+{
+    GList* list = g_list_first(self->store);
+    while (list != NULL)
+    {
+        ObjectOutlinerItem* item = list->data;
+        if (item->entity == entity)
+        {
+            g_list_store_remove(self->store, item);
+            break;
+        }
+        list = g_list_next(list);
+    }
 }
 
 // -------------------------

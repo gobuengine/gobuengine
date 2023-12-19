@@ -1744,17 +1744,20 @@ bool gb_resource_remove(gb_world_t* world, const char* key)
 // sprite, una entidad de tipo texto, etc.
 //
 
-ecs_entity_t gb_ecs_entity_new(gb_world_t* world, const char* name, const gb_transform_t t)
+ecs_entity_t gb_ecs_entity_new(gb_world_t* world, ecs_entity_t parent, const char* name, const gb_transform_t t)
 {
     ecs_entity_t entity = ecs_new_id(world);
+    if (parent != 0)
+        gb_ecs_entity_set_parent(world, parent, entity);
+
+    // ecs_entity_t lookup = 0;
+    // char* name_id = (lookup == 0 ? name : gb_strdups("%s%lld", name, entity));
+    gb_ecs_entity_set_name(world, entity, gb_strdups("%s%lld", name, entity));
+
     gb_ecs_entity_set(world, entity, gb_info_t, { .name = gb_strdup(name) });
     gb_ecs_entity_set(world, entity, gb_transform_t, { .position = t.position, .scale = t.scale, .rotation = t.rotation, .origin = t.origin });
     gb_ecs_entity_set(world, entity, gb_bounding_t, { 0 });
     gb_ecs_entity_set(world, entity, gb_gizmos_t, { .selected = false });
-
-    char* name_id = ecs_lookup(world, name) == 0 ? gb_strdup(name) : gb_strdups("%s%lld", name, entity);
-    gb_ecs_entity_set_name(world, entity, name_id);
-    ecs_os_free(name_id);
 
     return entity;
 }
@@ -1764,14 +1767,14 @@ void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity
     ecs_add_pair(world, entity, EcsChildOf, parent);
 }
 
-char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity)
+const char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity)
 {
     return ecs_get_name(world, entity);
 }
 
 ecs_entity_t gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name)
 {
-    return ecs_set_name(world, entity, name);
+    return ecs_set_name(world, entity, gb_strdup(name));
 }
 
 void gb_ecs_vec_remove(ecs_vec_t* v, ecs_size_t size, int32_t index)

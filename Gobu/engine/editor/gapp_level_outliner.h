@@ -75,6 +75,9 @@ void gapp_level_outliner_events(GappLevelOutliner* self, ecs_entity_t event, ecs
 // void gapp_level_outliner_init_root(GappLevelOutliner* self, ObjectOutlinerItem* item);
 void gapp_level_outliner_init_root(GappLevelOutliner* self, ecs_entity_t entity);
 
+void gapp_level_outliner_append_entity(GappLevelOutliner* self, ecs_entity_t entity);
+void gapp_level_outliner_remove_entity(GappLevelOutliner* self, ecs_entity_t entity);
+
 G_END_DECLS
 
 #endif // __GAPP_LEVEL_OUTLINER_H__

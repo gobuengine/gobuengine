@@ -112,15 +112,18 @@ static void signal_toolbar_click_zoom_reset(GtkWidget* button, GappLevelEditor* 
     camera->zoom = 1.0f;
 }
 
-static void signal_observer_state_world(ecs_iter_t* it)
+static void hook_callback(ecs_iter_t* it)
 {
+    ecs_world_t* world = it->world;
     ecs_entity_t event = it->event;
     GappLevelEditor* self = it->ctx;
 
-    for (int i = 0; i < it->count; i++)
-    {
-        ecs_entity_t entity = it->entities[i];
-        gapp_level_outliner_events(self->outliner, event, entity, it->world);
+    for (int i = 0; i < it->count; i++) {
+        ecs_entity_t e = it->entities[i];
+        if (event == EcsOnAdd)
+            gapp_level_outliner_append_entity(self->outliner, e);
+        else if (event == EcsOnRemove)
+            gapp_level_outliner_remove_entity(self->outliner, e);
     }
 }
 
@@ -130,6 +133,14 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
     size_t level_buffer_size;
 
     self->world = gb_app_init(&(gb_app_t) { .width = width, .height = height, .show_grid = true });
+
+    ecs_set_hooks(self->world, gb_transform_t, {
+        .on_add = hook_callback,
+        .on_remove = hook_callback,
+        .ctx = self
+    });
+
+    ecs_log_set_level(0);
 
     gchar* level_buffer = gb_fs_get_contents(self->filename, &level_buffer_size);
 
@@ -145,17 +156,8 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
     // experimental
     self->root = ecs_lookup(self->world, "World");
     if (self->root == 0) {
-        self->root = gb_ecs_entity_new(self->world, "World", gb_ecs_transform(0,0));
+        self->root = gb_ecs_entity_new(self->world, 0, "World", gb_ecs_transform(0, 0));
     }
-
-    gapp_level_outliner_init_root(self->outliner, self->root);
-
-    ecs_observer(self->world, {
-        .filter = {.terms = { {.id = ecs_id(gb_transform_t)} }},
-        .events = { EcsOnRemove, EcsOnAdd, EcsOnSet },
-        .callback = signal_observer_state_world,
-        .ctx = self
-    });
 }
 
 GappLevelEditor* gapp_level_editor_new(const gchar* filename)
