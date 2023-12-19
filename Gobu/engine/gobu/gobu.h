@@ -174,6 +174,10 @@ extern "C" {
 
     typedef struct gb_animate_sprite_t
     {
+        int current;
+        int current_frame;
+        float counter;
+        ecs_bool_t is_playing;
         ecs_string_t resource;
         ecs_string_t animation;
         ecs_vec_t animations;
@@ -319,6 +323,7 @@ extern "C" {
     // --------------------------
     const char* gb_resource_set(gb_world_t* world, const char* path);
     const gb_resource_t* gb_resource(gb_world_t* world, const char* key);
+    bool gb_resource_remove(gb_world_t* world, const char* key);
 
     // --------------------------
     // ECS MODULE
@@ -338,9 +343,19 @@ extern "C" {
     void gb_ecs_vec_remove(ecs_vec_t* v, ecs_size_t size, int32_t index);
     void gb_ecs_vec_swap(ecs_vec_t* v, ecs_size_t size, int32_t index_a, int32_t index_b);
 
-    // --------------------------
-    // WindowAPP MODULE
-    // --------------------------
+        // --------------------------
+        // gb_animate_sprite_t API
+        // --------------------------
+    void gb_animate_sprite_set(gb_animate_sprite_t* animated, const char* name);
+    void gb_animate_sprite_stop(gb_animate_sprite_t* animated);
+    void gb_animate_sprite_pause(gb_animate_sprite_t* animated);
+    void gb_animate_sprite_play(gb_animate_sprite_t* animated);
+    bool gb_animate_sprite_is_playing(gb_animate_sprite_t* animated);
+    bool gb_animate_sprite_is_looping(gb_animate_sprite_t* animated);
+
+        // --------------------------
+        // WindowAPP MODULE
+        // --------------------------
     gb_world_t* gb_app_init(gb_app_t* app);
     void gb_app_main(gb_world_t* world);
     void gb_app_progress(gb_world_t* world);
