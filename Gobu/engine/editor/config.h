@@ -17,6 +17,8 @@
 
 #define GAPP_SCRIPT_LANGUAGE_DEFAULT    "c"
 
+#define GAME_ROOT_ENTITY                "Root"	
+
 #define FILE_GAME_PROJECT               "game.gobuproject"
 #define FILE_GAME_COMPONENT             "game.gcomponent"
 #define FILE_SCRIPT_BUILD               "game.c"

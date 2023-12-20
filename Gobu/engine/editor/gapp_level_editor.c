@@ -140,8 +140,6 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
         .ctx = self
     });
 
-    ecs_log_set_level(0);
-
     gchar* level_buffer = gb_fs_get_contents(self->filename, &level_buffer_size);
 
     gb_camera_t* camera = ecs_get(self->world, ecs_lookup(self->world, "Engine"), gb_camera_t);
@@ -154,9 +152,9 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
 
     // Buscamos o creamos una entidad principal de nombre World...
     // experimental
-    self->root = ecs_lookup(self->world, "World");
+    self->root = ecs_lookup(self->world, GAME_ROOT_ENTITY);
     if (self->root == 0) {
-        self->root = gb_ecs_entity_new(self->world, 0, "World", gb_ecs_transform(0, 0));
+        self->root = gb_ecs_entity_new(self->world, 0, GAME_ROOT_ENTITY, gb_ecs_transform(0, 0));
     }
 }
 

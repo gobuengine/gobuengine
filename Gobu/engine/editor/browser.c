@@ -82,6 +82,24 @@ static GListStore* gapp_browser_get_file_seleted(GbAppBrowser* browser)
     return files;
 }
 
+static GFileInfo* browser_get_first_file_selected(GbAppBrowser* browser)
+{
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(browser);
+
+    GListModel* list = gtk_multi_selection_get_model(private->selection);
+    guint items_n = g_list_model_get_n_items(list);
+
+    for (int i = 0; i < items_n; i++)
+    {
+        if (gtk_selection_model_is_selected(GTK_SELECTION_MODEL(private->selection), i) == FALSE)
+            continue;
+
+        return G_FILE_INFO(g_list_model_get_item(list, i));
+    }
+
+    return NULL;
+}
+
 /**
  * Obtiene el icono de un archivo en el explorador de mundos del editor en Gobu.
  *
@@ -317,11 +335,11 @@ static void signal_popover(GtkWidget* button, gpointer data)
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_popover_set_child(GTK_POPOVER(popover), box);
     {
-        item = gtk_button_new_with_label("Import to /Game");
-        gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-        gtk_box_append(GTK_BOX(box), item);
+        // item = gtk_button_new_with_label("Import to /Game");
+        // gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+        // gtk_box_append(GTK_BOX(box), item);
 
-        gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+        // gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
         item = gtk_button_new_with_label("New Folder");
         gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
@@ -376,26 +394,25 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
         {
             if (child != NULL && child != widget)
             {
-                item = gtk_button_new_with_label("Delete");
+                GFileInfo* info = browser_get_first_file_selected(data);
+                GFile* file = G_FILE(g_file_info_get_attribute_object(info, "standard::file"));
+                gchar* filename = g_file_get_path(file);
+
+                item = gtk_button_new_with_label(gb_strdups("Delete [ %s ]", gb_path_basename(filename)));
                 gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                 gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_delete_file), data);
 
-                gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+                if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg"))
+                {
+                    gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
 
-                item = gtk_button_new_with_label("Create Sprite");
-                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
-                gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-                gtk_box_append(GTK_BOX(box), item);
-
-                gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
-
-                item = gtk_button_new_with_label("Create Animation Sprite");
-                gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
-                // gtk_widget_set_tooltip_text(item, "Animation Sprite Sheets");
-                gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
-                gtk_box_append(GTK_BOX(box), item);
+                    item = gtk_button_new_with_label("Extract Sprites");
+                    gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
+                    gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
+                    gtk_box_append(GTK_BOX(box), item);
+                }
             }
             else
             {
@@ -731,9 +748,9 @@ static void gbapp_browser_init(GbAppBrowser* self)
             g_signal_connect(item, "clicked", G_CALLBACK(signal_popover), self);
             gapp_widget_toolbar_separator_new(toolbar);
 
-            item = gapp_widget_button_new_icon_with_label("insert-image-symbolic", "Import");
-            gtk_button_set_has_frame(item, FALSE);
-            gtk_box_append(GTK_BOX(toolbar), item);
+            // item = gapp_widget_button_new_icon_with_label("insert-image-symbolic", "Import");
+            // gtk_button_set_has_frame(item, FALSE);
+            // gtk_box_append(GTK_BOX(toolbar), item);
             // g_signal_connect(item, "clicked", G_CALLBACK(GobuSignalContentBrowserPopover), self);
             // gapp_widget_toolbar_separator_new(toolbar);
 

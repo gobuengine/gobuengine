@@ -24,6 +24,8 @@ struct _GbAppAsheets
     GtkWidget* btn_remove_frame;
     GtkWidget* btn_aframesheet;
     GtkWidget* btn_playanim;
+    GtkWidget* btn_anim_remove;
+    GtkWidget* btn_anim_add;
     GtkWidget* label_frame_duration;
     GtkSingleSelection* selection_anim;
     GtkSingleSelection* selection_frame;
@@ -93,9 +95,12 @@ static gboolean fn_source_func_grab_focus(GtkWidget* widget)
 
 static gboolean fn_source_func_play_animation_check(GbAppAsheets* self)
 {
-    bool is_playing = gb_animate_sprite_is_playing(self->animate_sprite);
+    if (self->animate_sprite != NULL)
+    {
+        bool is_playing = gb_animate_sprite_is_playing(self->animate_sprite);
 
-    gtk_button_set_icon_name(GTK_BUTTON(self->btn_playanim), is_playing ? "media-playback-stop-symbolic" : "media-playback-start-symbolic");
+        gtk_button_set_icon_name(GTK_BUTTON(self->btn_playanim), is_playing ? "media-playback-stop-symbolic" : "media-playback-start-symbolic");
+    }
 
     return TRUE;
 }
@@ -399,6 +404,8 @@ static void fn_animation_remove_frame(GbAppAsheets* self, gb_animate_animation_t
 {
     gb_return_if_fail(anim != NULL);
 
+    gb_animate_sprite_stop(self->animate_sprite);
+
     int index = fn_frame_get_index_by_id(self, anim, post);
 
     gb_animate_frame_t* frame = ecs_vec_get_t(&anim->frames, gb_animate_frame_t, index);
@@ -412,6 +419,8 @@ static void fn_animation_remove_frame(GbAppAsheets* self, gb_animate_animation_t
     int32_t count = ecs_vec_count(&anim->frames);
     guint n = post >= count ? count - 1 : post;
     gtk_single_selection_set_selected(self->selection_frame, n);
+
+    gb_animate_sprite_play(self->animate_sprite);
 }
 
 /**
@@ -471,6 +480,7 @@ static void fn_frame_selected_move_to_direction(GbAppAsheets* self, ASheetsDirec
  */
 static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
 {
+    printf("signal_viewport_start\n");
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
 
@@ -485,7 +495,7 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
     asheets->entity = gb_ecs_entity_new(asheets->world, 0, "AnimationSprite", gb_ecs_transform(0, 0));
     gb_ecs_entity_set(asheets->world, asheets->entity, gb_animate_sprite_t, { .resource = key });
     gb_ecs_entity_set(asheets->world, asheets->entity, gb_sprite_t, { 0 });
-    // ecs_delete(asheets->world, ecs_lookup(asheets->world, "Engine"));
+    ecs_remove(asheets->world, asheets->entity, gb_gizmos_t);
 
     asheets->animate_sprite = ecs_get(asheets->world, asheets->entity, gb_animate_sprite_t);
 }
@@ -535,6 +545,14 @@ static void signal_toolbar_btn_remove_animation(GtkWidget* widget, GbAppAsheets*
 
     fn_animation_remove(self, post);
 
+    if (g_list_model_get_n_items(G_LIST_MODEL(self->list_anim)) == 0)
+    {
+        gtk_widget_set_sensitive(self->btn_playanim, FALSE);
+        gtk_widget_set_sensitive(self->btn_anim_remove, FALSE);
+        gtk_widget_set_sensitive(self->btn_anim_add, FALSE);
+        return;
+    }
+
     gtk_single_selection_set_selected(self->selection_anim, -1);
     g_timeout_add(5, (GSourceFunc)fn_source_func_selected_first_animation, self);
 }
@@ -571,8 +589,10 @@ static void signal_selected_animation(GtkSingleSelection* selection, GParamSpec*
     const gchar* name = fn_animation_selected_get_name(self);
 
     guint count = g_list_model_get_n_items(G_LIST_MODEL(self->list_anim));
-    if (count == 0)
+    if (count == 0) {
         gtk_widget_set_sensitive(self->btn_aframesheet, FALSE);
+        // gtk_widget_set_sensitive(self->btn_playanim, FALSE);
+    }
 
     gb_return_if_fail(name != NULL);
 
@@ -584,6 +604,10 @@ static void signal_selected_animation(GtkSingleSelection* selection, GParamSpec*
 
     gb_animate_sprite_set(self->animate_sprite, name);
 
+    gtk_widget_set_sensitive(self->btn_playanim, ecs_vec_count(&anim->frames) > 0);
+
+    gtk_widget_set_sensitive(self->btn_anim_remove, TRUE);
+    gtk_widget_set_sensitive(self->btn_anim_add, TRUE);
     gtk_widget_set_sensitive(self->btn_paste_frame, self->frame_copy != NULL);
     gtk_widget_set_sensitive(self->btn_aframesheet, TRUE);
     gtk_widget_set_sensitive(self->frame_duration, FALSE);
@@ -903,6 +927,10 @@ static gboolean signal_drop_assets_frames(GtkDropTarget* target, const GValue* v
             }
         }
 
+        int n = gtk_single_selection_get_selected(self->selection_anim);
+        fn_animation_load_list_animation(self);
+        gtk_single_selection_set_selected(self->selection_anim, n);
+
         return TRUE;
     }
     return FALSE;
@@ -1098,7 +1126,6 @@ static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
         g_signal_connect(viewport, "gobu-embed-start", G_CALLBACK(signal_viewport_start), self);
         g_signal_connect(viewport, "gobu-embed-render", G_CALLBACK(signal_viewport_render), self);
         gtk_paned_set_start_child(GTK_PANED(paned_main), viewport);
-
         // --------------------
         // ?List Animations
         // --------------------
@@ -1113,15 +1140,17 @@ static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
                 gtk_box_append(toolbar, btn_n);
                 g_signal_connect(btn_n, "clicked", G_CALLBACK(signal_toolbar_btn_new_animation), self);
 
-                GtkWidget* btn_r = gapp_widget_button_new_icon_with_label("user-trash-symbolic", NULL);
-                gtk_widget_set_tooltip_text(btn_r, "Remove animation");
-                gtk_box_append(toolbar, btn_r);
-                g_signal_connect(btn_r, "clicked", G_CALLBACK(signal_toolbar_btn_remove_animation), self);
+                self->btn_anim_remove = gapp_widget_button_new_icon_with_label("user-trash-symbolic", NULL);
+                gtk_widget_set_tooltip_text(self->btn_anim_remove, "Remove animation");
+                gtk_box_append(toolbar, self->btn_anim_remove);
+                gtk_widget_set_sensitive(self->btn_anim_remove, FALSE);
+                g_signal_connect(self->btn_anim_remove, "clicked", G_CALLBACK(signal_toolbar_btn_remove_animation), self);
 
-                GtkWidget* btn_d = gapp_widget_button_new_icon_with_label("bookmark-new-symbolic", "Default");
-                gtk_widget_set_tooltip_text(btn_d, "Set as default animation");
-                gtk_box_append(toolbar, btn_d);
-                g_signal_connect(btn_d, "clicked", G_CALLBACK(signal_toolbar_btn_default_animation), self);
+                self->btn_anim_add = gapp_widget_button_new_icon_with_label("bookmark-new-symbolic", "Default");
+                gtk_widget_set_tooltip_text(self->btn_anim_add, "Set as default animation");
+                gtk_box_append(toolbar, self->btn_anim_add);
+                gtk_widget_set_sensitive(self->btn_anim_add, FALSE);
+                g_signal_connect(self->btn_anim_add, "clicked", G_CALLBACK(signal_toolbar_btn_default_animation), self);
             }
 
             GtkListItemFactory* factory = gtk_signal_list_item_factory_new();
@@ -1154,15 +1183,15 @@ static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
                 self->btn_playanim = gapp_widget_button_new_icon_with_label("media-playback-start-symbolic", NULL);
                 gtk_widget_set_tooltip_text(self->btn_playanim, "Play animation");
                 gtk_box_append(toolbar_frames, self->btn_playanim);
-                // gtk_widget_set_sensitive(self->btn_playanim, FALSE);
+                gtk_widget_set_sensitive(self->btn_playanim, FALSE);
                 g_signal_connect(self->btn_playanim, "clicked", G_CALLBACK(signal_toolbar_btn_play_animation_frame), self);
 
-                gtk_box_append(toolbar_frames, gapp_widget_separator_h());
+                // gtk_box_append(toolbar_frames, gapp_widget_separator_h());
 
-                self->btn_aframesheet = gapp_widget_button_new_icon_with_label("view-grid-symbolic", NULL);
-                gtk_widget_set_tooltip_text(self->btn_aframesheet, "Add frames from sprite sheet");
-                gtk_box_append(toolbar_frames, self->btn_aframesheet);
-                gtk_widget_set_sensitive(self->btn_aframesheet, FALSE);
+                // self->btn_aframesheet = gapp_widget_button_new_icon_with_label("view-grid-symbolic", NULL);
+                // gtk_widget_set_tooltip_text(self->btn_aframesheet, "Add frames from sprite sheet");
+                // gtk_box_append(toolbar_frames, self->btn_aframesheet);
+                // gtk_widget_set_sensitive(self->btn_aframesheet, FALSE);
 
                 gtk_box_append(toolbar_frames, gapp_widget_separator_h());
 

@@ -99,7 +99,7 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess
         gb_camera_t* camera = ecs_get(world, ecs_lookup(world, "Engine"), gb_camera_t);
         gb_vec2_t mouseWorld = engine.screen_to_world(*camera, (gb_vec2_t) { x, y });
 
-        ecs_entity_t e = gb_ecs_entity_new(world, ecs_lookup(world, "World"), name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
+        ecs_entity_t e = gb_ecs_entity_new(world, ecs_lookup(world, GAME_ROOT_ENTITY), name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
 
         if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
             gb_ecs_entity_set(world, e, gb_sprite_t, { .resource = key });

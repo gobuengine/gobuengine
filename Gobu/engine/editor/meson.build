@@ -33,6 +33,7 @@ gobueditor_src += [
     'gapp_level_viewport.c',
     'gapp_settings.c',
     'gbapp_asheets.c',
+    'gapp_extrasprites.c',
     libcore_source,
     libraygo_source,
 ]

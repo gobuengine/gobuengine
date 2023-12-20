@@ -60,6 +60,7 @@
         "config.h": "c",
         "gapp_script_editor.h": "c",
         "browser.h": "c",
-        "gbapp_asheets.h": "c"
+        "gbapp_asheets.h": "c",
+        "binn_json.h": "c"
     }
 }

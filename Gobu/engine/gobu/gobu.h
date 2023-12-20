@@ -5,8 +5,8 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include "thirdparty/flecs/flecs.h"
-#include "thirdparty/raygo/raylib.h"
-#include "thirdparty/raygo/raymath.h"
+#include "thirdparty/goburender/raylib.h"
+#include "thirdparty/goburender/raymath.h"
 #include "thirdparty/binn/binn_json.h"
 
 #ifdef __cplusplus
@@ -339,6 +339,7 @@ extern "C" {
     
     ecs_entity_t gb_ecs_entity_new(gb_world_t* world, ecs_entity_t parent, const char* name, const gb_transform_t t);
     void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t entity);
+    ecs_entity_t gb_ecs_entity_get_parent(gb_world_t* world, ecs_entity_t entity);
     const char* gb_ecs_entity_get_name(gb_world_t* world, ecs_entity_t entity);
     ecs_entity_t gb_ecs_entity_set_name(gb_world_t* world, ecs_entity_t entity, const char* name);
     void gb_ecs_vec_remove(ecs_vec_t* v, ecs_size_t size, int32_t index);

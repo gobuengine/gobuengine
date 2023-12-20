@@ -1,4 +1,4 @@
-subdir('raygo')
+subdir('goburender')
 subdir('flecs')
 subdir('binn')
 # subdir('lua')
