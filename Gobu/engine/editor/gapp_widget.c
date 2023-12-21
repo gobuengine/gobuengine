@@ -194,7 +194,11 @@ GtkWidget* gapp_widget_paned_new(GtkOrientation orientation, gboolean start)
     }
 
     gtk_paned_set_wide_handle(GTK_PANED(paned), TRUE);
-    gtk_widget_set_vexpand(GTK_WIDGET(paned), TRUE);
+
+    if (orientation == GTK_ORIENTATION_VERTICAL)
+        gtk_widget_set_vexpand(GTK_WIDGET(paned), TRUE);
+    else if (orientation == GTK_ORIENTATION_HORIZONTAL)
+        gtk_widget_set_hexpand(GTK_WIDGET(paned), TRUE);
 
     return paned;
 }
@@ -340,4 +344,51 @@ gchar* gapp_widget_view_get_text(GtkTextBuffer* buffer)
     GtkTextIter start, end;
     gtk_text_buffer_get_bounds(buffer, &start, &end);
     return gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+}
+
+
+GtkWidget* gapp_widget_input_number(GtkWidget *box, const gchar* label_input, double min, double max, double step)
+{
+    GtkWidget* spin_button, * label;
+
+    GtkWidget* c_paned = gapp_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, TRUE);
+    gtk_paned_set_wide_handle(GTK_PANED(c_paned), FALSE);
+    gtk_box_append(box, c_paned);
+    {
+        label = gtk_label_new(label_input);
+        gtk_label_set_xalign(label, 0.0f);
+        gapp_widget_set_margin(label, 5);
+        gtk_paned_set_start_child(GTK_PANED(c_paned), label);
+
+        spin_button = gtk_spin_button_new_with_range(min, max, step);
+        gapp_widget_set_margin(spin_button, 5);
+        gtk_paned_set_end_child(GTK_PANED(c_paned), spin_button);
+        // gtk_size_group_add_widget(group_size, label);
+    }
+
+    return spin_button;
+}
+
+
+GtkWidget* gapp_widget_input_str(GtkWidget *box, const gchar* label_input, const gchar *default_str)
+{
+    GtkWidget* entry, * label;
+
+    GtkWidget* c_paned = gapp_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, TRUE);
+    gtk_paned_set_wide_handle(GTK_PANED(c_paned), FALSE);
+    gtk_box_append(box, c_paned);
+    {
+        label = gtk_label_new(label_input);
+        gtk_label_set_xalign(label, 0.0f);
+        gapp_widget_set_margin(label, 5);
+        gtk_paned_set_start_child(GTK_PANED(c_paned), label);
+
+        entry = gtk_entry_new();
+        gapp_widget_set_margin(entry, 5);
+        gtk_paned_set_end_child(GTK_PANED(c_paned), entry);
+        gapp_widget_entry_set_text(entry, default_str);
+        // gtk_size_group_add_widget(group_size, label);
+    }
+
+    return entry;
 }

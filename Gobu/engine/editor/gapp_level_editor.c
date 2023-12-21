@@ -132,7 +132,7 @@ static void signal_viewport_init(GappLevelEditor* self, int width, int height, g
 {
     size_t level_buffer_size;
 
-    self->world = gb_app_init(&(gb_app_t) { .width = width, .height = height, .show_grid = true });
+    self->world = gapp_gobu_embed_get_world(self->viewport);
 
     ecs_set_hooks(self->world, gb_transform_t, {
         .on_add = hook_callback,

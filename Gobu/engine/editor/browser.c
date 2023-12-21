@@ -1,6 +1,7 @@
 #include "browser.h"
 #include "gapp_level_editor.h"
 #include "gapp_script_editor.h"
+#include "gapp_extrasprites.h"
 
 enum
 {
@@ -276,6 +277,19 @@ void signal_delete_file(GtkWidget* widget, gpointer data)
     gtk_popover_popdown(GTK_POPOVER(private->popover));
 }
 
+static void signal_open_extra_sprites(GtkWidget *widget, gpointer data)
+{
+    GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(data);
+
+    GFileInfo *file_info = browser_get_first_file_selected(data);
+    GFile* file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
+    gchar* filename = g_file_get_path(file);
+
+    gbapp_extrasprites_new( filename );
+    
+    gtk_popover_popdown(GTK_POPOVER(private->popover));
+}
+
 /**
  * Maneja la señal de creación de elementos en el explorador de mundos del editor en Gobu.
  *
@@ -386,7 +400,7 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
         private->popover = gtk_popover_new();
         gtk_popover_set_cascade_popdown(GTK_POPOVER(private->popover), TRUE);
         gtk_widget_set_parent(GTK_POPOVER(private->popover), widget);
-        gtk_popover_set_has_arrow(GTK_POPOVER(private->popover), FALSE);
+        // gtk_popover_set_has_arrow(GTK_POPOVER(private->popover), FALSE);
         gtk_popover_set_pointing_to(GTK_POPOVER(private->popover), &(GdkRectangle) { x, y, 1, 1 });
 
         box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -412,6 +426,7 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
                     gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                     gtk_button_set_has_frame(GTK_BUTTON(item), FALSE);
                     gtk_box_append(GTK_BOX(box), item);
+                    g_signal_connect(item, "clicked", G_CALLBACK(signal_open_extra_sprites), data);
                 }
             }
             else

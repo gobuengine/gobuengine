@@ -57,7 +57,7 @@ struct _GbAppBrowserPrivate
     GtkListItemFactory *factory;
     GtkDirectoryList *directory_list;
     GtkMultiSelection *selection;
-    GtkWidget *popover;
+    GtkPopover *popover;
 };
 
 GtkWidget *gbapp_browser_new(void);

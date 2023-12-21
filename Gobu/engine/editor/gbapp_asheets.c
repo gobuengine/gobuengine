@@ -480,11 +480,10 @@ static void fn_frame_selected_move_to_direction(GbAppAsheets* self, ASheetsDirec
  */
 static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
 {
-    printf("signal_viewport_start\n");
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
 
-    asheets->world = gb_app_init(&(gb_app_t) { .width = width, .height = height, .show_grid = true });
+    asheets->world = gapp_gobu_embed_get_world(viewport);
 
     gb_camera_t* camera = ecs_get(asheets->world, ecs_lookup(asheets->world, "Engine"), gb_camera_t);
     camera->mode = GB_CAMERA_EDITOR;
@@ -500,16 +499,6 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
     asheets->animate_sprite = ecs_get(asheets->world, asheets->entity, gb_animate_sprite_t);
 }
 
-/**
- * @brief Función que se encarga de renderizar el viewport de la aplicación.
- *
- * @param viewport El widget del viewport a renderizar.
- * @param asheets Puntero a la estructura GbAppAsheets.
- */
-static void signal_viewport_render(GtkWidget* viewport, GbAppAsheets* asheets)
-{
-    gb_app_progress(asheets->world);
-}
 
 /**
  * @brief Función que se ejecuta cuando se hace clic en el botón de nueva animación en la barra de herramientas.
@@ -1123,8 +1112,8 @@ static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
     gtk_box_append(self, paned_main);
     {
         viewport = gapp_gobu_embed_new();
+        gapp_gobu_embed_set_grid(viewport, TRUE);
         g_signal_connect(viewport, "gobu-embed-start", G_CALLBACK(signal_viewport_start), self);
-        g_signal_connect(viewport, "gobu-embed-render", G_CALLBACK(signal_viewport_render), self);
         gtk_paned_set_start_child(GTK_PANED(paned_main), viewport);
         // --------------------
         // ?List Animations

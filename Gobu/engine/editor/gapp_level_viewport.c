@@ -12,7 +12,6 @@ G_DEFINE_TYPE_WITH_PRIVATE(GappLevelViewport, gapp_level_viewport, GAPP_TYPE_GOB
 extern gb_engine_t engine;
 
 static void signal_viewport_start(GappLevelViewport* viewpor, gpointer data);
-static void signal_viewport_render(GappLevelViewport* viewpor, gpointer data);
 static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess, double x, double y, gpointer data);
 
 static void gapp_level_viewport_class_init(GappLevelViewportClass* klass)
@@ -22,8 +21,8 @@ static void gapp_level_viewport_class_init(GappLevelViewportClass* klass)
 
 static void gapp_level_viewport_init(GappLevelViewport* self)
 {
+    gapp_gobu_embed_set_grid(self, TRUE);
     g_signal_connect(self, "gobu-embed-start", G_CALLBACK(signal_viewport_start), NULL);
-    g_signal_connect(self, "gobu-embed-render", G_CALLBACK(signal_viewport_render), NULL);
     g_signal_connect(self, "gobu-embed-drop", G_CALLBACK(signal_viewport_drop), NULL);
 }
 
@@ -54,20 +53,6 @@ static void signal_viewport_start(GappLevelViewport* viewport, gpointer data)
     int height = gapp_gobu_embed_get_height(viewport);
 
     g_signal_emit_by_name(viewport->editor, "level-viewport-init", width, height, 0);
-}
-
-/**
- * @brief Renderiza el viewport de nivel.
- *
- * Esta función se encarga de renderizar el viewport de nivel.
- *
- * @param viewport El viewport de nivel a renderizar.
- * @param data Datos adicionales pasados a la función de señal.
- */
-static void signal_viewport_render(GappLevelViewport* viewport, gpointer data)
-{
-    ecs_world_t* world = gapp_level_editor_get_world(viewport->editor);
-    gb_app_progress(world);
 }
 
 /**

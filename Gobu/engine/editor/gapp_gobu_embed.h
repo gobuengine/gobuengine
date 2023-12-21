@@ -44,12 +44,16 @@ struct _GappGobuEmbedPrivate
     guint height;
     gint tick;
     gboolean initialize;
+    gboolean show_grid;
+    gb_world_t *world;
 };
 
 GappGobuEmbed *gapp_gobu_embed_new(void);
 gboolean gapp_gobu_embed_get_init(GappGobuEmbed* embed);
 int gapp_gobu_embed_get_width(GappGobuEmbed* embed);
 int gapp_gobu_embed_get_height(GappGobuEmbed* embed);
+gb_world_t *gapp_gobu_embed_get_world(GappGobuEmbed* embed);
+void gapp_gobu_embed_set_grid(GappGobuEmbed* embed, gboolean show);
 
 G_END_DECLS
 

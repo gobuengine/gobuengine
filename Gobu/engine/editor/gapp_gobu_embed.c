@@ -117,6 +117,7 @@ static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer 
 
     if (!priv->initialize)
     {
+        priv->world = gb_app_init(&(gb_app_t) { .width = priv->width, .height = priv->height, .show_grid = priv->show_grid });
         g_signal_emit(viewport, w_signals[SIGNAL_START], 0);
         priv->initialize = TRUE;
     }
@@ -124,7 +125,8 @@ static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer 
     // TODO: Temporal hasta que se implemente el renderizado por contexto
     ViewportSizeCallback(priv->width, priv->height);
 
-    g_signal_emit(viewport, w_signals[SIGNAL_RENDER], 0);
+    // g_signal_emit(viewport, w_signals[SIGNAL_RENDER], 0);
+    gb_app_progress(priv->world);
 
     return TRUE;
 }
@@ -212,6 +214,18 @@ int gapp_gobu_embed_get_height(GappGobuEmbed* embed)
 {
     GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->height;
+}
+
+gb_world_t* gapp_gobu_embed_get_world(GappGobuEmbed* embed)
+{
+    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
+    return priv->world;
+}
+
+void gapp_gobu_embed_set_grid(GappGobuEmbed* embed, gboolean show)
+{
+    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
+    return priv->show_grid = show;
 }
 
 /**

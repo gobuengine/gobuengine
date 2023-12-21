@@ -61,4 +61,7 @@ const gchar* gapp_widget_entry_get_text(GtkEntry* entry);
 void gapp_widget_view_set_text(GtkTextView* view, const gchar* text);
 gchar* gapp_widget_view_get_text(GtkTextBuffer* buffer);
 
+GtkWidget* gapp_widget_input_number(GtkWidget *box, const gchar* label_input, double min, double max, double step);
+GtkWidget* gapp_widget_input_str(GtkWidget *box, const gchar* label_input, const gchar *default_str);
+
 #endif // __GAPP_WIDGET_H__

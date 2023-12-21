@@ -73,7 +73,7 @@ struct gb_setting_project_t {
 
 
 static bool gb_setting_load(const char* filename);
-static void gb_input_init(gb_world_t* world);
+static void gb_input_init(void);
 
 // ########################################
 // Project functions
@@ -1054,7 +1054,7 @@ static void gb_engine_component_init(gb_world_t* world)
             {.name = "name", .type = ecs_id(ecs_string_t) },
             {.name = "fps", .type = ecs_id(ecs_i16_t) },
             {.name = "loop", .type = ecs_id(ecs_bool_t) },
-            {.name = "frames", .type = ecs_vector(world, {.entity = ecs_entity(world, {.name = "gb_animate_frame_t" }),.type = ecs_id(gb_animate_frame_t)})},
+            {.name = "frames", .type = ecs_vector(world, {.entity = ecs_entity(world, {.name = "frames" }),.type = ecs_id(gb_animate_frame_t)})},
         }
     });
 
@@ -1063,7 +1063,7 @@ static void gb_engine_component_init(gb_world_t* world)
         .members = {
             {.name = "resource", .type = ecs_id(ecs_string_t) },
             {.name = "animation", .type = ecs_id(ecs_string_t) },
-            {.name = "animations", .type = ecs_vector(world, {.entity = ecs_entity(world, {.name = "gb_animate_animation_t" }),.type = ecs_id(gb_animate_animation_t)})},
+            {.name = "animations", .type = ecs_vector(world, {.entity = ecs_entity(world, {.name = "animations" }),.type = ecs_id(gb_animate_animation_t)})},
         }
     });
 }
@@ -1414,8 +1414,28 @@ static void gb_ecs_update_gb_bounding_t(ecs_iter_t* it)
     gb_bounding_t* bounding = ecs_field(it, gb_bounding_t, 1);
     gb_transform_t* transform = ecs_field(it, gb_transform_t, 2);
 
+    // Drawing
+    gb_shape_rect_t* rect = ecs_field(it, gb_shape_rect_t, 3);
+    gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 4);
+    gb_text_t* text = ecs_field(it, gb_text_t, 5);
+
     for (int i = 0; i < it->count; i++)
     {
+        bounding[i].size.x = 0.0f;
+        bounding[i].size.y = 0.0f;
+
+        if (rect) {
+            bounding[i].size = (gb_vec2_t){ rect[i].width, rect[i].height };
+        }
+
+        if (sprite) {
+            bounding[i].size = (gb_vec2_t){ sprite[i].dst.width, sprite[i].dst.height };
+        }
+
+        if (text) {
+            bounding[i].size = MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing);
+        }
+
         bounding[i].min.x = transform[i].position.x;
         bounding[i].min.y = transform[i].position.y;
         bounding[i].max.x = bounding[i].size.x;
@@ -1523,26 +1543,26 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
         {
             gb_gfx_translate(trans.position.x, trans.position.y, 0.0f);
             gb_gfx_rotate(trans.rotation, 0.0f, 0.0f, 1.0f);
-            gb_gfx_translate(trans.origin.x, trans.origin.y, 0.0f);
+            gb_gfx_translate(-(trans.origin.x * bounding[i].size.x), -(trans.origin.y * bounding[i].size.y), 0.0f);
             gb_gfx_scale(trans.scale.x, trans.scale.y, 1.0f);
 
             if (rect) {
                 gb_rendering_draw_rect(rect[i]);
-                bounding[i].size = (gb_vec2_t){ rect[i].width, rect[i].height };
             }
 
-            if (sprite && sprite[i].texture.id != 0) {
-                gb_rendering_draw_sprite(sprite[i]);
-                bounding[i].size = (gb_vec2_t){ sprite[i].dst.width, sprite[i].dst.height };
+            if (sprite) {
+                if (sprite[i].texture.id != 0)
+                    gb_rendering_draw_sprite(sprite[i]);
             }
 
-            if (text && text[i].font.texture.id != 0) {
-                gb_rendering_draw_text(text[i]);
-                bounding[i].size = MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing);
+            if (text) {
+                if (text[i].font.texture.id != 0)
+                    gb_rendering_draw_text(text[i]);
             }
 
-            if (gismos && gismos[i].selected) {
-                gb_rendering_draw_gismos(trans, bounding[i]);
+            if (gismos) {
+                if (gismos[i].selected)
+                    gb_rendering_draw_gismos(trans, bounding[i]);
             }
         }
         gb_gfx_pop_matrix();
@@ -1628,8 +1648,8 @@ static void gb_engine_system_init(gb_world_t* world)
     });
 
     ecs_system(world, {
-        .entity = ecs_entity(world, {.name = "gb_ecs_update_gb_bounding_t", .add = {ecs_dependson(EcsPreUpdate)} }),
-        .query.filter.terms = { {.id = ecs_id(gb_bounding_t)}, {.id = ecs_id(gb_transform_t)} },
+        .entity = ecs_entity(world, {.name = "gb_ecs_update_gb_bounding_t", .add = {ecs_dependson(EcsOnUpdate)} }),
+        .query.filter.terms = { {.id = ecs_id(gb_bounding_t)}, {.id = ecs_id(gb_transform_t)}, {.id = ecs_id(gb_shape_rect_t), .oper = EcsOptional}, {.id = ecs_id(gb_sprite_t), .oper = EcsOptional}, {.id = ecs_id(gb_text_t), .oper = EcsOptional} },
         .callback = gb_ecs_update_gb_bounding_t
     });
 
@@ -1825,11 +1845,13 @@ void gb_ecs_vec_swap(ecs_vec_t* v, ecs_size_t size, int32_t index_a, int32_t ind
 // ########################################
 // Description de window app functions: 
 
+static bool input_ready = FALSE;
+
 gb_world_t* gb_app_init(gb_app_t* app)
 {
     gb_world_t* world = ecs_init();
 
-    gb_input_init(world);
+    gb_input_init();
     gb_engine_component_init(world);
     gb_engine_system_init(world);
 
@@ -1887,7 +1909,7 @@ static gb_vec2_t getworldtoscreen2d(gb_camera_t camera, gb_vec2_t position)
     return GetWorldToScreen2D(position, cam);
 }
 
-static void gb_input_init(gb_world_t* world)
+static void gb_input_init(void)
 {
     engine.input.mouse_button_down = IsMouseButtonDown;
     engine.input.mouse_button_pressed = IsMouseButtonPressed;
@@ -1904,5 +1926,7 @@ static void gb_input_init(gb_world_t* world)
 
     engine.world_to_screen = getworldtoscreen2d;
     engine.screen_to_world = getscreentoworld2d;
+
+    input_ready = TRUE;
 }
 

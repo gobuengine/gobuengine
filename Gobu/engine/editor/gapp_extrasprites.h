@@ -33,14 +33,15 @@ G_BEGIN_DECLS
 
 typedef struct _GbAppExtraSpritesPrivate GbAppExtraSpritesPrivate;
 
-#define GBAPP_TYPE_EXTRASPRITES (gbapp_extrasprites_get_type())
-G_DECLARE_FINAL_TYPE(GbAppExtraSprites, gbapp_extrasprites, GBAPP, EXTRASPRITES, GtkBox)
+#define GBAPP_TYPE_EXTRASPRITE (gbapp_extrasprites_get_type())
+G_DECLARE_FINAL_TYPE(GbAppExtraSprites, gbapp_extrasprites, GBAPP, EXTRASPRITE, GtkWindow)
 
 struct _GbAppExtraSpritesPrivate
 {
+    GtkWidget parent_instance;
 };
 
-GtkWidget* gbapp_extrasprites_new(void);
+GtkWidget* gbapp_extrasprites_new(const gchar *filename);
 
 G_END_DECLS
 
