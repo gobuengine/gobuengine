@@ -758,7 +758,7 @@ char* gb_str_sanitize(char* str)
  */
 char* gb_str_replace(const char* str, const char* find, const char* replace)
 {
-    char** split = g_strsplit_set(str, find, -1);
+    char** split = g_strsplit(str, find, -1);
     char* result = g_strjoinv(replace, split);
     g_strfreev(split);
     return result;
@@ -842,6 +842,8 @@ void gb_rendering_draw_gismos(gb_transform_t transform, gb_bounding_t bonding_bo
 void gb_rendering_draw_rect(gb_shape_rect_t rect)
 {
     DrawRectangle(rect.x, rect.y, rect.width, rect.height, rect.color);
+    if (rect.line_width > 0)
+        DrawRectangleLinesEx((gb_rect_t){rect.x, rect.y, rect.width, rect.height}, rect.line_width, rect.color_line);
 }
 
 /**
@@ -1528,9 +1530,9 @@ static void gb_ecs_postdraw_drawing_rendering(ecs_iter_t* it)
 {
     gb_transform_t* transform = ecs_field(it, gb_transform_t, 1);
     gb_bounding_t* bounding = ecs_field(it, gb_bounding_t, 2);
-    gb_gizmos_t* gismos = ecs_field(it, gb_gizmos_t, 3);
 
     // Drawing
+    gb_gizmos_t* gismos = ecs_field(it, gb_gizmos_t, 3);
     gb_shape_rect_t* rect = ecs_field(it, gb_shape_rect_t, 4);
     gb_sprite_t* sprite = ecs_field(it, gb_sprite_t, 5);
     gb_text_t* text = ecs_field(it, gb_text_t, 6);

@@ -346,7 +346,6 @@ gchar* gapp_widget_view_get_text(GtkTextBuffer* buffer)
     return gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
 }
 
-
 GtkWidget* gapp_widget_input_number(GtkWidget *box, const gchar* label_input, double min, double max, double step)
 {
     GtkWidget* spin_button, * label;

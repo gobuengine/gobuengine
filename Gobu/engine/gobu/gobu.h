@@ -135,6 +135,8 @@ extern "C" {
         float width;
         float height;
         gb_color_t color;
+        int line_width;
+        gb_color_t color_line;
     }gb_shape_rect_t;
 
     typedef struct gb_shape_circle_t
