@@ -1,5 +1,5 @@
 /**********************************************************************************
- * gbapp_asheets.h                                                                *
+ * gbapp_asprites.h                                                                *
  * ********************************************************************************
  * GOBU ENGINE                                                                    *
  * https://gobuengine.org                                                         *
@@ -31,17 +31,17 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GbAppAsheetsPrivate GbAppAsheetsPrivate;
+typedef struct _GbAppAspritesPrivate GbAppAspritesPrivate;
 
-#define GBAPP_TYPE_ASHEETS (gbapp_asheets_get_type())
-G_DECLARE_FINAL_TYPE(GbAppAsheets, gbapp_asheets, GBAPP, ASHEETS, GtkBox)
+#define GBAPP_TYPE_ASPRITES (gbapp_asprites_get_type())
+G_DECLARE_FINAL_TYPE(GbAppAsprites, gbapp_asprites, GBAPP, ASPRITES, GtkBox)
 
-struct _GbAppAsheetsPrivate
+struct _GbAppAspritesPrivate
 {
     GtkWidget parent_instance;
 };
 
-GtkWidget* gbapp_asheets_new(const gchar *filename);
+GtkWidget* gbapp_asprites_new(const gchar *filename);
 
 G_END_DECLS
 

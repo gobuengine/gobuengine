@@ -62,6 +62,7 @@
         "browser.h": "c",
         "gbapp_asheets.h": "c",
         "binn_json.h": "c",
-        "gapp_extrasprites.h": "c"
+        "gapp_extrasprites.h": "c",
+        "gbapp_asprites_editor.h": "c"
     }
 }

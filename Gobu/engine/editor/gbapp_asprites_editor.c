@@ -1,15 +1,12 @@
-#include "gbapp_asheets.h"
+#include "gbapp_asprites_editor.h"
 #include "gapp_gobu_embed.h"
-
-#define gb_return_if_fail(expr) if(!(expr)) {gb_print_warning(TF("Assertion '%s' failed", #expr)); return;}
-#define gb_return_val_if_fail(expr, val) if(!(expr)) {gb_print_warning(TF("Assertion '%s' failed", #expr)); return val;}
 
 typedef enum ASheetsDirectionMoveFrame {
     ASHEETS_DIRECTION_MOVE_FRAME_LEFT = -1,
     ASHEETS_DIRECTION_MOVE_FRAME_RIGHT = 1
 }ASheetsDirectionMoveFrame;
 
-struct _GbAppAsheets
+struct _GbAppAsprites
 {
     GtkWidget parent;
     GtkStringList* list_anim;
@@ -43,28 +40,28 @@ extern GAPP* EditorCore;
 
 static void fn_widget_focus_focus(GtkWidget* widget);
 static void fn_clear_string_list(GtkStringList* list);
-static void fn_animation_load_list_animation(GbAppAsheets* self);
-static void fn_animation_add_frame(GbAppAsheets* self, gb_animate_animation_t* anim, gb_animate_frame_t* frame);
-static void fn_animation_remove_frame(GbAppAsheets* self, gb_animate_animation_t* anim, guint post);
-static gboolean fn_animation_new(GbAppAsheets* self, const gchar* name);
-static gboolean fn_animation_remove(GbAppAsheets* self, guint post);
-static gb_animate_animation_t* fn_animation_by_name(GbAppAsheets* self, const gchar* name);
-static int fn_animation_index_by_name(GbAppAsheets* self, const gchar* name);
-static const gchar* fn_animation_selected_get_name(GbAppAsheets* self);
-static gchar* fn_animation_default(GbAppAsheets* self);
-static void fn_animation_set_default(GbAppAsheets* self, const gchar* name);
-static void fn_animation_load_frames(GbAppAsheets* self, gb_animate_animation_t* anim);
-static gboolean fn_animation_exists(GbAppAsheets* self, const gchar* name);
-static guint fn_frame_get_index_by_id(GbAppAsheets* self, gb_animate_animation_t* anim, guint position);
+static void fn_animation_load_list_animation(GbAppAsprites* self);
+static void fn_animation_add_frame(GbAppAsprites* self, gb_animate_animation_t* anim, gb_animate_frame_t* frame);
+static void fn_animation_remove_frame(GbAppAsprites* self, gb_animate_animation_t* anim, guint post);
+static gboolean fn_animation_new(GbAppAsprites* self, const gchar* name);
+static gboolean fn_animation_remove(GbAppAsprites* self, guint post);
+static gb_animate_animation_t* fn_animation_by_name(GbAppAsprites* self, const gchar* name);
+static int fn_animation_index_by_name(GbAppAsprites* self, const gchar* name);
+static const gchar* fn_animation_selected_get_name(GbAppAsprites* self);
+static gchar* fn_animation_default(GbAppAsprites* self);
+static void fn_animation_set_default(GbAppAsprites* self, const gchar* name);
+static void fn_animation_load_frames(GbAppAsprites* self, gb_animate_animation_t* anim);
+static gboolean fn_animation_exists(GbAppAsprites* self, const gchar* name);
+static guint fn_frame_get_index_by_id(GbAppAsprites* self, gb_animate_animation_t* anim, guint position);
 
-G_DEFINE_TYPE_WITH_PRIVATE(GbAppAsheets, gbapp_asheets, GTK_TYPE_BOX);
+G_DEFINE_TYPE_WITH_PRIVATE(GbAppAsprites, gbapp_asprites, GTK_TYPE_BOX);
 
 
-static void gbapp_asheets_finalize(GObject* object)
+static void gbapp_asprites_finalize(GObject* object)
 {
-    GbAppAsheets* self = GBAPP_ASHEETS(object);
+    GbAppAsprites* self = GBAPP_ASPRITES(object);
 
-    gb_print_info(TF("Asheets Free [%s]\n", gb_fs_get_name(self->filename, false)));
+    gb_print_info(TF("Asprites Free [%s]\n", gb_fs_get_name(self->filename, false)));
 
     g_source_remove(self->timeout_check_anim);
 
@@ -74,15 +71,15 @@ static void gbapp_asheets_finalize(GObject* object)
     g_free(self->filename);
 }
 
-static void gbapp_asheets_class_init(GbAppAsheetsClass* klass)
+static void gbapp_asprites_class_init(GbAppAspritesClass* klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
-    object_class->finalize = gbapp_asheets_finalize;
+    object_class->finalize = gbapp_asprites_finalize;
 }
 
-static void gbapp_asheets_init(GbAppAsheets* self)
+static void gbapp_asprites_init(GbAppAsprites* self)
 {
-    GbAppAsheetsPrivate* priv = gbapp_asheets_get_instance_private(self);
+    GbAppAspritesPrivate* priv = gbapp_asprites_get_instance_private(self);
 }
 
 // --------------------
@@ -93,7 +90,7 @@ static gboolean fn_source_func_grab_focus(GtkWidget* widget)
     return FALSE;
 }
 
-static gboolean fn_source_func_play_animation_check(GbAppAsheets* self)
+static gboolean fn_source_func_play_animation_check(GbAppAsprites* self)
 {
     if (self->animate_sprite != NULL)
     {
@@ -105,7 +102,7 @@ static gboolean fn_source_func_play_animation_check(GbAppAsheets* self)
     return TRUE;
 }
 
-static gboolean fn_source_func_selected_first_animation(GbAppAsheets* self)
+static gboolean fn_source_func_selected_first_animation(GbAppAsprites* self)
 {
     gtk_single_selection_set_selected(self->selection_anim, 0);
     return FALSE;
@@ -119,9 +116,9 @@ static void fn_widget_focus_focus(GtkWidget* widget)
 /**
  * Guarda los datos de asheets en un archivo.
  *
- * @param self El puntero al objeto GbAppAsheets.
+ * @param self El puntero al objeto GbAppAsprites.
  */
-static gboolean fn_save_asheets_data_to_file(GbAppAsheets* self)
+static gboolean fn_save_asheets_data_to_file(GbAppAsprites* self)
 {
     char* json = ecs_entity_to_json(self->world, self->entity, &(ecs_iter_to_json_desc_t){.serialize_entities = true, .serialize_values = true});
     gb_fs_write_file(self->filename, json);
@@ -133,10 +130,10 @@ static gboolean fn_save_asheets_data_to_file(GbAppAsheets* self)
 /**
  * @brief Elimina un elemento del recolector de basura de recursos.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param key Clave del elemento a eliminar.
  */
-static void fn_resource_garbage_collector_remove(GbAppAsheets* self, const gchar* key)
+static void fn_resource_garbage_collector_remove(GbAppAsprites* self, const gchar* key)
 {
     guint* result = g_hash_table_lookup(self->garbage_collector, key);
     gb_return_if_fail(result != NULL);
@@ -154,14 +151,14 @@ static void fn_resource_garbage_collector_remove(GbAppAsheets* self, const gchar
 /**
  * @brief Agrega una clave al recolector de basura de recursos.
  *
- * Esta función agrega una clave al recolector de basura de recursos de GbAppAsheets.
+ * Esta función agrega una clave al recolector de basura de recursos de GbAppAsprites.
  * El recolector de basura se encarga de liberar los recursos asociados a las claves
  * cuando ya no son necesarios.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param key Clave del recurso a agregar.
  */
-static void fn_resource_garbage_collector_add(GbAppAsheets* self, const gchar* key)
+static void fn_resource_garbage_collector_add(GbAppAsprites* self, const gchar* key)
 {
     guint n = GPOINTER_TO_UINT(g_hash_table_lookup(self->garbage_collector, key));
     n += 1;
@@ -183,13 +180,13 @@ static void fn_clear_string_list(GtkStringList* list)
 /**
  * @brief Crea una nueva animación.
  *
- * Esta función crea una nueva animación en el objeto GbAppAsheets.
+ * Esta función crea una nueva animación en el objeto GbAppAsprites.
  *
- * @param self El puntero al objeto GbAppAsheets.
+ * @param self El puntero al objeto GbAppAsprites.
  * @param name El nombre de la animación.
  * @return TRUE si la animación se creó correctamente, FALSE en caso contrario.
  */
-static gboolean fn_animation_new(GbAppAsheets* self, const gchar* name)
+static gboolean fn_animation_new(GbAppAsprites* self, const gchar* name)
 {
     // 
     gb_animate_animation_t* ptr = ecs_vec_append_t(NULL, &self->animate_sprite->animations, gb_animate_animation_t);
@@ -208,11 +205,11 @@ static gboolean fn_animation_new(GbAppAsheets* self, const gchar* name)
 /**
  * @brief Remueve una animación de la hoja de animaciones.
  *
- * @param self El puntero a la estructura GbAppAsheets.
+ * @param self El puntero a la estructura GbAppAsprites.
  * @param post El índice de la animación a remover.
  * @return gboolean Verdadero si la animación fue removida exitosamente, falso en caso contrario.
  */
-static gboolean fn_animation_remove(GbAppAsheets* self, guint post)
+static gboolean fn_animation_remove(GbAppAsprites* self, guint post)
 {
     gchar* name = gtk_string_list_get_string(self->list_anim, post);
     gb_return_if_fail(name != NULL);
@@ -237,11 +234,11 @@ static gboolean fn_animation_remove(GbAppAsheets* self, guint post)
 /**
  * @brief Carga la lista de animaciones.
  *
- * Esta función se encarga de cargar la lista de animaciones en la estructura GbAppAsheets.
+ * Esta función se encarga de cargar la lista de animaciones en la estructura GbAppAsprites.
  *
- * @param self Puntero a la estructura GbAppAsheets.
+ * @param self Puntero a la estructura GbAppAsprites.
  */
-static void fn_animation_load_list_animation(GbAppAsheets* self)
+static void fn_animation_load_list_animation(GbAppAsprites* self)
 {
     fn_clear_string_list(self->list_anim);
 
@@ -257,10 +254,10 @@ static void fn_animation_load_list_animation(GbAppAsheets* self)
  *
  * Esta función devuelve el índice del marco seleccionado en la hoja de animación.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @return El índice del marco seleccionado.
  */
-static guint fn_frame_get_index_by_id(GbAppAsheets* self, gb_animate_animation_t* anim, guint position)
+static guint fn_frame_get_index_by_id(GbAppAsprites* self, gb_animate_animation_t* anim, guint position)
 {
     gb_return_if_fail(position != -1);
 
@@ -277,11 +274,11 @@ static guint fn_frame_get_index_by_id(GbAppAsheets* self, gb_animate_animation_t
 /**
  * Busca una animación por su nombre en la estructura gb_animate_animation_t.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param name Nombre de la animación a buscar.
  * @return Puntero a la animación encontrada o NULL si no se encuentra.
  */
-static gb_animate_animation_t* fn_animation_by_name(GbAppAsheets* self, const gchar* name)
+static gb_animate_animation_t* fn_animation_by_name(GbAppAsprites* self, const gchar* name)
 {
     for (int i = 0; i < ecs_vec_count(&self->animate_sprite->animations); i++)
     {
@@ -295,14 +292,14 @@ static gb_animate_animation_t* fn_animation_by_name(GbAppAsheets* self, const gc
 /**
  * @brief Busca el índice de una animación por su nombre.
  *
- * Esta función busca el índice de una animación en el objeto GbAppAsheets
+ * Esta función busca el índice de una animación en el objeto GbAppAsprites
  * basándose en su nombre.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param name Nombre de la animación a buscar.
  * @return El índice de la animación si se encuentra, -1 si no se encuentra.
  */
-static int fn_animation_index_by_name(GbAppAsheets* self, const gchar* name)
+static int fn_animation_index_by_name(GbAppAsprites* self, const gchar* name)
 {
     for (int i = 0; i < ecs_vec_count(&self->animate_sprite->animations); i++)
     {
@@ -316,11 +313,11 @@ static int fn_animation_index_by_name(GbAppAsheets* self, const gchar* name)
 /**
  * @brief Verifica si existe una animación en el objeto asheets.animations.
  *
- * @param self El objeto GbAppAsheets.
+ * @param self El objeto GbAppAsprites.
  * @param name El nombre de la animación a verificar.
  * @return gboolean Devuelve TRUE si la animación existe, FALSE en caso contrario.
  */
-static gboolean fn_animation_exists(GbAppAsheets* self, const gchar* name)
+static gboolean fn_animation_exists(GbAppAsprites* self, const gchar* name)
 {
     return fn_animation_index_by_name(self, name) != -1 ? TRUE : FALSE;
 }
@@ -328,10 +325,10 @@ static gboolean fn_animation_exists(GbAppAsheets* self, const gchar* name)
 /**
  * @brief Función para obtener el nombre de la animacion predeterminada.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @return Puntero a una cadena de caracteres que representa el nombre de archivo predeterminado de la animación.
  */
-static gchar* fn_animation_default(GbAppAsheets* self)
+static gchar* fn_animation_default(GbAppAsprites* self)
 {
     return gb_strdup(self->animate_sprite->animation);
 }
@@ -339,10 +336,10 @@ static gchar* fn_animation_default(GbAppAsheets* self)
 /**
  * @brief Establece el nombre de la animación por defecto.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param name Nombre de la animación por defecto.
  */
-static void fn_animation_set_default(GbAppAsheets* self, const gchar* name)
+static void fn_animation_set_default(GbAppAsprites* self, const gchar* name)
 {
     self->animate_sprite->animation = gb_strdup(name);
 }
@@ -352,10 +349,10 @@ static void fn_animation_set_default(GbAppAsheets* self, const gchar* name)
  *
  * Esta función devuelve el nombre de la animación actualmente seleccionada en la hoja de animación.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @return El nombre de la animación seleccionada.
  */
-static const gchar* fn_animation_selected_get_name(GbAppAsheets* self)
+static const gchar* fn_animation_selected_get_name(GbAppAsprites* self)
 {
     guint position = gtk_single_selection_get_selected(self->selection_anim);
     gb_return_val_if_fail(position != -1, NULL);
@@ -365,14 +362,14 @@ static const gchar* fn_animation_selected_get_name(GbAppAsheets* self)
 /**
  * @brief Agrega un fotograma a una animación.
  *
- * Esta función agrega un fotograma a una animación existente en la estructura GbAppAsheets.
+ * Esta función agrega un fotograma a una animación existente en la estructura GbAppAsprites.
  *
- * @param self Puntero a la estructura GbAppAsheets.
+ * @param self Puntero a la estructura GbAppAsprites.
  * @param anim Puntero a la estructura gb_animate_animation_t que representa la animación.
  * @param id Identificador del fotograma a agregar.
  * @param duration Duración del fotograma en segundos.
  */
-static void fn_animation_add_frame(GbAppAsheets* self, gb_animate_animation_t* anim, gb_animate_frame_t* frame)
+static void fn_animation_add_frame(GbAppAsprites* self, gb_animate_animation_t* anim, gb_animate_frame_t* frame)
 {
     gb_return_if_fail(anim != NULL);
 
@@ -396,11 +393,11 @@ static void fn_animation_add_frame(GbAppAsheets* self, gb_animate_animation_t* a
  *
  * Esta función elimina un fotograma específico de una animación en la hoja de sprites.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param anim Puntero a la estructura de datos de la animación.
  * @param post Índice del fotograma a eliminar.
  */
-static void fn_animation_remove_frame(GbAppAsheets* self, gb_animate_animation_t* anim, guint post)
+static void fn_animation_remove_frame(GbAppAsprites* self, gb_animate_animation_t* anim, guint post)
 {
     gb_return_if_fail(anim != NULL);
 
@@ -428,10 +425,10 @@ static void fn_animation_remove_frame(GbAppAsheets* self, gb_animate_animation_t
  *
  * Esta función carga los fotogramas de una animación en la estructura de datos proporcionada.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param anim Puntero a la estructura de datos de animaciones.
  */
-static void fn_animation_load_frames(GbAppAsheets* self, gb_animate_animation_t* anim)
+static void fn_animation_load_frames(GbAppAsprites* self, gb_animate_animation_t* anim)
 {
     gb_return_if_fail(anim != NULL);
 
@@ -450,11 +447,11 @@ static void fn_animation_load_frames(GbAppAsheets* self, gb_animate_animation_t*
 /**
  * @brief Mueve el frame seleccionado en la dirección especificada.
  *
- * @param self Puntero al objeto GbAppAsheets.
+ * @param self Puntero al objeto GbAppAsprites.
  * @param direction Dirección en la que se moverá el marco seleccionado.
  */
 
-static void fn_frame_selected_move_to_direction(GbAppAsheets* self, ASheetsDirectionMoveFrame direction)
+static void fn_frame_selected_move_to_direction(GbAppAsprites* self, ASheetsDirectionMoveFrame direction)
 {
     gb_animate_animation_t* anim = fn_animation_by_name(self, fn_animation_selected_get_name(self));
     gb_return_if_fail(anim != NULL);
@@ -476,9 +473,9 @@ static void fn_frame_selected_move_to_direction(GbAppAsheets* self, ASheetsDirec
  * @brief Función que se ejecuta cuando se inicia la visualización del viewport.
  *
  * @param viewport El widget del viewport.
- * @param asheets La instancia de GbAppAsheets.
+ * @param asheets La instancia de GbAppAsprites.
  */
-static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
+static void signal_viewport_start(GtkWidget* viewport, GbAppAsprites* asheets)
 {
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
@@ -504,9 +501,9 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppAsheets* asheets)
  * @brief Función que se ejecuta cuando se hace clic en el botón de nueva animación en la barra de herramientas.
  *
  * @param widget El widget que emitió la señal.
- * @param self   El puntero a la estructura GbAppAsheets.
+ * @param self   El puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_new_animation(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_new_animation(GtkWidget* widget, GbAppAsprites* self)
 {
     gchar* name;
     for (int i = 1;; i++)
@@ -525,9 +522,9 @@ static void signal_toolbar_btn_new_animation(GtkWidget* widget, GbAppAsheets* se
  * @brief Función que se ejecuta cuando se hace clic en el botón de eliminar animación en la barra de herramientas.
  *
  * @param widget El widget del botón que se ha hecho clic.
- * @param self   Puntero a la estructura GbAppAsheets que contiene los datos de la aplicación.
+ * @param self   Puntero a la estructura GbAppAsprites que contiene los datos de la aplicación.
  */
-static void signal_toolbar_btn_remove_animation(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_remove_animation(GtkWidget* widget, GbAppAsprites* self)
 {
     guint post = gtk_single_selection_get_selected(self->selection_anim);
     gb_return_if_fail(post != -1);
@@ -550,12 +547,12 @@ static void signal_toolbar_btn_remove_animation(GtkWidget* widget, GbAppAsheets*
  * @brief Función de señal para el botón de animación predeterminada en la barra de herramientas.
  *
  * Esta función se llama cuando se hace clic en el botón de animación predeterminada en la barra de herramientas.
- * Recibe un puntero al widget del botón y un puntero a la estructura GbAppAsheets.
+ * Recibe un puntero al widget del botón y un puntero a la estructura GbAppAsprites.
  *
  * @param widget El widget del botón que emitió la señal.
- * @param self   Un puntero a la estructura GbAppAsheets.
+ * @param self   Un puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_default_animation(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_default_animation(GtkWidget* widget, GbAppAsprites* self)
 {
     const gchar* name = fn_animation_selected_get_name(self);
     fn_animation_set_default(self, name);
@@ -571,9 +568,9 @@ static void signal_toolbar_btn_default_animation(GtkWidget* widget, GbAppAsheets
  *
  * @param selection El GtkSingleSelection que emitió la señal.
  * @param pspec El GParamSpec asociado a la señal.
- * @param self El objeto GbAppAsheets que contiene la función.
+ * @param self El objeto GbAppAsprites que contiene la función.
  */
-static void signal_selected_animation(GtkSingleSelection* selection, GParamSpec* pspec, GbAppAsheets* self)
+static void signal_selected_animation(GtkSingleSelection* selection, GParamSpec* pspec, GbAppAsprites* self)
 {
     const gchar* name = fn_animation_selected_get_name(self);
 
@@ -611,9 +608,9 @@ static void signal_selected_animation(GtkSingleSelection* selection, GParamSpec*
  * @brief Función que se ejecuta cuando se cambia el valor del GtkSpinButton de la frecuencia de animación.
  *
  * @param spin_button El GtkSpinButton que ha cambiado su valor.
- * @param self El puntero a la estructura GbAppAsheets.
+ * @param self El puntero a la estructura GbAppAsprites.
  */
-static void signal_value_changed_input_fps_animation(GtkSpinButton* spin_button, GbAppAsheets* self)
+static void signal_value_changed_input_fps_animation(GtkSpinButton* spin_button, GbAppAsprites* self)
 {
     gb_animate_animation_t* anim = g_object_get_data(G_OBJECT(spin_button), "gb_animate_animation_t");
     gb_return_if_fail(anim != NULL);
@@ -625,9 +622,9 @@ static void signal_value_changed_input_fps_animation(GtkSpinButton* spin_button,
  * @brief Función que se ejecuta cuando se cambia el estado del botón de loop de una animación.
  *
  * @param button El botón de verificación que ha cambiado de estado.
- * @param self   El objeto GbAppAsheets al que pertenece el botón.
+ * @param self   El objeto GbAppAsprites al que pertenece el botón.
  */
-static void signal_changed_checked_loop_animation(GtkCheckButton* button, GbAppAsheets* self)
+static void signal_changed_checked_loop_animation(GtkCheckButton* button, GbAppAsprites* self)
 {
     gb_animate_animation_t* anim = g_object_get_data(G_OBJECT(button), "gb_animate_animation_t");
     gb_return_if_fail(anim != NULL);
@@ -648,9 +645,9 @@ static void signal_changed_checked_loop_animation(GtkCheckButton* button, GbAppA
  * @param n_press El número de veces que se ha presionado el botón del ratón.
  * @param x La coordenada X del punto de clic.
  * @param y La coordenada Y del punto de clic.
- * @param self El puntero a la estructura GbAppAsheets que contiene los datos de la aplicación.
+ * @param self El puntero a la estructura GbAppAsprites que contiene los datos de la aplicación.
  */
-static void signal_double_click_label_to_change_input_name(GtkGestureClick* gesture, gint n_press, gdouble x, gdouble y, GbAppAsheets* self)
+static void signal_double_click_label_to_change_input_name(GtkGestureClick* gesture, gint n_press, gdouble x, gdouble y, GbAppAsprites* self)
 {
     GtkWidget* stack = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture));
 
@@ -672,9 +669,9 @@ static void signal_double_click_label_to_change_input_name(GtkGestureClick* gest
  * @brief Función que se ejecuta cuando se activa el cambio de nombre de la animación.
  *
  * @param entry El GtkEntry que activó el cambio de nombre.
- * @param self  El puntero a la estructura GbAppAsheets.
+ * @param self  El puntero a la estructura GbAppAsprites.
  */
-static void signal_change_animation_name_on_enter_key_press(GtkEntry* entry, GbAppAsheets* self)
+static void signal_change_animation_name_on_enter_key_press(GtkEntry* entry, GbAppAsprites* self)
 {
     const gchar* name_new_animation = gb_str_tolower(gb_str_remove_spaces(gapp_widget_entry_get_text(entry)));
 
@@ -701,9 +698,9 @@ end:
  * @brief Función que se ejecuta cuando se pierde el foco en el GtkEntry al cambiar el nombre de una animacion.
  *
  * @param event El controlador de eventos GtkEventControllerFocus.
- * @param self El objeto GbAppAsheets.
+ * @param self El objeto GbAppAsprites.
  */
-static void signal_input_lost_focus(GtkEventControllerFocus* event, GbAppAsheets* self)
+static void signal_input_lost_focus(GtkEventControllerFocus* event, GbAppAsprites* self)
 {
     GtkWidget* entry = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(event));
     GtkStack* stack = GTK_STACK(gtk_widget_get_parent(entry));
@@ -717,9 +714,9 @@ static void signal_input_lost_focus(GtkEventControllerFocus* event, GbAppAsheets
  *
  * @param factory La fábrica de elementos de lista a configurar.
  * @param item El elemento de lista a configurar.
- * @param self El objeto GbAppAsheets actual.
+ * @param self El objeto GbAppAsprites actual.
  */
-static void signal_list_item_factory_setup_animation(GtkListItemFactory* factory, GtkListItem* item, GbAppAsheets* self)
+static void signal_list_item_factory_setup_animation(GtkListItemFactory* factory, GtkListItem* item, GbAppAsprites* self)
 {
     GtkWidget* box, * icon, * label, * entry, * box_label, * box_tool, * fps, * loop;
 
@@ -781,9 +778,9 @@ static void signal_list_item_factory_setup_animation(GtkListItemFactory* factory
  *
  * @param factory La fábrica de elementos de lista.
  * @param item El elemento de lista al que se va a vincular la animación.
- * @param self El objeto GbAppAsheets actual.
+ * @param self El objeto GbAppAsprites actual.
  */
-static void signal_list_item_factory_bind_animation(GtkListItemFactory* factory, GtkListItem* item, GbAppAsheets* self)
+static void signal_list_item_factory_bind_animation(GtkListItemFactory* factory, GtkListItem* item, GbAppAsprites* self)
 {
     GtkStringObject* string_object = gtk_list_item_get_item(item);
 
@@ -820,9 +817,9 @@ static void signal_list_item_factory_bind_animation(GtkListItemFactory* factory,
  *
  * @param factory La fábrica de elementos de lista de señales.
  * @param item El elemento de lista de señales.
- * @param self El objeto GbAppAsheets.
+ * @param self El objeto GbAppAsprites.
  */
-static void signal_list_item_factory_setup_frame(GtkListItemFactory* factory, GtkListItem* item, GbAppAsheets* self)
+static void signal_list_item_factory_setup_frame(GtkListItemFactory* factory, GtkListItem* item, GbAppAsprites* self)
 {
     GtkWidget* box, * icon, * label;
 
@@ -845,9 +842,9 @@ static void signal_list_item_factory_setup_frame(GtkListItemFactory* factory, Gt
  *
  * @param factory La fábrica de elementos de lista.
  * @param item El elemento de la lista al que se va a vincular el marco.
- * @param self El objeto GbAppAsheets actual.
+ * @param self El objeto GbAppAsprites actual.
  */
-static void signal_list_item_factory_bind_frame(GtkListItemFactory* factory, GtkListItem* item, GbAppAsheets* self)
+static void signal_list_item_factory_bind_frame(GtkListItemFactory* factory, GtkListItem* item, GbAppAsprites* self)
 {
     GtkStringObject* string_object = gtk_list_item_get_item(item);
 
@@ -882,10 +879,10 @@ static void signal_list_item_factory_bind_frame(GtkListItemFactory* factory, Gtk
  * @param value El valor del elemento arrastrado.
  * @param x La posición horizontal del puntero en el momento de soltar el elemento.
  * @param y La posición vertical del puntero en el momento de soltar el elemento.
- * @param self El puntero a la estructura GbAppAsheets.
+ * @param self El puntero a la estructura GbAppAsprites.
  * @return gboolean Devuelve TRUE si el evento se maneja correctamente, FALSE en caso contrario.
  */
-static gboolean signal_drop_assets_frames(GtkDropTarget* target, const GValue* value, double x, double y, GbAppAsheets* self)
+static gboolean signal_drop_assets_frames(GtkDropTarget* target, const GValue* value, double x, double y, GbAppAsprites* self)
 {
     if (G_VALUE_HOLDS(value, G_TYPE_LIST_STORE))
     {
@@ -930,10 +927,10 @@ static gboolean signal_drop_assets_frames(GtkDropTarget* target, const GValue* v
  *
  * @param selection La selección de frames.
  * @param pspec La especificación del parámetro.
- * @param self El objeto GbAppAsheets.
+ * @param self El objeto GbAppAsprites.
  */
 guint pposition = 0;
-static void signal_selected_frame(GtkSingleSelection* selection, GParamSpec* pspec, GbAppAsheets* self)
+static void signal_selected_frame(GtkSingleSelection* selection, GParamSpec* pspec, GbAppAsprites* self)
 {
     gb_animate_animation_t* anim = fn_animation_by_name(self, fn_animation_selected_get_name(self));
     gb_return_if_fail(anim != NULL);
@@ -973,9 +970,9 @@ static void signal_selected_frame(GtkSingleSelection* selection, GParamSpec* psp
  * @brief Función que se ejecuta cuando se cambia la duración de un frame seleccionado.
  *
  * Esta función es llamada cuando se cambia el valor del GtkSpinButton asociado a la duración de un frame seleccionado.
- * Recibe como parámetros el GtkSpinButton y un puntero a la estructura GbAppAsheets.
+ * Recibe como parámetros el GtkSpinButton y un puntero a la estructura GbAppAsprites.
  */
-static void signal_value_changed_duraction_frame(GtkSpinButton* spin_button, GbAppAsheets* self)
+static void signal_value_changed_duraction_frame(GtkSpinButton* spin_button, GbAppAsprites* self)
 {
     gb_animate_animation_t* anim = fn_animation_by_name(self, fn_animation_selected_get_name(self));
     gb_return_if_fail(anim != NULL);
@@ -991,12 +988,12 @@ static void signal_value_changed_duraction_frame(GtkSpinButton* spin_button, GbA
  * @brief Función de señal para el botón de eliminación de marco en la barra de herramientas.
  *
  * Esta función se ejecuta cuando se hace clic en el botón de eliminación de marco en la barra de herramientas.
- * Recibe un puntero al widget que emitió la señal y un puntero a la estructura GbAppAsheets.
+ * Recibe un puntero al widget que emitió la señal y un puntero a la estructura GbAppAsprites.
  *
  * @param widget El widget que emitió la señal.
- * @param self   Puntero a la estructura GbAppAsheets.
+ * @param self   Puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_remove_frame(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_remove_frame(GtkWidget* widget, GbAppAsprites* self)
 {
     guint position = gtk_single_selection_get_selected(self->selection_frame);
     gb_animate_animation_t* anim = fn_animation_by_name(self, fn_animation_selected_get_name(self));
@@ -1007,12 +1004,12 @@ static void signal_toolbar_btn_remove_frame(GtkWidget* widget, GbAppAsheets* sel
  * @brief Función de señal para el botón de mover a la izquierda del marco de la barra de herramientas.
  *
  * Esta función se llama cuando se hace clic en el botón de mover a la izquierda del frame en la barra de herramientas.
- * Toma un puntero al widget del botón y un puntero a la estructura GbAppAsheets.
+ * Toma un puntero al widget del botón y un puntero a la estructura GbAppAsprites.
  *
  * @param widget El widget del botón que emitió la señal.
- * @param self Puntero a la estructura GbAppAsheets.
+ * @param self Puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_move_left_frame(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_move_left_frame(GtkWidget* widget, GbAppAsprites* self)
 {
     fn_frame_selected_move_to_direction(self, ASHEETS_DIRECTION_MOVE_FRAME_LEFT);
 }
@@ -1023,9 +1020,9 @@ static void signal_toolbar_btn_move_left_frame(GtkWidget* widget, GbAppAsheets* 
  * Esta función se llama cuando se hace clic en el botón de mover a la derecha en la barra de herramientas.
  *
  * @param widget El widget del botón que activó la señal.
- * @param self   El puntero a la estructura GbAppAsheets que contiene los datos de la aplicación.
+ * @param self   El puntero a la estructura GbAppAsprites que contiene los datos de la aplicación.
  */
-static void signal_toolbar_btn_move_right_frame(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_move_right_frame(GtkWidget* widget, GbAppAsprites* self)
 {
     fn_frame_selected_move_to_direction(self, ASHEETS_DIRECTION_MOVE_FRAME_RIGHT);
 }
@@ -1034,9 +1031,9 @@ static void signal_toolbar_btn_move_right_frame(GtkWidget* widget, GbAppAsheets*
  * @brief Función que se ejecuta cuando se hace clic en el botón de copiar marco en la barra de herramientas.
  *
  * @param widget El widget que emitió la señal.
- * @param self   El puntero a la estructura GbAppAsheets.
+ * @param self   El puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_copy_frame(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_copy_frame(GtkWidget* widget, GbAppAsprites* self)
 {
     gb_animate_animation_t* anim = fn_animation_by_name(self, fn_animation_selected_get_name(self));
     gb_return_if_fail(anim != NULL);
@@ -1053,9 +1050,9 @@ static void signal_toolbar_btn_copy_frame(GtkWidget* widget, GbAppAsheets* self)
  * @brief Función que se ejecuta cuando se presiona el botón de pegar en la barra de herramientas.
  *
  * @param widget El widget que emitió la señal.
- * @param self   El puntero a la estructura GbAppAsheets.
+ * @param self   El puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_paste_frame(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_paste_frame(GtkWidget* widget, GbAppAsprites* self)
 {
     gb_animate_animation_t* anim = fn_animation_by_name(self, fn_animation_selected_get_name(self));
     gb_return_if_fail(anim != NULL);
@@ -1067,9 +1064,9 @@ static void signal_toolbar_btn_paste_frame(GtkWidget* widget, GbAppAsheets* self
  * @brief Función que se ejecuta cuando se presiona el botón de reproducción de un fotograma de animación en la barra de herramientas.
  *
  * @param widget El widget del botón que se presionó.
- * @param self El puntero a la estructura GbAppAsheets.
+ * @param self El puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_play_animation_frame(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_play_animation_frame(GtkWidget* widget, GbAppAsprites* self)
 {
     if (gb_animate_sprite_is_playing(self->animate_sprite) == TRUE)
     {
@@ -1083,21 +1080,21 @@ static void signal_toolbar_btn_play_animation_frame(GtkWidget* widget, GbAppAshe
 
 /**
  * @brief Función que se ejecuta cuando se hace clic en el botón de guardar en la barra de herramientas.
- *        Deserializa los datos de GbAppAsheets y los guarda en un archivo.
+ *        Deserializa los datos de GbAppAsprites y los guarda en un archivo.
  *
  * @param widget El widget que generó la señal.
- * @param self   El puntero a la estructura GbAppAsheets.
+ * @param self   El puntero a la estructura GbAppAsprites.
  */
-static void signal_toolbar_btn_save_asheets_deserialize_to_file(GtkWidget* widget, GbAppAsheets* self)
+static void signal_toolbar_btn_save_asheets_deserialize_to_file(GtkWidget* widget, GbAppAsprites* self)
 {
 
 }
 
-static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
+static GbAppAsprites* gbapp_asprites_template(GbAppAsprites* self)
 {
     GtkWidget* scroll, * viewport, * paned_main, * paned2;
 
-    GbAppAsheetsPrivate* priv = gbapp_asheets_get_instance_private(self);
+    GbAppAspritesPrivate* priv = gbapp_asprites_get_instance_private(self);
 
     GtkWidget* toolbar_main = gapp_widget_toolbar_new();
     gtk_box_append(self, toolbar_main);
@@ -1270,9 +1267,9 @@ static GbAppAsheets* gbapp_asheets_template(GbAppAsheets* self)
  *
  * @return Un nuevo widget que Animation Sprite Sheets.
  */
-GtkWidget* gbapp_asheets_new(const gchar* filename)
+GtkWidget* gbapp_asprites_new(const gchar* filename)
 {
-    GbAppAsheets* self = g_object_new(GBAPP_TYPE_ASHEETS, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
+    GbAppAsprites* self = g_object_new(GBAPP_TYPE_ASPRITES, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
 
     self->filename = gb_strdup(filename);
     char* name = gb_fs_get_name(filename, false);
@@ -1282,7 +1279,7 @@ GtkWidget* gbapp_asheets_new(const gchar* filename)
 
     self->garbage_collector = g_hash_table_new(g_str_hash, g_str_equal);
 
-    gapp_project_editor_append_page(GAPP_NOTEBOOK_DEFAULT, 0, name, gbapp_asheets_template(self));
+    gapp_project_editor_append_page(GAPP_NOTEBOOK_DEFAULT, 0, name, gbapp_asprites_template(self));
 
     return self;
 }

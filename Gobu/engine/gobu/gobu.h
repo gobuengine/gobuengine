@@ -9,6 +9,13 @@
 #include "thirdparty/goburender/raymath.h"
 #include "thirdparty/binn/binn_json.h"
 
+#if gb_print_warning
+#define gb_print_warning
+#endif
+
+#define gb_return_if_fail(expr) if(!(expr)) {gb_print_warning(TF("Assertion '%s' failed", #expr)); return;}
+#define gb_return_val_if_fail(expr, val) if(!(expr)) {gb_print_warning(TF("Assertion '%s' failed", #expr)); return val;}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -338,7 +345,7 @@ extern "C" {
     gb_ecs_vec_swap(vec, ECS_SIZEOF(T), elem, elem2)
 
 #define gb_ecs_transform(x, y) (gb_transform_t){ .position = (gb_vec2_t){ x, y}, .scale = Vector2One(), .rotation = 0.0f, .origin = (gb_vec2_t){0.5f, 0.5f} }
-    
+
     ecs_entity_t gb_ecs_entity_new(gb_world_t* world, ecs_entity_t parent, const char* name, const gb_transform_t t);
     void gb_ecs_entity_set_parent(gb_world_t* world, ecs_entity_t parent, ecs_entity_t entity);
     ecs_entity_t gb_ecs_entity_get_parent(gb_world_t* world, ecs_entity_t entity);
@@ -347,9 +354,14 @@ extern "C" {
     void gb_ecs_vec_remove(ecs_vec_t* v, ecs_size_t size, int32_t index);
     void gb_ecs_vec_swap(ecs_vec_t* v, ecs_size_t size, int32_t index_a, int32_t index_b);
 
-        // --------------------------
-        // gb_animate_sprite_t API
-        // --------------------------
+            // --------------------------
+            // gb_sprite_t API
+            // --------------------------
+    gb_sprite_t gb_sprite_to_from_binn(binn* fsprite);
+
+            // --------------------------
+            // gb_animate_sprite_t API
+            // --------------------------
     void gb_animate_sprite_set(gb_animate_sprite_t* animated, const char* name);
     void gb_animate_sprite_stop(gb_animate_sprite_t* animated);
     void gb_animate_sprite_pause(gb_animate_sprite_t* animated);

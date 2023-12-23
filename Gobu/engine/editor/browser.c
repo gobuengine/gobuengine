@@ -8,7 +8,7 @@ enum
     ACTION_CREATE_FOLDER,
     ACTION_CREATE_ENTITY,
     ACTION_CREATE_LEVEL,
-    ACTION_CREATE_ASHEETS,
+    ACTION_CREATE_ASPRITES,
     ACTION_LAST
 };
 
@@ -118,6 +118,15 @@ static void gbapp_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_fil
         gtk_image_set_from_file(image, g_file_get_path(file));
         return;
     }
+    else if (gb_fs_is_extension(ext_file, ".sprite"))
+    {
+        // gchar* filename = g_file_get_path(file);
+        // gchar* resource = sprite_from_file();
+        // GdkTexture* texture = gdk_texture_new_from_filename(filename);
+        // gdk_texture_set_clip(texture, 0, 0, 64, 64);
+        // gtk_image_set_from_file(image, filename);
+        return;
+    }
     else if (gb_fs_is_extension(ext_file, ".gbscript"))
     {
         icon = EditorCore->resource.icons[GOBU_RESOURCE_ICON_COMPONENT];
@@ -130,9 +139,9 @@ static void gbapp_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_fil
     {
         icon = EditorCore->resource.icons[GOBU_RESOURCE_ICON_ENTITY];
     }
-    else if (gb_fs_is_extension(ext_file, ".asheets"))
+    else if (gb_fs_is_extension(ext_file, ".asprites"))
     {
-        icon = EditorCore->resource.icons[GOBU_RESOURCE_ICON_ASHEETS];
+        icon = EditorCore->resource.icons[GOBU_RESOURCE_ICON_ASPRITE];
     }
     else
     {
@@ -277,16 +286,16 @@ void signal_delete_file(GtkWidget* widget, gpointer data)
     gtk_popover_popdown(GTK_POPOVER(private->popover));
 }
 
-static void signal_open_extra_sprites(GtkWidget *widget, gpointer data)
+static void signal_open_extra_sprites(GtkWidget* widget, gpointer data)
 {
     GbAppBrowserPrivate* private = gbapp_browser_get_instance_private(data);
 
-    GFileInfo *file_info = browser_get_first_file_selected(data);
+    GFileInfo* file_info = browser_get_first_file_selected(data);
     GFile* file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
     gchar* filename = g_file_get_path(file);
 
-    gbapp_extrasprites_new( filename );
-    
+    gbapp_extrasprites_new(filename);
+
     gtk_popover_popdown(GTK_POPOVER(private->popover));
 }
 
@@ -315,12 +324,12 @@ static void signal_create_item_action_response(GtkDialog* dialog, int response, 
 
             gb_print_info(TF("Create Level: %s", result));
         }
-        else if (action->response == ACTION_CREATE_ASHEETS) {
-            gchar* path_result = gb_path_join(private->path_current, TF("%s.asheets", result), NULL);
+        else if (action->response == ACTION_CREATE_ASPRITES) {
+            gchar* path_result = gb_path_join(private->path_current, TF("%s.asprites", result), NULL);
             g_file_create_readwrite(g_file_new_for_path(path_result), G_FILE_CREATE_NONE, NULL, NULL);
             g_free(path_result);
 
-            gb_print_info(TF("Create Animation Sprite Sheets: %s", result));
+            gb_print_info(TF("Create AnimationSprite: %s", result));
         }
     }
     gtk_window_destroy(GTK_WINDOW(dialog));
@@ -459,7 +468,7 @@ static void signal_view_file_popover(GtkGesture* gesture, int n_press, double x,
                 gtk_label_set_xalign(gtk_button_get_child(GTK_BUTTON(item)), 0.0f);
                 gtk_box_append(GTK_BOX(box), item);
                 g_signal_connect(item, "clicked", G_CALLBACK(signal_create_item_action),
-                gbapp_browser_fn_new_action("Create New Animation Sprite Sheets", "SpriteSheets", ACTION_CREATE_ASHEETS, data));
+                gbapp_browser_fn_new_action("Create New Animation Sprite Sheets", "SpriteSheets", ACTION_CREATE_ASPRITES, data));
             }
         }
 
@@ -624,8 +633,6 @@ static void signal_view_file_selected(GtkGridView* self, guint position, gpointe
     {
         gbapp_browser_fn_history_path_forward_clear(user_data);
         gbapp_browser_fn_open_folder(user_data, filename, TRUE);
-
-        // g_object_unref(file);
     }
     else if (g_file_info_get_file_type(file_info) == G_FILE_TYPE_REGULAR) {
         if (gb_fs_is_extension(filename, ".level")) {
@@ -634,15 +641,13 @@ static void signal_view_file_selected(GtkGridView* self, guint position, gpointe
         else if (gb_fs_is_extension(filename, ".gbscript")) {
             gapp_editor_script_new(filename);
         }
-        else if (gb_fs_is_extension(filename, ".asheets")) {
-            gbapp_asheets_new(filename);
-        }
-        else {
-            return;
+        else if (gb_fs_is_extension(filename, ".asprites")) {
+            gbapp_asprites_new(filename);
         }
 
-        gb_print_info(TF("Open file: %s", gb_path_basename(filename)));
+        gb_print_info(TF("Double Clic file: %s", gb_path_basename(filename)));
     }
+    g_free(filename);
 }
 
 /**

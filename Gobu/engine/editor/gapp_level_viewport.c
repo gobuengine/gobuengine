@@ -86,7 +86,7 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess
 
         ecs_entity_t e = gb_ecs_entity_new(world, ecs_lookup(world, GAME_ROOT_ENTITY), name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
 
-        if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
+        if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg") || gb_fs_is_extension(filename, ".sprite")) {
             gb_ecs_entity_set(world, e, gb_sprite_t, { .resource = key });
         }
     }

@@ -102,7 +102,7 @@ static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double nu
             float x = -(x_o + w * i);
             float y = -(y_o + h * n);
 
-            self->rects[self->index] = (gb_rect_t){ x, y, w, h };
+            self->rects[self->index] = (gb_rect_t){ (w*n), (h*i), w, h };
 
             char *real_name = gb_strdups("%s%d",namee,self->index);
             ecs_entity_t entity = gb_ecs_entity_new(world, 0, real_name, gb_ecs_transform(x, y));
@@ -167,15 +167,18 @@ static void signal_extract(GtkWidget* widget, GbAppExtraSprites* self)
             char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", index_name));
             char* filename = gb_path_join(gb_path_dirname(self->filename), gb_strdups("%s.sprite", name_format), NULL);
 
-            char* buffer = ecs_entity_to_json(world, entity, &(ecs_entity_to_json_desc_t){
-                .serialize_values = true,
-                .serialize_path = true,
-                .serialize_id_labels = true
-            });
-            // gb_fs_write_file(filename, buffer);
+            binn *fsprite = binn_object();
+            binn_object_set_str(fsprite, "resource", gb_path_relative_content(self->filename));
+            binn_object_set_float(fsprite, "x", self->rects[i].x);
+            binn_object_set_float(fsprite, "y", self->rects[i].y);
+            binn_object_set_float(fsprite, "width", self->rects[i].width);
+            binn_object_set_float(fsprite, "height", self->rects[i].height);
+            binn_deserialize_from_file(fsprite, filename);
+            binn_free(fsprite);
+
             index_name++;
 
-            ecs_os_free(buffer);
+            // ecs_os_free(buffer);
             ecs_os_free(filename);
             ecs_os_free(name_format);
         }

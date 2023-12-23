@@ -843,7 +843,7 @@ void gb_rendering_draw_rect(gb_shape_rect_t rect)
 {
     DrawRectangle(rect.x, rect.y, rect.width, rect.height, rect.color);
     if (rect.line_width > 0)
-        DrawRectangleLinesEx((gb_rect_t){rect.x, rect.y, rect.width, rect.height}, rect.line_width, rect.color_line);
+        DrawRectangleLinesEx((gb_rect_t) { rect.x, rect.y, rect.width, rect.height }, rect.line_width, rect.color_line);
 }
 
 /**
@@ -1295,7 +1295,7 @@ static void gb_ecs_observe_set_gb_resource_t(ecs_iter_t* it)
                 resource[i].texture = LoadTexture(path);
             if (IsFileExtension(path, ".ttf"))
                 resource[i].font = LoadFont(path);
-            if (IsFileExtension(path, ".anim") || IsFileExtension(path, ".asheets"))
+            if (IsFileExtension(path, ".asprites") || IsFileExtension(path, ".sprite"))
                 resource[i].json = binn_serialize_from_file(path);
 
         }
@@ -1304,7 +1304,7 @@ static void gb_ecs_observe_set_gb_resource_t(ecs_iter_t* it)
                 UnloadTexture(resource[i].texture);
             if (IsFileExtension(path, ".ttf"))
                 UnloadFont(resource[i].font);
-            if (IsFileExtension(path, ".anim"))
+            if (IsFileExtension(path, ".asprites") || IsFileExtension(path, ".sprite"))
                 binn_free(resource[i].json);
         }
 
@@ -1438,8 +1438,8 @@ static void gb_ecs_update_gb_bounding_t(ecs_iter_t* it)
             bounding[i].size = MeasureTextEx(text[i].font, text[i].text, text[i].size, text[i].spacing);
         }
 
-        bounding[i].min.x = transform[i].position.x;
-        bounding[i].min.y = transform[i].position.y;
+        bounding[i].min.x = transform[i].position.x - (transform[i].origin.x * bounding[i].size.x);
+        bounding[i].min.y = transform[i].position.y - (transform[i].origin.y * bounding[i].size.y);
         bounding[i].max.x = bounding[i].size.x;
         bounding[i].max.y = bounding[i].size.y;
         bounding[i].center.x = bounding[i].min.x + (bounding[i].size.x / 2);
@@ -1722,10 +1722,10 @@ const char* gb_resource_set(gb_world_t* world, const char* path)
         ecs_entity_t resource = ecs_new_entity(world, kkey);
         ecs_set(world, resource, gb_resource_t, { .path = path_relative });
     }
-    else {
-        ecs_entity_t resource = ecs_lookup(world, kkey);
-        ecs_set(world, resource, gb_resource_t, { .path = path_relative });
-    }
+    // else {
+    //     ecs_entity_t resource = ecs_lookup(world, kkey);
+    //     ecs_set(world, resource, gb_resource_t, { .path = path_relative });
+    // }
     return kkey;
 }
 
@@ -1883,11 +1883,39 @@ void gb_app_progress(gb_world_t* world)
     ecs_progress(world, GetFrameTime());
 }
 
+// ########################################
+// Sprites functions
+// ########################################
+
+gb_sprite_t gb_sprite_to_from_binn(binn* fsprite)
+{
+    gb_sprite_t sprite = { 0 };
+
+    sprite.resource = binn_object_str(fsprite, "resource");
+    sprite.src.x = binn_object_float(fsprite, "x");
+    sprite.src.x = binn_object_float(fsprite, "y");
+    sprite.dst.width = binn_object_float(fsprite, "width");
+    sprite.dst.height = binn_object_float(fsprite, "height");
+    sprite.tint = WHITE;
+
+    return sprite;
+}
+
+void gb_sprites_to_save_to_from_file(gb_sprite_t sprite, const char* filename)
+{
+    // binn *fsprite = binn_object();
+    // binn_object_set_str(fsprite, "resource", gb_path_relative_content(self->filename));
+    // binn_object_set_float(fsprite, "x", self->rects[i].x);
+    // binn_object_set_float(fsprite, "y", self->rects[i].y);
+    // binn_object_set_float(fsprite, "width", self->rects[i].width);
+    // binn_object_set_float(fsprite, "height", self->rects[i].height);
+    // binn_deserialize_from_file(fsprite, filename);
+    // binn_free(fsprite);
+}
 
 // ########################################
 // Engine functions
 // ########################################
-// Description de engine app functions: 
 
 static gb_vec2_t getscreentoworld2d(gb_camera_t camera, gb_vec2_t position)
 {
