@@ -27,7 +27,7 @@ struct _GbAppExtraSprites {
     GtkWidget* input_spacing_y;
     double cell_width_default;
     double cell_height_default;
-    gb_rect_t rects[100];
+    gb_rect_t* rects;
     int index;
     gchar* filename;
     ecs_entity_t entity;
@@ -82,34 +82,36 @@ static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double nu
 {
     gb_world_t* world = gapp_gobu_embed_get_world(self->viewport);
 
-    float w = (float)(self->cell_width_default / num_cell_x);
-    float h = (float)(self->cell_height_default / num_cell_y);
-    float x_o = -(self->cell_width_default / 2) + (w / 2);
-    float y_o = -(self->cell_height_default / 2) + (h / 2);
-    self->index = 0;
+    float frame_w = (float)(self->cell_width_default / num_cell_x);
+    float frame_h = (float)(self->cell_height_default / num_cell_y);
+    float center_x = -(self->cell_width_default / 2) + (frame_w / 2);
+    float center_y = -(self->cell_height_default / 2) + (frame_h / 2);
+
+    ecs_entity_t parent = ecs_lookup(world, "extrasprites");
+    ecs_delete_children(world, parent);
 
     int index_name = gtk_spin_button_get_value(self->input_index);
 
     char* name = gapp_widget_entry_get_text(self->input_name);
 
-    char* namee = gb_str_replace(name, "{0}", "");
+    int num_cell = num_cell_x * num_cell_y;
 
-    ecs_entity_t parent = ecs_lookup(world, "extrasprites");
-    ecs_delete_children(world, parent);
+    self->rects = g_realloc(self->rects, sizeof(gb_rect_t) * num_cell);
 
-    for (int i = 0; i < num_cell_x; i++) {
-        for (int n = 0; n < num_cell_y; n++) {
-            float x = -(x_o + w * i);
-            float y = -(y_o + h * n);
+    for (int i = 0; i < num_cell; i++) {
+        int frame_now = i;
+        int frame_row = (self->cell_width_default / frame_w);
+        float sub_x = (float)(frame_now % frame_row) * frame_w;
+        float sub_y = (float)(frame_now / frame_row) * frame_h;
 
-            self->rects[self->index] = (gb_rect_t){ (w*n), (h*i), w, h };
+        self->rects[i] = (gb_rect_t){ sub_x, sub_y, frame_w, frame_h };
 
-            char *real_name = gb_strdups("%s%d",namee,self->index);
-            ecs_entity_t entity = gb_ecs_entity_new(world, 0, real_name, gb_ecs_transform(x, y));
-            gb_ecs_entity_set_parent(world, parent, entity);
-            gb_ecs_entity_set(world, entity, gb_shape_rect_t, { .width = w, .height = h, .color_line = ORANGE, .line_width = 1 });
-            self->index++;
-        }
+        char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", (i + index_name)));
+
+        ecs_entity_t entity = gb_ecs_entity_new(world, parent, name_format, gb_ecs_transform(sub_x + center_x, sub_y + center_y));
+        gb_ecs_entity_set(world, entity, gb_shape_rect_t, { .width = frame_w, .height = frame_h, .color_line = ORANGE, .line_width = 1 });
+        ecs_remove(world, entity, gb_gizmos_t);
+        g_free(name_format);
     }
 }
 
@@ -140,6 +142,7 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppExtraSprites* self)
 
     char* key = gb_resource_set(world, self->filename);
     self->entity = gb_ecs_entity_new(world, 0, "extrasprites", gb_ecs_transform(0, 0));
+    ecs_remove(world, self->entity, gb_gizmos_t);
     gb_ecs_entity_set(world, self->entity, gb_sprite_t, { .resource = key });
 
     fn_update_rect(self, 1, 1, 0, 0, 0, 0);
@@ -147,7 +150,9 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppExtraSprites* self)
 
 static void signal_close(GtkWidget* widget, GbAppExtraSprites* self)
 {
+    g_free(self->rects);
     gtk_window_close(self);
+    gb_log_info(TF("Close ExtraSprites: %s", gb_path_relative_content(self->filename)));
 }
 
 static void signal_extract(GtkWidget* widget, GbAppExtraSprites* self)
@@ -167,7 +172,7 @@ static void signal_extract(GtkWidget* widget, GbAppExtraSprites* self)
             char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", index_name));
             char* filename = gb_path_join(gb_path_dirname(self->filename), gb_strdups("%s.sprite", name_format), NULL);
 
-            binn *fsprite = binn_object();
+            binn* fsprite = binn_object();
             binn_object_set_str(fsprite, "resource", gb_path_relative_content(self->filename));
             binn_object_set_float(fsprite, "x", self->rects[i].x);
             binn_object_set_float(fsprite, "y", self->rects[i].y);
@@ -211,6 +216,7 @@ static void gbapp_extrasprites_show(GbAppExtraSprites* self, GParamSpec* pspec, 
     gtk_window_set_modal(self, TRUE);
     gtk_window_set_resizable(self, FALSE);
     gtk_window_set_default_size(self, 1000, 700);
+    g_signal_connect(self, "destroy", G_CALLBACK(signal_close), self);
 
     GtkWidget* paned = gapp_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, FALSE);
     gtk_window_set_child(self, paned);
@@ -251,10 +257,10 @@ static void gbapp_extrasprites_show(GbAppExtraSprites* self, GParamSpec* pspec, 
 
         // self->input_cell_width = gapp_widget_input_number(box_exp, "Cell Width", 0.0f, 99999.0f, 1.0f, &self->cell_width);
         // self->input_cell_height = gapp_widget_input_number(box_exp, "Cell Height", 0.0f, 99999.0f, 1.0f, &self->cell_height);
-        self->input_num_cell_x = gapp_widget_input_number(box_exp, "Num Cells X", 1.0f, 99999.0f, 1.0f);
+        self->input_num_cell_x = gapp_widget_input_number(box_exp, "Num Cells X", 1.0f, 128.0f, 1.0f);
         g_signal_connect(self->input_num_cell_x, "value-changed", G_CALLBACK(input_updates), self);
 
-        self->input_num_cell_y = gapp_widget_input_number(box_exp, "Num Cells Y", 1.0f, 99999.0f, 1.0f);
+        self->input_num_cell_y = gapp_widget_input_number(box_exp, "Num Cells Y", 1.0f, 128.0f, 1.0f);
         g_signal_connect(self->input_num_cell_y, "value-changed", G_CALLBACK(input_updates), self);
 
         self->input_margin_x = gapp_widget_input_number(box_exp, "Margin X", 0.0f, 99999.0f, 1.0f);

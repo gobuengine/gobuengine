@@ -379,6 +379,11 @@ char* gb_path_relative_content(const char* path)
     return npath;
 }
 
+char* gb_path_join_relative_content(const char* path)
+{
+    return gb_path_normalize(gb_path_join(gb_project_get_path(), "Content", path, NULL));
+}
+
 /**
  * @brief Normaliza una ruta de archivo.
  *
@@ -1251,7 +1256,18 @@ static void gb_ecs_observe_set_gb_sprite_t(ecs_iter_t* it)
     {
         gb_resource_t* resource = gb_resource(it->world, sprite[i].resource);
         g_return_if_fail(resource != NULL);
+        g_return_if_fail(resource->texture.id != 0);
+
         sprite[i].texture = resource->texture;
+
+        if (resource->json != NULL)
+        {
+            gb_sprite_t source = gb_sprite_to_from_binn(resource->json);
+            sprite[i].src.x = source.src.x;
+            sprite[i].src.y = source.src.y;
+            sprite[i].dst.width = source.dst.width;
+            sprite[i].dst.height = source.dst.height;
+        }
 
         // clip sprite
         float x = sprite[i].src.x;
@@ -1262,7 +1278,7 @@ static void gb_ecs_observe_set_gb_sprite_t(ecs_iter_t* it)
         float clip_width = (w == 0) ? sprite[i].texture.width : w;
         float clip_height = (h == 0) ? sprite[i].texture.height : h;
 
-        sprite[i].src = (gb_rect_t){ x, y, sprite[i].texture.width, sprite[i].texture.height };
+        sprite[i].src = (gb_rect_t){ x, y, clip_width, clip_height };
         sprite[i].dst = (gb_rect_t){ 0.0f, 0.0f, clip_width, clip_height };
         sprite[i].tint = (sprite[i].tint.a == 0) ? (gb_color_t) { 255, 255, 255, 255 } : sprite[i].tint;
     }
@@ -1287,17 +1303,19 @@ static void gb_ecs_observe_set_gb_resource_t(ecs_iter_t* it)
 
     for (int i = 0; i < it->count; i++)
     {
-        char* path = gb_path_join(gb_project_get_path(), "Content", resource[i].path, NULL);
-        path = gb_path_normalize(path);
+        char* path = gb_path_join_relative_content(resource[i].path);
 
         if (event == EcsOnSet) {
             if (IsFileExtension(path, ".png") || IsFileExtension(path, ".jpg"))
                 resource[i].texture = LoadTexture(path);
             if (IsFileExtension(path, ".ttf"))
                 resource[i].font = LoadFont(path);
-            if (IsFileExtension(path, ".asprites") || IsFileExtension(path, ".sprite"))
+            if (IsFileExtension(path, ".asprites"))
                 resource[i].json = binn_serialize_from_file(path);
-
+            if (IsFileExtension(path, ".sprite")) {
+                resource[i].json = binn_serialize_from_file(path);
+                resource[i].texture = LoadTexture(gb_path_join_relative_content(binn_object_str(resource[i].json, "resource")));
+            }
         }
         else if (event == EcsOnRemove) {
             if (IsFileExtension(path, ".png") || IsFileExtension(path, ".jpg"))
@@ -1716,17 +1734,14 @@ static void gb_engine_system_init(gb_world_t* world)
 const char* gb_resource_set(gb_world_t* world, const char* path)
 {
     const char* path_relative = gb_path_relative_content(path);
-    const char* kkey = gb_path_normalize(gb_strdups("resource://%s", gb_str_replace(path_relative, ".", "!")));
+    const char* key = gb_path_normalize(gb_strdups("resource://%s", gb_str_replace(path_relative, ".", "!")));
 
-    if (ecs_is_valid(world, ecs_lookup(world, kkey)) == false) {
-        ecs_entity_t resource = ecs_new_entity(world, kkey);
+    if (ecs_is_valid(world, ecs_lookup(world, key)) == false) {
+        ecs_entity_t resource = ecs_new_entity(world, key);
         ecs_set(world, resource, gb_resource_t, { .path = path_relative });
     }
-    // else {
-    //     ecs_entity_t resource = ecs_lookup(world, kkey);
-    //     ecs_set(world, resource, gb_resource_t, { .path = path_relative });
-    // }
-    return kkey;
+
+    return key;
 }
 
 /**
@@ -1886,6 +1901,11 @@ void gb_app_progress(gb_world_t* world)
 // ########################################
 // Sprites functions
 // ########################################
+
+binn* gb_sprite_from_file(const char* filename)
+{
+    return binn_serialize_from_file(filename);
+}
 
 gb_sprite_t gb_sprite_to_from_binn(binn* fsprite)
 {

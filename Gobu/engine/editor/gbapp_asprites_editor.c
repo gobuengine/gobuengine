@@ -61,7 +61,7 @@ static void gbapp_asprites_finalize(GObject* object)
 {
     GbAppAsprites* self = GBAPP_ASPRITES(object);
 
-    gb_print_info(TF("Asprites Free [%s]\n", gb_fs_get_name(self->filename, false)));
+    gb_log_info(TF("Asprites Free [%s]\n", gb_fs_get_name(self->filename, false)));
 
     g_source_remove(self->timeout_check_anim);
 

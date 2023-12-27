@@ -47,10 +47,10 @@ struct _GobuToolConsolePrivate
 };
 
 GobuToolConsole* gapp_tool_console_new(void);
-void gb_print_error(const gchar *msg, const gchar *error);
-void gb_print_warning(const gchar *msg);
-void gb_print_success(const gchar *msg);
-void gb_print_info(const gchar *msg);
+void gb_log_error(const gchar *msg, const gchar *error);
+void gb_log_warn(const gchar *msg);
+void gb_log_success(const gchar *msg);
+void gb_log_info(const gchar *msg);
 
 G_END_DECLS
 

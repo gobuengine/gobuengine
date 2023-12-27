@@ -111,20 +111,20 @@ static void gbapp_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_fil
 {
     GIcon* icon;
     const char* ext_file = g_file_info_get_name(info_file);
+    GFile* file = G_FILE(g_file_info_get_attribute_object(info_file, "standard::file"));
 
     if (gb_fs_is_extension(ext_file, ".png") || gb_fs_is_extension(ext_file, ".jpg"))
     {
-        GFile* file = G_FILE(g_file_info_get_attribute_object(info_file, "standard::file"));
         gtk_image_set_from_file(image, g_file_get_path(file));
         return;
     }
     else if (gb_fs_is_extension(ext_file, ".sprite"))
     {
-        // gchar* filename = g_file_get_path(file);
-        // gchar* resource = sprite_from_file();
-        // GdkTexture* texture = gdk_texture_new_from_filename(filename);
-        // gdk_texture_set_clip(texture, 0, 0, 64, 64);
-        // gtk_image_set_from_file(image, filename);
+        gb_sprite_t sprite = gb_sprite_to_from_binn(gb_sprite_from_file(g_file_get_path(file)));
+        GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file(gb_path_join_relative_content(sprite.resource), NULL);
+        pixbuf = gdk_pixbuf_new_subpixbuf(pixbuf, sprite.src.x, sprite.src.y, sprite.dst.width, sprite.dst.height);
+        gtk_image_set_from_pixbuf(image, pixbuf);
+        g_object_unref(pixbuf);
         return;
     }
     else if (gb_fs_is_extension(ext_file, ".gbscript"))
@@ -181,7 +181,7 @@ static void gbapp_browser_fn_open_folder(GbAppBrowser* browser, const gchar* pat
     //  EL BOTON DE NAV (HOME) SE HABILITA SI NO ESTAMOS EN CONTENT
     gtk_widget_set_sensitive(GTK_WIDGET(private->btn_nav_home), is_home);
 
-    gb_print_info(TF("Open folder: %s", gb_path_basename(private->path_current)));
+    gb_log_info(TF("Open folder: %s", gb_path_basename(private->path_current)));
 }
 
 /**
@@ -256,11 +256,11 @@ static void signal_delete_file_response(GtkWidget* widget, int response, GListSt
             if (!g_file_delete(file, NULL, &error) && !g_error_matches(error, G_IO_ERROR, G_IO_ERROR_NOT_FOUND))
             {
                 // gapp_widget_alert(widget, error->message);
-                gb_print_error(TF("Failed to delete [ %s ]", g_file_peek_path(file)), error->message);
+                gb_log_error(TF("Failed to delete [ %s ]", g_file_peek_path(file)), error->message);
                 return;
             }
 
-            gb_print_success(TF("File delete [ %s ]", g_file_peek_path(file)));
+            gb_log_success(TF("File delete [ %s ]", g_file_peek_path(file)));
         }
     }
 
@@ -315,21 +315,21 @@ static void signal_create_item_action_response(GtkDialog* dialog, int response, 
             gb_fs_mkdir(path_result);
             g_free(path_result);
 
-            gb_print_info(TF("Create Folder: %s", result));
+            gb_log_info(TF("Create Folder: %s", result));
         }
         else if (action->response == ACTION_CREATE_LEVEL) {
             gchar* path_result = gb_path_join(private->path_current, TF("%s.level", result), NULL);
             g_file_create_readwrite(g_file_new_for_path(path_result), G_FILE_CREATE_NONE, NULL, NULL);
             g_free(path_result);
 
-            gb_print_info(TF("Create Level: %s", result));
+            gb_log_info(TF("Create Level: %s", result));
         }
         else if (action->response == ACTION_CREATE_ASPRITES) {
             gchar* path_result = gb_path_join(private->path_current, TF("%s.asprites", result), NULL);
             g_file_create_readwrite(g_file_new_for_path(path_result), G_FILE_CREATE_NONE, NULL, NULL);
             g_free(path_result);
 
-            gb_print_info(TF("Create AnimationSprite: %s", result));
+            gb_log_info(TF("Create AnimationSprite: %s", result));
         }
     }
     gtk_window_destroy(GTK_WINDOW(dialog));
@@ -506,11 +506,11 @@ static gboolean signal_view_file_drop(GtkDropTarget* target, const GValue* value
             gchar* name = g_file_get_basename(file_src);
             if (gb_fs_copyc(file_src, file_dest, &error))
             {
-                gb_print_success(TF("Copy file: [%s]", name));
+                gb_log_success(TF("Copy file: [%s]", name));
             }
             else
             {
-                gb_print_error(TF("Copy [%s]", name), error->message);
+                gb_log_error(TF("Copy [%s]", name), error->message);
             }
         }
         return TRUE;
@@ -645,7 +645,7 @@ static void signal_view_file_selected(GtkGridView* self, guint position, gpointe
             gbapp_asprites_new(filename);
         }
 
-        gb_print_info(TF("Double Clic file: %s", gb_path_basename(filename)));
+        gb_log_info(TF("Double Clic file: %s", gb_path_basename(filename)));
     }
     g_free(filename);
 }

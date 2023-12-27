@@ -30,7 +30,7 @@ static void gapp_level_editor_class_finalize(GObject* object)
 {
     GappLevelEditor* self = GAPP_LEVEL_EDITOR(object);
 
-    gb_print_info(TF("Level Editor Free [%s]\n", gb_fs_get_name(self->filename, false)));
+    gb_log_info(TF("Level Editor Free [%s]\n", gb_fs_get_name(self->filename, false)));
 
     ecs_quit(self->world);
     g_free(self->filename);
@@ -103,7 +103,7 @@ static void signal_toolbar_click_save_level(GtkWidget* button, GappLevelEditor* 
     gb_fs_write_file(filename, json);
     ecs_os_free(json);
 
-    gb_print_success(TF("Save level %s", filename));
+    gb_log_success(TF("Save level %s", filename));
 }
 
 static void signal_toolbar_click_zoom_reset(GtkWidget* button, GappLevelEditor* self)

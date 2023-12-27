@@ -78,17 +78,21 @@ static void signal_viewport_drop(GappLevelViewport* viewport, GListStore* filess
         char* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
         gb_world_t* world = gapp_level_editor_get_world(viewport->editor);
 
-        const char *key = gb_resource_set(world, filename);
-        gb_print_info(gb_strdups("Resource load: %s", key));
+        const char* key = gb_resource_set(world, filename);
+        gb_log_info(TF("Resource load: %s", key));
 
         gb_camera_t* camera = ecs_get(world, ecs_lookup(world, "Engine"), gb_camera_t);
         gb_vec2_t mouseWorld = engine.screen_to_world(*camera, (gb_vec2_t) { x, y });
 
-        ecs_entity_t e = gb_ecs_entity_new(world, ecs_lookup(world, GAME_ROOT_ENTITY), name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
+        ecs_entity_t parent = ecs_lookup(world, GAME_ROOT_ENTITY);
+        ecs_entity_t e = gb_ecs_entity_new(world, parent, name, gb_ecs_transform(mouseWorld.x, mouseWorld.y));
 
         if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg") || gb_fs_is_extension(filename, ".sprite")) {
             gb_ecs_entity_set(world, e, gb_sprite_t, { .resource = key });
         }
+
+        g_free(filename);
+        g_free(name);
     }
 }
 

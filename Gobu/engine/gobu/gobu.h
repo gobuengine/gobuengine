@@ -9,12 +9,25 @@
 #include "thirdparty/goburender/raymath.h"
 #include "thirdparty/binn/binn_json.h"
 
-#if gb_print_warning
-#define gb_print_warning
+#if gb_log_error
+#define gb_log_error
 #endif
 
-#define gb_return_if_fail(expr) if(!(expr)) {gb_print_warning(TF("Assertion '%s' failed", #expr)); return;}
-#define gb_return_val_if_fail(expr, val) if(!(expr)) {gb_print_warning(TF("Assertion '%s' failed", #expr)); return val;}
+#if gb_log_warn
+#define gb_log_warn
+#endif
+
+#if gb_log_success
+#define gb_log_success
+#endif
+
+#if gb_log_info
+#define gb_log_info
+#endif
+
+
+#define gb_return_if_fail(expr) if(!(expr)) {gb_log_warn(TF("Assertion '%s' failed", #expr)); return;}
+#define gb_return_val_if_fail(expr, val) if(!(expr)) {gb_log_warn(TF("Assertion '%s' failed", #expr)); return val;}
 
 #ifdef __cplusplus
 extern "C" {
@@ -290,6 +303,7 @@ extern "C" {
     // UTILITY MODULE
     // --------------------------
     char* gb_path_relative_content(const char* path);
+    char* gb_path_join_relative_content(const char* path);
     char* gb_path_normalize(const char* path);
     char* gb_path_join(const char* first_path, ...);
     char* gb_path_basename(const char* filename);
@@ -358,6 +372,7 @@ extern "C" {
             // gb_sprite_t API
             // --------------------------
     gb_sprite_t gb_sprite_to_from_binn(binn* fsprite);
+    binn* gb_sprite_from_file(const char* filename);
 
             // --------------------------
             // gb_animate_sprite_t API
