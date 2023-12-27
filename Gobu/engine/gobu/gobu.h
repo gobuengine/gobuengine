@@ -25,9 +25,10 @@
 #define gb_log_info
 #endif
 
-
 #define gb_return_if_fail(expr) if(!(expr)) {gb_log_warn(TF("Assertion '%s' failed", #expr)); return;}
 #define gb_return_val_if_fail(expr, val) if(!(expr)) {gb_log_warn(TF("Assertion '%s' failed", #expr)); return val;}
+
+#define SET_DEFAULT_VALUE(value, default_value) value = ((value) == 0 ? (default_value) : (value))
 
 #ifdef __cplusplus
 extern "C" {
@@ -371,8 +372,8 @@ extern "C" {
             // --------------------------
             // gb_sprite_t API
             // --------------------------
-    gb_sprite_t gb_sprite_to_from_binn(binn* fsprite);
-    binn* gb_sprite_from_file(const char* filename);
+    gb_sprite_t gb_sprite_deserialize(binn* fsprite);
+    binn* gb_sprite_serialize(gb_sprite_t sprite);
 
             // --------------------------
             // gb_animate_sprite_t API

@@ -25,8 +25,8 @@ struct _GbAppExtraSprites {
     GtkWidget* input_margin_y;
     GtkWidget* input_spacing_x;
     GtkWidget* input_spacing_y;
-    double cell_width_default;
-    double cell_height_default;
+    int cell_width_default;
+    int cell_height_default;
     gb_rect_t* rects;
     int index;
     gchar* filename;
@@ -78,6 +78,8 @@ static void gbapp_extrasprites_class_init(GbAppExtraSpritesClass* klass)
     g_object_class_install_properties(object_class, PROP_LAST, obj_props);
 }
 
+// ? ------------------------- CLASS METHODS -------------------------
+
 static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double num_cell_y, double margin_x, double margin_y, double spacing_x, double spacing_y)
 {
     gb_world_t* world = gapp_gobu_embed_get_world(self->viewport);
@@ -96,17 +98,19 @@ static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double nu
 
     int num_cell = num_cell_x * num_cell_y;
 
+    // if (self->rects != NULL)
+    //     g_free(self->rects);
+
     self->rects = g_realloc(self->rects, sizeof(gb_rect_t) * num_cell);
 
-    for (int i = 0; i < num_cell; i++) {
-        int frame_now = i;
+    for (int frame_current = 0; frame_current < num_cell; frame_current++) {
         int frame_row = (self->cell_width_default / frame_w);
-        float sub_x = (float)(frame_now % frame_row) * frame_w;
-        float sub_y = (float)(frame_now / frame_row) * frame_h;
+        float sub_x = (float)(frame_current % frame_row) * frame_w;
+        float sub_y = (float)(frame_current / frame_row) * frame_h;
 
-        self->rects[i] = (gb_rect_t){ sub_x, sub_y, frame_w, frame_h };
+        self->rects[frame_current] = (gb_rect_t){ sub_x, sub_y, frame_w, frame_h };
 
-        char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", (i + index_name)));
+        char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", (frame_current + index_name)));
 
         ecs_entity_t entity = gb_ecs_entity_new(world, parent, name_format, gb_ecs_transform(sub_x + center_x, sub_y + center_y));
         gb_ecs_entity_set(world, entity, gb_shape_rect_t, { .width = frame_w, .height = frame_h, .color_line = ORANGE, .line_width = 1 });
@@ -115,15 +119,50 @@ static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double nu
     }
 }
 
+static void fn_extract_sprite_from_files(gb_world_t* world, const char* name, int index_start, GbAppExtraSprites* self)
+{
+    int index_name = index_start;
+
+    // guardamos el resource una sola ve por extract..
+    gb_sprite_t clip_sprite;
+    clip_sprite.resource = gb_path_relative_content(self->filename);
+
+    ecs_entity_t parent = ecs_lookup(world, "extrasprites");
+    ecs_iter_t it = ecs_children(world, parent);
+    while (ecs_children_next(&it)) {
+        for (int i = 0; i < it.count; i++) {
+            ecs_entity_t entity = it.entities[i];
+
+            char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", index_name));
+            char* filename = gb_path_join(gb_path_dirname(self->filename), gb_strdups("%s.sprite", name_format), NULL);
+
+            clip_sprite.src.x = self->rects[i].x;
+            clip_sprite.src.y = self->rects[i].y;
+            clip_sprite.src.width = self->rects[i].width;
+            clip_sprite.src.height = self->rects[i].height;
+
+            binn* fsprite = gb_sprite_serialize(clip_sprite);
+            binn_deserialize_from_file(fsprite, filename);
+            binn_free(fsprite);
+
+            index_name++;
+
+            // ecs_os_free(buffer);
+            ecs_os_free(filename);
+            ecs_os_free(name_format);
+        }
+    }
+}
+
 static void signal_viewport_start(GtkWidget* viewport, GbAppExtraSprites* self)
 {
+    gb_world_t* world = gapp_gobu_embed_get_world(viewport);
+
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
 
     float x = width / 2;
     float y = height / 2;
-
-    gb_world_t* world = gapp_gobu_embed_get_world(viewport);
 
     gb_camera_t* camera = ecs_get(world, ecs_lookup(world, "Engine"), gb_camera_t);
     camera->offset.x = x;
@@ -137,59 +176,32 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppExtraSprites* self)
     self->cell_width_default = w;
     self->cell_height_default = h;
 
-    // gtk_spin_button_set_value(self->input_cell_width, w);
-    // gtk_spin_button_set_value(self->input_cell_height, h);
-
     char* key = gb_resource_set(world, self->filename);
     self->entity = gb_ecs_entity_new(world, 0, "extrasprites", gb_ecs_transform(0, 0));
     ecs_remove(world, self->entity, gb_gizmos_t);
     gb_ecs_entity_set(world, self->entity, gb_sprite_t, { .resource = key });
 
     fn_update_rect(self, 1, 1, 0, 0, 0, 0);
+
+    gb_log_info(TF("Init ExtraSprites: %s", gb_path_relative_content(self->filename)));
 }
 
-static void signal_close(GtkWidget* widget, GbAppExtraSprites* self)
+static void signal_destroy_close(GtkWidget* widget, GbAppExtraSprites* self)
 {
     g_free(self->rects);
     gtk_window_close(self);
     gb_log_info(TF("Close ExtraSprites: %s", gb_path_relative_content(self->filename)));
 }
 
-static void signal_extract(GtkWidget* widget, GbAppExtraSprites* self)
+static void signal_btn_extract(GtkWidget* widget, GbAppExtraSprites* self)
 {
     gb_world_t* world = gapp_gobu_embed_get_world(self->viewport);
-
     char* name = gapp_widget_entry_get_text(self->input_name);
     int index_name = gtk_spin_button_get_value(self->input_index);
 
-    ecs_entity_t parent = ecs_lookup(world, "extrasprites");
+    fn_extract_sprite_from_files(world, name, index_name, self);
 
-    ecs_iter_t it = ecs_children(world, parent);
-    while (ecs_children_next(&it)) {
-        for (int i = 0; i < it.count; i++) {
-            ecs_entity_t entity = it.entities[i];
-
-            char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", index_name));
-            char* filename = gb_path_join(gb_path_dirname(self->filename), gb_strdups("%s.sprite", name_format), NULL);
-
-            binn* fsprite = binn_object();
-            binn_object_set_str(fsprite, "resource", gb_path_relative_content(self->filename));
-            binn_object_set_float(fsprite, "x", self->rects[i].x);
-            binn_object_set_float(fsprite, "y", self->rects[i].y);
-            binn_object_set_float(fsprite, "width", self->rects[i].width);
-            binn_object_set_float(fsprite, "height", self->rects[i].height);
-            binn_deserialize_from_file(fsprite, filename);
-            binn_free(fsprite);
-
-            index_name++;
-
-            // ecs_os_free(buffer);
-            ecs_os_free(filename);
-            ecs_os_free(name_format);
-        }
-    }
-
-    signal_close(widget, self);
+    signal_destroy_close(widget, self);
 }
 
 static void input_updates(GtkSpinButton* self, GbAppExtraSprites* sprite)
@@ -216,7 +228,7 @@ static void gbapp_extrasprites_show(GbAppExtraSprites* self, GParamSpec* pspec, 
     gtk_window_set_modal(self, TRUE);
     gtk_window_set_resizable(self, FALSE);
     gtk_window_set_default_size(self, 1000, 700);
-    g_signal_connect(self, "destroy", G_CALLBACK(signal_close), self);
+    g_signal_connect(self, "destroy", G_CALLBACK(signal_destroy_close), self);
 
     GtkWidget* paned = gapp_widget_paned_new(GTK_ORIENTATION_HORIZONTAL, FALSE);
     gtk_window_set_child(self, paned);
@@ -288,13 +300,13 @@ static void gbapp_extrasprites_show(GbAppExtraSprites* self, GParamSpec* pspec, 
         gtk_button_set_has_frame(btn_extract, TRUE);
         gtk_widget_set_hexpand(btn_extract, TRUE);
         gtk_box_append(button_box, btn_extract);
-        g_signal_connect(btn_extract, "clicked", G_CALLBACK(signal_extract), self);
+        g_signal_connect(btn_extract, "clicked", G_CALLBACK(signal_btn_extract), self);
 
         GtkWidget* btn_noextract = gapp_widget_button_new_icon_with_label("application-exit-symbolic", "Cancel");
         gtk_button_set_has_frame(btn_noextract, TRUE);
         gtk_widget_set_hexpand(btn_noextract, TRUE);
         gtk_box_append(button_box, btn_noextract);
-        g_signal_connect(btn_noextract, "clicked", G_CALLBACK(signal_close), self);
+        g_signal_connect(btn_noextract, "clicked", G_CALLBACK(signal_destroy_close), self);
     }
 
     gtk_window_present(self);

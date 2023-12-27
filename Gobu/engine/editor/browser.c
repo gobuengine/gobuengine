@@ -120,7 +120,10 @@ static void gbapp_browser_fn_get_icon_file(GtkWidget* image, GFileInfo* info_fil
     }
     else if (gb_fs_is_extension(ext_file, ".sprite"))
     {
-        gb_sprite_t sprite = gb_sprite_to_from_binn(gb_sprite_from_file(g_file_get_path(file)));
+        binn* json = binn_serialize_from_file(g_file_get_path(file));
+        gb_sprite_t sprite = gb_sprite_deserialize(json);
+        binn_free(json);
+
         GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file(gb_path_join_relative_content(sprite.resource), NULL);
         pixbuf = gdk_pixbuf_new_subpixbuf(pixbuf, sprite.src.x, sprite.src.y, sprite.dst.width, sprite.dst.height);
         gtk_image_set_from_pixbuf(image, pixbuf);

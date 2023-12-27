@@ -1258,28 +1258,18 @@ static void gb_ecs_observe_set_gb_sprite_t(ecs_iter_t* it)
         g_return_if_fail(resource != NULL);
         g_return_if_fail(resource->texture.id != 0);
 
-        sprite[i].texture = resource->texture;
-
         if (resource->json != NULL)
         {
-            gb_sprite_t source = gb_sprite_to_from_binn(resource->json);
-            sprite[i].src.x = source.src.x;
-            sprite[i].src.y = source.src.y;
-            sprite[i].dst.width = source.dst.width;
-            sprite[i].dst.height = source.dst.height;
+            sprite[i] = gb_sprite_deserialize(resource->json);
         }
 
-        // clip sprite
-        float x = sprite[i].src.x;
-        float y = sprite[i].src.y;
-        float w = sprite[i].dst.width;
-        float h = sprite[i].dst.height;
+        sprite[i].texture = resource->texture;
 
-        float clip_width = (w == 0) ? sprite[i].texture.width : w;
-        float clip_height = (h == 0) ? sprite[i].texture.height : h;
+        SET_DEFAULT_VALUE(sprite[i].src.width, resource->texture.width);
+        SET_DEFAULT_VALUE(sprite[i].src.height, resource->texture.height);
+        SET_DEFAULT_VALUE(sprite[i].dst.width, resource->texture.width);
+        SET_DEFAULT_VALUE(sprite[i].dst.height, resource->texture.height);
 
-        sprite[i].src = (gb_rect_t){ x, y, clip_width, clip_height };
-        sprite[i].dst = (gb_rect_t){ 0.0f, 0.0f, clip_width, clip_height };
         sprite[i].tint = (sprite[i].tint.a == 0) ? (gb_color_t) { 255, 255, 255, 255 } : sprite[i].tint;
     }
 }
@@ -1902,35 +1892,33 @@ void gb_app_progress(gb_world_t* world)
 // Sprites functions
 // ########################################
 
-binn* gb_sprite_from_file(const char* filename)
-{
-    return binn_serialize_from_file(filename);
-}
-
-gb_sprite_t gb_sprite_to_from_binn(binn* fsprite)
+gb_sprite_t gb_sprite_deserialize(binn* fsprite)
 {
     gb_sprite_t sprite = { 0 };
 
     sprite.resource = binn_object_str(fsprite, "resource");
+
     sprite.src.x = binn_object_float(fsprite, "x");
-    sprite.src.x = binn_object_float(fsprite, "y");
+    sprite.src.y = binn_object_float(fsprite, "y");
     sprite.dst.width = binn_object_float(fsprite, "width");
     sprite.dst.height = binn_object_float(fsprite, "height");
-    sprite.tint = WHITE;
+    sprite.src.width = sprite.dst.width;
+    sprite.src.height = sprite.dst.height;
+    sprite.dst.x = 0.0f;
+    sprite.dst.y = 0.0f;
 
     return sprite;
 }
 
-void gb_sprites_to_save_to_from_file(gb_sprite_t sprite, const char* filename)
+binn* gb_sprite_serialize(gb_sprite_t sprite)
 {
-    // binn *fsprite = binn_object();
-    // binn_object_set_str(fsprite, "resource", gb_path_relative_content(self->filename));
-    // binn_object_set_float(fsprite, "x", self->rects[i].x);
-    // binn_object_set_float(fsprite, "y", self->rects[i].y);
-    // binn_object_set_float(fsprite, "width", self->rects[i].width);
-    // binn_object_set_float(fsprite, "height", self->rects[i].height);
-    // binn_deserialize_from_file(fsprite, filename);
-    // binn_free(fsprite);
+    binn* fsprite = binn_object();
+    binn_object_set_str(fsprite, "resource", sprite.resource);
+    binn_object_set_float(fsprite, "x", sprite.src.x);
+    binn_object_set_float(fsprite, "y", sprite.src.y);
+    binn_object_set_float(fsprite, "width", sprite.src.width);
+    binn_object_set_float(fsprite, "height", sprite.src.height);
+    return fsprite;
 }
 
 // ########################################
