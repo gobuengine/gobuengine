@@ -345,6 +345,7 @@ extern "C" {
     // --------------------------
     // RESOURCE MODULE
     // --------------------------
+    const char* gb_resource_key_normalize(const char* path);
     const char* gb_resource_set(gb_world_t* world, const char* path);
     const gb_resource_t* gb_resource(gb_world_t* world, const char* key);
     bool gb_resource_remove(gb_world_t* world, const char* key);
@@ -374,6 +375,7 @@ extern "C" {
             // --------------------------
     gb_sprite_t gb_sprite_deserialize(binn* fsprite);
     binn* gb_sprite_serialize(gb_sprite_t sprite);
+    gb_sprite_t gb_sprite_init(void);
 
             // --------------------------
             // gb_animate_sprite_t API

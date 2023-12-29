@@ -1192,7 +1192,7 @@ static void gb_ecs_update_gb_animate_sprite_t(ecs_iter_t* it)
                 float clip_height = (h == 0) ? frame->sprite.texture.height : h;
 
                 sprite[i].texture = frame->sprite.texture;
-                sprite[i].src = (gb_rect_t){ x, y, frame->sprite.texture.width, frame->sprite.texture.height };
+                sprite[i].src = (gb_rect_t){ x, y, clip_width, clip_height };
                 sprite[i].dst = (gb_rect_t){ 0.0f, 0.0f, clip_width, clip_height };
                 sprite[i].tint = (frame->sprite.tint.a == 0) ? (gb_color_t) { 255, 255, 255, 255 } : frame->sprite.tint;
             }
@@ -1258,8 +1258,7 @@ static void gb_ecs_observe_set_gb_sprite_t(ecs_iter_t* it)
         g_return_if_fail(resource != NULL);
         g_return_if_fail(resource->texture.id != 0);
 
-        if (resource->json != NULL)
-        {
+        if (resource->json != NULL){
             sprite[i] = gb_sprite_deserialize(resource->json);
         }
 
@@ -1710,6 +1709,14 @@ static void gb_engine_system_init(gb_world_t* world)
 // un recurso de tipo fuente, etc.
 //
 
+const char* gb_resource_key_normalize(const char* path)
+{
+    if (strstr(path, "resource://") != NULL)
+        return path;
+    else
+        return gb_path_normalize(gb_strdups("resource://%s", gb_str_replace(path, ".", "!")));
+}
+
 /**
  * @brief Establece un recurso en el mundo de entidades.
  *
@@ -1728,7 +1735,7 @@ const char* gb_resource_set(gb_world_t* world, const char* path)
 
     if (ecs_is_valid(world, ecs_lookup(world, key)) == false) {
         ecs_entity_t resource = ecs_new_entity(world, key);
-        ecs_set(world, resource, gb_resource_t, { .path = path_relative });
+        ecs_set(world, resource, gb_resource_t, { .path = gb_strdup(path_relative) });
     }
 
     return key;
@@ -1919,6 +1926,12 @@ binn* gb_sprite_serialize(gb_sprite_t sprite)
     binn_object_set_float(fsprite, "width", sprite.src.width);
     binn_object_set_float(fsprite, "height", sprite.src.height);
     return fsprite;
+}
+
+gb_sprite_t gb_sprite_init(void)
+{
+    gb_sprite_t sprite = {0};
+    return sprite;
 }
 
 // ########################################

@@ -864,11 +864,15 @@ static void signal_list_item_factory_bind_frame(GtkListItemFactory* factory, Gtk
     // obtenemos el path relativo del recurso...
     ecs_entity_t resource = ecs_lookup(self->world, frame->sprite.resource);
     char* relative = ecs_get(self->world, resource, gb_resource_t)->path;
+    char* path = gb_path_join_relative_content(relative);
 
-    char* path = gb_path_join(gb_project_get_path(), FOLDER_CONTENT_PROJECT, relative, NULL);
-    path = gb_path_normalize(path);
+    // <pixbuf::icon>
+    GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file(path, NULL);
+    if (frame->sprite.dst.width != 0)
+        pixbuf = gdk_pixbuf_new_subpixbuf(pixbuf, frame->sprite.src.x, frame->sprite.src.y, frame->sprite.dst.width, frame->sprite.dst.height);
+    gtk_image_set_from_pixbuf(icon, pixbuf);
+    g_object_unref(pixbuf);
 
-    gtk_image_set_from_file(GTK_IMAGE(icon), path);
     gtk_label_set_text(label, gb_strdups("%d", index));
 }
 
@@ -901,15 +905,23 @@ static gboolean signal_drop_assets_frames(GtkDropTarget* target, const GValue* v
             GFile* file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
 
             gchar* filename = g_file_get_path(file);
-            if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg")) {
+            if (gb_fs_is_extension(filename, ".png") || gb_fs_is_extension(filename, ".jpg") || gb_fs_is_extension(filename, ".sprite")) {
                 gchar* name = gb_str_remove_spaces(gb_fs_get_name(filename, true));
+                gb_animate_frame_t frame;
+                frame.duration = 1.0f;
+                frame.sprite = gb_sprite_init();
 
-                // crea el resource si no existe
-                const char* key = gb_resource_set(self->world, filename);
+                if (gb_fs_is_extension(filename, ".sprite"))
+                {
+                    binn* bsprite = binn_serialize_from_file(filename);
+                    frame.sprite = gb_sprite_deserialize(bsprite);
+                    frame.sprite.resource = gb_resource_set(self->world, frame.sprite.resource);
+                }
+                else {
+                    frame.sprite.resource = gb_resource_set(self->world, filename);
+                }
 
-                fn_animation_add_frame(self, anim, &(gb_animate_frame_t) {
-                    .sprite.resource = key, .duration = 1.0
-                });
+                fn_animation_add_frame(self, anim, &frame);
             }
         }
 

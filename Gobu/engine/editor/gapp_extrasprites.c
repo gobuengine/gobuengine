@@ -98,8 +98,10 @@ static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double nu
 
     int num_cell = num_cell_x * num_cell_y;
 
-    // if (self->rects != NULL)
-    //     g_free(self->rects);
+    if (self->rects != NULL) {
+        g_free(self->rects);
+        self->rects = NULL;
+    }
 
     self->rects = g_realloc(self->rects, sizeof(gb_rect_t) * num_cell);
 
@@ -188,7 +190,11 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppExtraSprites* self)
 
 static void signal_destroy_close(GtkWidget* widget, GbAppExtraSprites* self)
 {
-    g_free(self->rects);
+    if (self->rects != NULL) {
+        g_free(self->rects);
+        self->rects = NULL;
+    }
+
     gtk_window_close(self);
     gb_log_info(TF("Close ExtraSprites: %s", gb_path_relative_content(self->filename)));
 }
@@ -275,17 +281,17 @@ static void gbapp_extrasprites_show(GbAppExtraSprites* self, GParamSpec* pspec, 
         self->input_num_cell_y = gapp_widget_input_number(box_exp, "Num Cells Y", 1.0f, 128.0f, 1.0f);
         g_signal_connect(self->input_num_cell_y, "value-changed", G_CALLBACK(input_updates), self);
 
-        self->input_margin_x = gapp_widget_input_number(box_exp, "Margin X", 0.0f, 99999.0f, 1.0f);
-        g_signal_connect(self->input_margin_x, "value-changed", G_CALLBACK(input_updates), self);
+        // self->input_margin_x = gapp_widget_input_number(box_exp, "Margin X", 0.0f, 99999.0f, 1.0f);
+        // g_signal_connect(self->input_margin_x, "value-changed", G_CALLBACK(input_updates), self);
 
-        self->input_margin_y = gapp_widget_input_number(box_exp, "Margin Y", 0.0f, 99999.0f, 1.0f);
-        g_signal_connect(self->input_margin_y, "value-changed", G_CALLBACK(input_updates), self);
+        // self->input_margin_y = gapp_widget_input_number(box_exp, "Margin Y", 0.0f, 99999.0f, 1.0f);
+        // g_signal_connect(self->input_margin_y, "value-changed", G_CALLBACK(input_updates), self);
 
-        self->input_spacing_x = gapp_widget_input_number(box_exp, "Spacing X", 0.0f, 99999.0f, 1.0f);
-        g_signal_connect(self->input_spacing_x, "value-changed", G_CALLBACK(input_updates), self);
+        // self->input_spacing_x = gapp_widget_input_number(box_exp, "Spacing X", 0.0f, 99999.0f, 1.0f);
+        // g_signal_connect(self->input_spacing_x, "value-changed", G_CALLBACK(input_updates), self);
 
-        self->input_spacing_y = gapp_widget_input_number(box_exp, "Spacing Y", 0.0f, 99999.0f, 1.0f);
-        g_signal_connect(self->input_spacing_y, "value-changed", G_CALLBACK(input_updates), self);
+        // self->input_spacing_y = gapp_widget_input_number(box_exp, "Spacing Y", 0.0f, 99999.0f, 1.0f);
+        // g_signal_connect(self->input_spacing_y, "value-changed", G_CALLBACK(input_updates), self);
     }
 
     GtkWidget* button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
