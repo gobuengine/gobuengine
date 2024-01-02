@@ -63,6 +63,17 @@
         "gbapp_asheets.h": "c",
         "binn_json.h": "c",
         "gapp_extrasprites.h": "c",
-        "gbapp_asprites_editor.h": "c"
+        "gbapp_asprites_editor.h": "c",
+        "gb_color.h": "c",
+        "gb_type_color.h": "c",
+        "gb_sprite.h": "c",
+        "gb_type_texture.h": "c",
+        "gb_type_camera.h": "c",
+        "gb_type_vec2.h": "c",
+        "gb_type_transform.h": "c",
+        "gb_ecs_bounding.h": "c",
+        "gb_ecs_camera.h": "c",
+        "gb_type_gizmos.h": "c",
+        "stdlib.h": "c"
     }
 }

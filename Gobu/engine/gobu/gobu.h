@@ -28,7 +28,7 @@
 #define gb_return_if_fail(expr) if(!(expr)) {gb_log_warn(TF("Assertion '%s' failed", #expr)); return;}
 #define gb_return_val_if_fail(expr, val) if(!(expr)) {gb_log_warn(TF("Assertion '%s' failed", #expr)); return val;}
 
-#define SET_DEFAULT_VALUE(value, default_value) value = ((value) == 0 ? (default_value) : (value))
+#define gb_if_default_value(value, default_value) value = ((value) == 0 ? (default_value) : (value))
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,22 +42,6 @@ extern "C" {
         G_FS_TEST_IS_EXECUTABLE = 1 << 3,
         G_FS_TEST_EXISTS = 1 << 4
     } GFSTest;
-
-    typedef enum {
-        GB_CAMERA_NONE = 0,
-        GB_CAMERA_EDITOR,
-        GB_CAMERA_FOLLOWING,
-    }enumCameraMode;
-
-    typedef Color gb_color_t;
-
-    typedef Font gb_font_t;
-
-    typedef Rectangle gb_rect_t;
-
-    typedef Vector2 gb_vec2_t;
-
-    typedef Texture2D gb_texture_t;
 
     typedef struct gb_render_phases_t
     {
@@ -79,132 +63,11 @@ extern "C" {
         bool show_grid;
     }gb_app_t;
 
-    typedef struct gb_bounding_t
-    {
-        gb_vec2_t min;
-        gb_vec2_t max;
-        gb_vec2_t size;
-        gb_vec2_t center;
-        gb_vec2_t extents;
-    }gb_bounding_t;
-
-    typedef struct gb_transform_t
-    {
-        gb_vec2_t position;
-        gb_vec2_t scale;
-        float rotation;
-        gb_vec2_t origin;
-    }gb_transform_t;
-
-    typedef struct gb_camera_t
-    {
-        gb_vec2_t offset;       // Camera offset (displacement from target)
-        gb_vec2_t target;       // Camera target (rotation and zoom origin)
-        float rotation;         // Camera rotation in degrees
-        float zoom;             // Camera zoom (scaling), should be 1.0f by default
-        enumCameraMode mode;
-    }gb_camera_t;
-
     typedef struct gb_info_t
     {
         ecs_string_t name;
         ecs_u8_t type;              // 0: entity empty, 1: sprite, 2: text, 3: tiling sprite...
     }gb_info_t;
-
-    typedef struct gb_animated_t
-    {
-        char* resource;
-        char* animation;
-        bool is_playing;
-        // no-serialize
-        float counter;
-        int width;
-        int height;
-        int current;
-        int count;
-        int frames[100];
-        int speed;
-        int start_frame;
-        int end_frame;
-        bool loop;
-    }gb_animated_t;
-
-
-    typedef struct gb_text_t
-    {
-        char* resource;
-        char* text;
-        float size;
-        float spacing;
-        gb_color_t color;
-        gb_font_t font;
-    }gb_text_t;
-
-    typedef struct gb_sprite_t
-    {
-        char* resource;
-        gb_color_t tint;
-        gb_texture_t texture;
-        gb_rect_t src;
-        gb_rect_t dst;
-    }gb_sprite_t;
-
-    typedef struct gb_shape_rect_t
-    {
-        float x;
-        float y;
-        float width;
-        float height;
-        gb_color_t color;
-        int line_width;
-        gb_color_t color_line;
-    }gb_shape_rect_t;
-
-    typedef struct gb_shape_circle_t
-    {
-        float x;
-        float y;
-        float radius;
-        gb_color_t color;
-    }gb_shape_circle_t;
-
-    typedef struct gb_gizmos_t
-    {
-        bool selected;
-    }gb_gizmos_t;
-
-    typedef struct gb_resource_t {
-        char* path;
-        gb_texture_t texture;
-        gb_font_t font;
-        binn* json;
-    }gb_resource_t;
-
-    typedef struct gb_animate_frame_t
-    {
-        int index_;
-        int duration;
-        gb_sprite_t sprite;
-    }gb_animate_frame_t;
-
-    typedef struct gb_animate_animation_t
-    {
-        ecs_string_t name;
-        ecs_i16_t fps;
-        ecs_bool_t loop;
-        ecs_vec_t frames;
-    }gb_animate_animation_t;
-
-    typedef struct gb_animate_sprite_t
-    {
-        int current;
-        int current_frame;
-        float counter;
-        ecs_bool_t is_playing;
-        ecs_string_t resource;
-        ecs_string_t animation;
-        ecs_vec_t animations;
-    }gb_animate_sprite_t;
 
     typedef struct gb_engine_t {
         struct {
@@ -225,25 +88,9 @@ extern "C" {
         gb_vec2_t(*world_to_screen)(gb_camera_t camera, gb_vec2_t position);
     }gb_engine_t;
 
-    extern ECS_COMPONENT_DECLARE(enumCameraMode);
     extern ECS_COMPONENT_DECLARE(gb_render_phases_t);
     extern ECS_COMPONENT_DECLARE(gb_app_t);
-    extern ECS_COMPONENT_DECLARE(gb_color_t);
-    extern ECS_COMPONENT_DECLARE(gb_rect_t);
-    extern ECS_COMPONENT_DECLARE(gb_vec2_t);
-    extern ECS_COMPONENT_DECLARE(gb_camera_t);
-    extern ECS_COMPONENT_DECLARE(gb_transform_t);
-    extern ECS_COMPONENT_DECLARE(gb_bounding_t);
     extern ECS_COMPONENT_DECLARE(gb_info_t);
-    extern ECS_COMPONENT_DECLARE(gb_animated_t);
-    extern ECS_COMPONENT_DECLARE(gb_text_t);
-    extern ECS_COMPONENT_DECLARE(gb_sprite_t);
-    extern ECS_COMPONENT_DECLARE(gb_animate_frame_t);
-    extern ECS_COMPONENT_DECLARE(gb_animate_animation_t);
-    extern ECS_COMPONENT_DECLARE(gb_animate_sprite_t);
-    extern ECS_COMPONENT_DECLARE(gb_shape_rect_t);
-    extern ECS_COMPONENT_DECLARE(gb_shape_circle_t);
-    extern ECS_COMPONENT_DECLARE(gb_resource_t);
     extern ECS_COMPONENT_DECLARE(gb_gizmos_t);
 
 #define gb_ecs_world_new ecs_init
@@ -255,7 +102,7 @@ extern "C" {
 // --------------------------
 // PROJECT MODULE
 // --------------------------
-    bool gb_project_load(const char* filename);
+    bool gb_project_load_from_file(const char* filename);
     const char* gb_project_get_path(void);
 
     // --------------------------

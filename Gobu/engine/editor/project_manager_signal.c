@@ -14,7 +14,7 @@ static void response_open_project_ready(GObject* source, GAsyncResult* res, Gobu
     g_return_if_fail(file);
 
     char* path_str = g_file_get_path(file);
-    if (gb_project_load(path_str)) {
+    if (gb_project_load_from_file(path_str)) {
         gapp_project_editor_window_new(gtk_window_get_application(ctx->window));
     }
 
@@ -63,7 +63,7 @@ void project_manager_signal_create_project(GtkWidget* widget, GobuProjectManager
     if (project_manager_fn_create_project(name, path))
     {
         gchar* path_str = gb_path_join(path, name, "game.gobuproject", NULL);
-        if (gb_project_load(path_str))
+        if (gb_project_load_from_file(path_str))
         {
             gapp_project_editor_window_new(gtk_window_get_application(ctx->window));
         }
