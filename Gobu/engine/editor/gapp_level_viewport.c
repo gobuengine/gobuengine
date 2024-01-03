@@ -1,10 +1,7 @@
 #include "gapp_level_viewport.h"
 #include "gapp_main.h"
 
-#include "gb_input.h"
-#include "gb_ecs_sprite.h"
-#include "gb_type_vec2.h"
-#include "gb_type_transform.h"
+#include "gobu.h"
 
 struct _GappLevelViewport
 {

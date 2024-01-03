@@ -83,6 +83,8 @@
         "gb_type_animate_sprite.h": "c",
         "gb_log.h": "c",
         "gb_project.h": "c",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "gb_components.h": "c",
+        "gb_input.h": "c"
     }
 }

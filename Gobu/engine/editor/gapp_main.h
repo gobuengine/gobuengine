@@ -9,6 +9,7 @@
 
 #include "gapp_widget.h"
 #include "gapp_tool_console.h"
+#include "gobu.h"
 
 typedef enum
 {

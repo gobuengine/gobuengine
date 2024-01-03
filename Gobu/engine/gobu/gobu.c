@@ -1,14 +1,6 @@
 #include "gobu.h"
 #include "config.h"
 
-#include "gb_ecs_rendering.h"
-#include "gb_ecs_resource.h"
-#include "gb_ecs_bounding.h"
-#include "gb_ecs_camera.h"
-#include "gb_ecs_gizmos.h"
-#include "gb_ecs_text.h"
-#include "gb_ecs_sprite.h"
-
 ecs_world_t* gb_init(gb_app_t* app)
 {
     ecs_world_t* world = ecs_init();
@@ -23,6 +15,7 @@ ecs_world_t* gb_init(gb_app_t* app)
     ECS_IMPORT(world, gb_type_camera_module);
     ECS_IMPORT(world, gb_type_sprite_module);
     ECS_IMPORT(world, gb_type_text_module);
+    ECS_IMPORT(world, gb_rendering_module);
 
     // SetConfigFlags(FLAG_MSAA_4X_HINT);
     ecs_entity_t Engine = ecs_new_entity(world, "Engine");

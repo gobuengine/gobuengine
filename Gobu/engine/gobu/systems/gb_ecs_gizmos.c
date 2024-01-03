@@ -1,5 +1,4 @@
 #include "gb_ecs_gizmos.h"
-#include "gb_input.h"
 
 static void update_gb_gizmos_t(ecs_iter_t* it);
 

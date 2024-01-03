@@ -7,7 +7,7 @@
 #include "thirdparty/binn/binn_json.h"
 #include "thirdparty/goburender/raylib.h"
 
-#include "gb_type_animate_sprite.h"
+#include "gobu.h"
 
 #ifdef __cplusplus
 extern "C" {

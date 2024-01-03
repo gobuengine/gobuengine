@@ -1,6 +1,4 @@
 #include "gb_ecs_resource.h"
-#include "gb_log.h"
-#include "gb_path.h"
 
 static void observe_set_gb_resource(ecs_iter_t* it);
 

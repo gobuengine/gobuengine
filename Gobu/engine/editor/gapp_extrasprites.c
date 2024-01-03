@@ -2,9 +2,7 @@
 #include "gapp_gobu_embed.h"
 #include "gapp_widget.h"
 
-#include "gb_ecs_sprite.h"
-#include "gb_ecs_gizmos.h"
-#include "gb_type_shape_rect.h"
+#include "gobu.h"
 
 enum
 {

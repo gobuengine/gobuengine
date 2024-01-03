@@ -5,9 +5,7 @@
 #include <stdint.h>
 #include "thirdparty/flecs/flecs.h"
 
-#include "gb_type_transform.h"
-#include "gb_type_bounding.h"
-#include "gb_type_gizmos.h"
+#include "gobu.h"
 
 #ifdef __cplusplus
 extern "C"

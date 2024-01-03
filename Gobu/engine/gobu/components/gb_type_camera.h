@@ -16,7 +16,7 @@ extern "C" {
         GB_CAMERA_NONE = 0,
         GB_CAMERA_EDITOR,
         GB_CAMERA_FOLLOWING,
-    }enumCameraMode;
+    }eCameraMode;
 
     typedef struct gb_camera_t
     {
@@ -24,13 +24,13 @@ extern "C" {
         gb_vec2_t target;       // Camera target (rotation and zoom origin)
         float rotation;         // Camera rotation in degrees
         float zoom;             // Camera zoom (scaling), should be 1.0f by default
-        enumCameraMode mode;
+        eCameraMode mode;
     }gb_camera_t;
 
     typedef Color gb_color_t;
 
     // global component
-    extern ECS_COMPONENT_DECLARE(enumCameraMode);
+    extern ECS_COMPONENT_DECLARE(eCameraMode);
     extern ECS_COMPONENT_DECLARE(gb_camera_t);
 
     // module import

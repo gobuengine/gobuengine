@@ -4,9 +4,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "gb_type_camera.h"
-#include "gb_type_vec2.h"
-#include "gb_ecs_rendering.h"
+#include "components/gb_components.h"
+#include "systems/gb_systems.h"
+
+#include "gb_fs.h"
+#include "gb_input.h"
+#include "gb_log.h"
+#include "gb_path.h"
+#include "gb_string.h"
+#include "gb_ecs.h"
 
 #ifdef __cplusplus
 extern "C"

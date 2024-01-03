@@ -1,12 +1,7 @@
 #include "gbapp_asprites_editor.h"
 #include "gapp_gobu_embed.h"
 
-#include "gb_type_animate_sprite.h"
-#include "gb_ecs_sprite.h"
-#include "gb_ecs_gizmos.h"
-#include "gb_ecs_resource.h"
-#include "gb_ecs.h"
-#include "gb_log.h"
+#include "gobu.h"
 
 typedef enum ASheetsDirectionMoveFrame {
     ASHEETS_DIRECTION_MOVE_FRAME_LEFT = -1,

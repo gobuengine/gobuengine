@@ -1,19 +1,7 @@
 #include "gb_ecs_rendering.h"
 
-#include "gb_type_transform.h"
-#include "gb_type_rect.h"
-#include "gb_type_vec2.h"
-#include "gb_type_color.h"
-#include "gb_type_texture.h"
-#include "gb_type_shape_circle.h"
-#include "gb_type_shape_rect.h"
-
-#include "gb_ecs_resource.h"
-#include "gb_ecs_bounding.h"
-#include "gb_ecs_camera.h"
-#include "gb_ecs_gizmos.h"
-#include "gb_ecs_text.h"
-#include "gb_ecs_sprite.h"
+#include "gobu.h"
+#include "gb_gfx.h"
 
 ECS_COMPONENT_DECLARE(gb_render_phases_t);
 ECS_COMPONENT_DECLARE(gb_app_t);
@@ -36,6 +24,8 @@ void gb_rendering_moduleImport(ecs_world_t *world)
     ECS_IMPORT(world, gb_type_shape_circle_module);
     ECS_IMPORT(world, gb_type_shape_rect_module);
 
+    ECS_IMPORT(world, gb_bounding_module);
+    ECS_IMPORT(world, gb_animate_sprite_module);
     ECS_IMPORT(world, gb_resource_module);
     ECS_IMPORT(world, gb_camera_module);
     ECS_IMPORT(world, gb_gizmos_module);

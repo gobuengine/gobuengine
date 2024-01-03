@@ -6,13 +6,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#include "gb_type_color.h"
-#include "gb_type_transform.h"
-#include "gb_type_bounding.h"
-#include "gb_type_shape_rect.h"
-#include "gb_type_shape_circle.h"
-#include "gb_type_sprite.h"
-#include "gb_type_text.h"
+#include "gobu.h"
 
 #ifdef __cplusplus
 extern "C"

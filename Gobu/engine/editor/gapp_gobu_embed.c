@@ -1,7 +1,5 @@
 #include "gapp_gobu_embed.h"
-#include "thirdparty/goburender/raylib.h"
-
-#include "gb_ecs_rendering.h"
+#include "gobu.h"
 
 enum
 {
@@ -17,22 +15,21 @@ struct _GappGobuEmbed
     GtkWidget parent;
 };
 
-static guint w_signals[SIGNAL_LAST] = { 0 };
+static guint w_signals[SIGNAL_LAST] = {0};
 
 G_DEFINE_TYPE_WITH_PRIVATE(GappGobuEmbed, gapp_gobu_embed, GTK_TYPE_GL_AREA);
 
-static void signal_embed_resize(GappGobuEmbed* viewport, int width, int height, gpointer data);
-static gboolean signal_embed_mouse_wheel(GtkEventControllerScroll* controller, gdouble dx, gdouble dy, GtkWidget* widget);
-static void signal_embed_mouse_move(GtkEventControllerMotion* controller, double x, double y, GtkWidget* widget);
-static void signal_embed_mouse_button_pressed(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget);
-static void signal_embed_mouse_button_released(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget);
-static void signal_embed_key_pressed(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget);
-static void signal_embed_key_released(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget);
+static void signal_embed_resize(GappGobuEmbed *viewport, int width, int height, gpointer data);
+static gboolean signal_embed_mouse_wheel(GtkEventControllerScroll *controller, gdouble dx, gdouble dy, GtkWidget *widget);
+static void signal_embed_mouse_move(GtkEventControllerMotion *controller, double x, double y, GtkWidget *widget);
+static void signal_embed_mouse_button_pressed(GtkGestureClick *gesture, int n_press, double x, double y, GtkWidget *widget);
+static void signal_embed_mouse_button_released(GtkGestureClick *gesture, int n_press, double x, double y, GtkWidget *widget);
+static void signal_embed_key_pressed(GtkEventControllerKey *self, guint keyval, guint keycode, GdkModifierType state, GtkWidget *widget);
+static void signal_embed_key_released(GtkEventControllerKey *self, guint keyval, guint keycode, GdkModifierType state, GtkWidget *widget);
 
-
-static void gapp_gobu_embed_class_init(GappGobuEmbedClass* klass)
+static void gapp_gobu_embed_class_init(GappGobuEmbedClass *klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS(klass);
+    GObjectClass *object_class = G_OBJECT_CLASS(klass);
 
     w_signals[SIGNAL_START] = g_signal_new("gobu-embed-start",
                                            G_TYPE_FROM_CLASS(klass),
@@ -63,7 +60,7 @@ static void gapp_gobu_embed_class_init(GappGobuEmbedClass* klass)
                                           G_TYPE_NONE, 3, G_TYPE_LIST_STORE, G_TYPE_DOUBLE, G_TYPE_DOUBLE);
 }
 
-static void gapp_gobu_embed_signal_focus(GtkWidget* viewport, gpointer data)
+static void gapp_gobu_embed_signal_focus(GtkWidget *viewport, gpointer data)
 {
     // gtk_widget_set_can_focus(GTK_GL_AREA(viewport), true);
     // gtk_widget_grab_focus(viewport);
@@ -71,7 +68,7 @@ static void gapp_gobu_embed_signal_focus(GtkWidget* viewport, gpointer data)
     printf("focus\n");
 }
 
-static void gapp_gobu_embed_signal_resize(GtkWidget* viewport, gint width, gint height, gpointer data)
+static void gapp_gobu_embed_signal_resize(GtkWidget *viewport, gint width, gint height, gpointer data)
 {
     if (gtk_gl_area_get_error(viewport) != NULL)
     {
@@ -79,7 +76,7 @@ static void gapp_gobu_embed_signal_resize(GtkWidget* viewport, gint width, gint 
         return;
     }
 
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(viewport);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(viewport);
     priv->width = width;
     priv->height = height;
 
@@ -88,7 +85,7 @@ static void gapp_gobu_embed_signal_resize(GtkWidget* viewport, gint width, gint 
     g_signal_emit(viewport, w_signals[SIGNAL_RESIZE], 0, width, height);
 }
 
-static void gapp_gobu_embed_signal_realize(GappGobuEmbed* viewport, gpointer data)
+static void gapp_gobu_embed_signal_realize(GappGobuEmbed *viewport, gpointer data)
 {
     gtk_gl_area_make_current(viewport);
     if (gtk_gl_area_get_error(viewport) != NULL)
@@ -100,14 +97,14 @@ static void gapp_gobu_embed_signal_realize(GappGobuEmbed* viewport, gpointer dat
     // gtk_gl_area_set_has_depth_buffer(viewport, TRUE);
 }
 
-static void gapp_gobu_embed_signal_unrealize(GappGobuEmbed* self)
+static void gapp_gobu_embed_signal_unrealize(GappGobuEmbed *self)
 {
     gtk_gl_area_make_current(self);
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(self);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(self);
     gtk_widget_remove_tick_callback(GTK_WIDGET(self), priv->tick);
 }
 
-static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer data)
+static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed *viewport, gpointer data)
 {
     gtk_gl_area_make_current(viewport);
     if (gtk_gl_area_get_error(viewport) != NULL)
@@ -116,11 +113,11 @@ static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer 
         return;
     }
 
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(viewport);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(viewport);
 
     if (!priv->initialize)
     {
-        priv->world = gb_init(&(gb_app_t) { .width = priv->width, .height = priv->height, .show_grid = priv->show_grid });
+        priv->world = gb_init(&(gb_app_t){.width = priv->width, .height = priv->height, .show_grid = priv->show_grid});
         g_signal_emit(viewport, w_signals[SIGNAL_START], 0);
         priv->initialize = TRUE;
     }
@@ -134,7 +131,7 @@ static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer 
     return TRUE;
 }
 
-static gboolean gapp_gobu_embed_drop(GtkDropTarget* target, const GValue* value, double x, double y, gpointer user_data)
+static gboolean gapp_gobu_embed_drop(GtkDropTarget *target, const GValue *value, double x, double y, gpointer user_data)
 {
     if (G_VALUE_HOLDS(value, G_TYPE_LIST_STORE))
     {
@@ -144,17 +141,17 @@ static gboolean gapp_gobu_embed_drop(GtkDropTarget* target, const GValue* value,
     return FALSE;
 }
 
-static gboolean gapp_gobu_embed_tick(GappGobuEmbed* self, GdkFrameClock* frame_clock, gpointer user_data)
+static gboolean gapp_gobu_embed_tick(GappGobuEmbed *self, GdkFrameClock *frame_clock, gpointer user_data)
 {
     gtk_widget_queue_draw(self);
     return G_SOURCE_CONTINUE;
 }
 
-static void gapp_gobu_embed_init(GappGobuEmbed* self)
+static void gapp_gobu_embed_init(GappGobuEmbed *self)
 {
-    GtkDropTarget* target;
+    GtkDropTarget *target;
 
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(self);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(self);
     priv->initialize = false;
 
     gtk_gl_area_set_required_version(GTK_GL_AREA(self), 3, 3);
@@ -169,21 +166,21 @@ static void gapp_gobu_embed_init(GappGobuEmbed* self)
     g_signal_connect(self, "resize", G_CALLBACK(gapp_gobu_embed_signal_resize), NULL);
     g_signal_connect(self, "render", G_CALLBACK(gapp_gobu_embed_signal_render), NULL);
 
-    GtkEventController* wheel = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
+    GtkEventController *wheel = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
     gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(wheel));
     g_signal_connect(wheel, "scroll", G_CALLBACK(signal_embed_mouse_wheel), self);
 
-    GtkEventController* motion = gtk_event_controller_motion_new();
+    GtkEventController *motion = gtk_event_controller_motion_new();
     gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(motion));
     g_signal_connect(motion, "motion", G_CALLBACK(signal_embed_mouse_move), self);
 
-    GtkGesture* gesture = gtk_gesture_click_new();
+    GtkGesture *gesture = gtk_gesture_click_new();
     gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(gesture));
     gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(gesture), 0);
     g_signal_connect(gesture, "pressed", G_CALLBACK(signal_embed_mouse_button_pressed), self);
     g_signal_connect(gesture, "released", G_CALLBACK(signal_embed_mouse_button_released), self);
 
-    GtkEventControllerKey* key = gtk_event_controller_key_new();
+    GtkEventControllerKey *key = gtk_event_controller_key_new();
     gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(key));
     g_signal_connect(key, "key-pressed", G_CALLBACK(signal_embed_key_pressed), self);
     g_signal_connect(key, "key-released", G_CALLBACK(signal_embed_key_released), self);
@@ -196,38 +193,38 @@ static void gapp_gobu_embed_init(GappGobuEmbed* self)
     priv->tick = gtk_widget_add_tick_callback(GTK_WIDGET(self), gapp_gobu_embed_tick, self, NULL);
 }
 
-GappGobuEmbed* gapp_gobu_embed_new(void)
+GappGobuEmbed *gapp_gobu_embed_new(void)
 {
     return g_object_new(GAPP_TYPE_GOBU_EMBED, NULL);
 }
 
-gboolean gapp_gobu_embed_get_init(GappGobuEmbed* embed)
+gboolean gapp_gobu_embed_get_init(GappGobuEmbed *embed)
 {
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->initialize;
 }
 
-int gapp_gobu_embed_get_width(GappGobuEmbed* embed)
+int gapp_gobu_embed_get_width(GappGobuEmbed *embed)
 {
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->width;
 }
 
-int gapp_gobu_embed_get_height(GappGobuEmbed* embed)
+int gapp_gobu_embed_get_height(GappGobuEmbed *embed)
 {
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->height;
 }
 
-ecs_world_t* gapp_gobu_embed_get_world(GappGobuEmbed* embed)
+ecs_world_t *gapp_gobu_embed_get_world(GappGobuEmbed *embed)
 {
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->world;
 }
 
-void gapp_gobu_embed_set_grid(GappGobuEmbed* embed, gboolean show)
+void gapp_gobu_embed_set_grid(GappGobuEmbed *embed, gboolean show)
 {
-    GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
+    GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->show_grid = show;
 }
 
@@ -242,7 +239,7 @@ void gapp_gobu_embed_set_grid(GappGobuEmbed* embed, gboolean show)
  * @param widget El widget del viewport.
  * @return gboolean Devuelve TRUE si el evento fue manejado correctamente, FALSE en caso contrario.
  */
-static gboolean signal_embed_mouse_wheel(GtkEventControllerScroll* controller, gdouble dx, gdouble dy, GtkWidget* widget)
+static gboolean signal_embed_mouse_wheel(GtkEventControllerScroll *controller, gdouble dx, gdouble dy, GtkWidget *widget)
 {
     SetMouseWheelMove(0.0f, dy);
     return FALSE;
@@ -256,7 +253,7 @@ static gboolean signal_embed_mouse_wheel(GtkEventControllerScroll* controller, g
  * @param y La coordenada y del mouse.
  * @param widget El widget en el que se produce el evento.
  */
-static void signal_embed_mouse_move(GtkEventControllerMotion* controller, double x, double y, GtkWidget* widget)
+static void signal_embed_mouse_move(GtkEventControllerMotion *controller, double x, double y, GtkWidget *widget)
 {
     gtk_widget_set_can_focus(GTK_GL_AREA(widget), true);
     gtk_widget_grab_focus(widget);
@@ -272,7 +269,7 @@ static void signal_embed_mouse_move(GtkEventControllerMotion* controller, double
  * @param y La coordenada Y del punto donde se ha presionado el botón del mouse.
  * @param widget El widget en el que se ha producido el evento.
  */
-static void signal_embed_mouse_button_pressed(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget)
+static void signal_embed_mouse_button_pressed(GtkGestureClick *gesture, int n_press, double x, double y, GtkWidget *widget)
 {
     gint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
     switch (button)
@@ -301,7 +298,7 @@ static void signal_embed_mouse_button_pressed(GtkGestureClick* gesture, int n_pr
  * @param y La coordenada y del punto donde se soltó el botón del mouse.
  * @param widget El widget en el que se soltó el botón del mouse.
  */
-static void signal_embed_mouse_button_released(GtkGestureClick* gesture, int n_press, double x, double y, GtkWidget* widget)
+static void signal_embed_mouse_button_released(GtkGestureClick *gesture, int n_press, double x, double y, GtkWidget *widget)
 {
     gint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
 
@@ -331,7 +328,7 @@ static void signal_embed_mouse_button_released(GtkGestureClick* gesture, int n_p
  * @param state El estado de los modificadores de teclado.
  * @param widget El widget en el que se presionó la tecla.
  */
-static void signal_embed_key_pressed(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget)
+static void signal_embed_key_pressed(GtkEventControllerKey *self, guint keyval, guint keycode, GdkModifierType state, GtkWidget *widget)
 {
     keycallback(keycode, keycode, 1, 0);
 }
@@ -345,7 +342,7 @@ static void signal_embed_key_pressed(GtkEventControllerKey* self, guint keyval, 
  * @param state El estado de los modificadores de teclado.
  * @param widget El widget en el que se soltó la tecla.
  */
-static void signal_embed_key_released(GtkEventControllerKey* self, guint keyval, guint keycode, GdkModifierType state, GtkWidget* widget)
+static void signal_embed_key_released(GtkEventControllerKey *self, guint keyval, guint keycode, GdkModifierType state, GtkWidget *widget)
 {
     keycallback(keycode, keycode, 0, 0);
 }

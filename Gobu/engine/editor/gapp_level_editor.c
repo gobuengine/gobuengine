@@ -6,10 +6,7 @@
 
 #include "gapp_widget.h"
 #include "gapp_main.h"
-
-#include "gb_fs.h"
-#include "gb_ecs_camera.h"
-#include "gb_type_transform.h"
+#include "gobu.h"
 
 struct _GappLevelEditor
 {
