@@ -9,5 +9,12 @@ void gb_type_resource_moduleImport(ecs_world_t* world)
 
     ECS_IMPORT(world, gb_type_texture_module);
     ECS_IMPORT(world, gb_type_text_module);
+
+    ecs_struct(world, {
+        .entity = ecs_id(gb_resource_t),
+        .members = {
+            {.name = "path", .type = ecs_id(ecs_string_t) },
+        }
+    });
 }
 

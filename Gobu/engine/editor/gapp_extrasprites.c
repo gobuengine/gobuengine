@@ -2,6 +2,10 @@
 #include "gapp_gobu_embed.h"
 #include "gapp_widget.h"
 
+#include "gb_ecs_sprite.h"
+#include "gb_ecs_gizmos.h"
+#include "gb_type_shape_rect.h"
+
 enum
 {
     PROP_0,
@@ -82,7 +86,7 @@ static void gbapp_extrasprites_class_init(GbAppExtraSpritesClass* klass)
 
 static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double num_cell_y, double margin_x, double margin_y, double spacing_x, double spacing_y)
 {
-    gb_world_t* world = gapp_gobu_embed_get_world(self->viewport);
+    ecs_world_t* world = gapp_gobu_embed_get_world(self->viewport);
 
     float frame_w = (float)(self->cell_width_default / num_cell_x);
     float frame_h = (float)(self->cell_height_default / num_cell_y);
@@ -115,13 +119,13 @@ static void fn_update_rect(GbAppExtraSprites* self, double num_cell_x, double nu
         char* name_format = gb_str_replace(name, "{0}", gb_strdups("%d", (frame_current + index_name)));
 
         ecs_entity_t entity = gb_ecs_entity_new(world, parent, name_format, gb_ecs_transform(sub_x + center_x, sub_y + center_y));
-        gb_ecs_entity_set(world, entity, gb_shape_rect_t, { .width = frame_w, .height = frame_h, .color_line = ORANGE, .line_width = 1 });
+        ecs_set(world, entity, gb_shape_rect_t, { .width = frame_w, .height = frame_h, .border_color = ORANGE, .border_width = 1 });
         ecs_remove(world, entity, gb_gizmos_t);
         g_free(name_format);
     }
 }
 
-static void fn_extract_sprite_from_files(gb_world_t* world, const char* name, int index_start, GbAppExtraSprites* self)
+static void fn_extract_sprite_from_files(ecs_world_t* world, const char* name, int index_start, GbAppExtraSprites* self)
 {
     int index_name = index_start;
 
@@ -158,7 +162,7 @@ static void fn_extract_sprite_from_files(gb_world_t* world, const char* name, in
 
 static void signal_viewport_start(GtkWidget* viewport, GbAppExtraSprites* self)
 {
-    gb_world_t* world = gapp_gobu_embed_get_world(viewport);
+    ecs_world_t* world = gapp_gobu_embed_get_world(viewport);
 
     int width = gapp_gobu_embed_get_width(viewport);
     int height = gapp_gobu_embed_get_height(viewport);
@@ -181,7 +185,7 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppExtraSprites* self)
     char* key = gb_resource_set(world, self->filename);
     self->entity = gb_ecs_entity_new(world, 0, "extrasprites", gb_ecs_transform(0, 0));
     ecs_remove(world, self->entity, gb_gizmos_t);
-    gb_ecs_entity_set(world, self->entity, gb_sprite_t, { .resource = key });
+    ecs_set(world, self->entity, gb_sprite_t, { .resource = key });
 
     fn_update_rect(self, 1, 1, 0, 0, 0, 0);
 
@@ -201,7 +205,7 @@ static void signal_destroy_close(GtkWidget* widget, GbAppExtraSprites* self)
 
 static void signal_btn_extract(GtkWidget* widget, GbAppExtraSprites* self)
 {
-    gb_world_t* world = gapp_gobu_embed_get_world(self->viewport);
+    ecs_world_t* world = gapp_gobu_embed_get_world(self->viewport);
     char* name = gapp_widget_entry_get_text(self->input_name);
     int index_name = gtk_spin_button_get_value(self->input_index);
 

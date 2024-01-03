@@ -17,7 +17,7 @@ void gb_type_shape_rect_moduleImport(ecs_world_t* world)
             {.name = "width", .type = ecs_id(ecs_f32_t) },
             {.name = "height", .type = ecs_id(ecs_f32_t) },
             // CSS Style
-            {.name = "background_color", .type = ecs_id(gb_color_t) },
+            {.name = "color", .type = ecs_id(gb_color_t) },
             {.name = "border_width", .type = ecs_id(ecs_i32_t) },
             {.name = "border_color", .type = ecs_id(gb_color_t) },
             {.name = "border_radius_top_left", .type = ecs_id(ecs_i32_t) },

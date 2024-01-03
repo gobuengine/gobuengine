@@ -2,6 +2,8 @@
 #define GB_UTILITY_PATH_H
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,7 +23,7 @@ extern "C" {
 
     char* gb_path_current_dir(void);
 
-    bool gb_path_exist(const char* filename);
+    bool gb_path_exist(const char *filename);
 
 #ifdef __cplusplus
 }

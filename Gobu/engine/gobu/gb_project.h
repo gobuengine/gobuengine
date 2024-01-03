@@ -1,7 +1,7 @@
 #ifndef GB_PROJECT_H
 #define GB_PROJECT_H
 
-#include <glib.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {

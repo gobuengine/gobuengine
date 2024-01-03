@@ -274,7 +274,7 @@ static gboolean _outliner_hack_update_expanded(GtkTreeListRow* row)
 
 void gapp_level_outliner_append_entity(GappLevelOutliner* self, ecs_entity_t entity)
 {
-    gb_world_t* world = gapp_level_editor_get_world(self->editor);
+    ecs_world_t* world = gapp_level_editor_get_world(self->editor);
     ObjectOutlinerItem* item = object_outliner_item_new(world, entity);
     g_list_store_append(self->store, item);
 }

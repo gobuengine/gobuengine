@@ -1,4 +1,5 @@
 #include "gb_ecs_text.h"
+#include "gb_ecs_resource.h"
 
 static void observe_set_gb_text_t(ecs_iter_t* it);
 

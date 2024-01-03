@@ -74,6 +74,15 @@
         "gb_ecs_bounding.h": "c",
         "gb_ecs_camera.h": "c",
         "gb_type_gizmos.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "gb_ecs_rendering.h": "c",
+        "gb_ecs_resource.h": "c",
+        "gb_string.h": "c",
+        "gb_type_sprite.h": "c",
+        "gb_ecs_sprite.h": "c",
+        "gb_type_animate_sprite.h": "c",
+        "gb_log.h": "c",
+        "gb_project.h": "c",
+        "stdbool.h": "c"
     }
 }

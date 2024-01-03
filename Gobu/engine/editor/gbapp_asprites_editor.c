@@ -1,6 +1,13 @@
 #include "gbapp_asprites_editor.h"
 #include "gapp_gobu_embed.h"
 
+#include "gb_type_animate_sprite.h"
+#include "gb_ecs_sprite.h"
+#include "gb_ecs_gizmos.h"
+#include "gb_ecs_resource.h"
+#include "gb_ecs.h"
+#include "gb_log.h"
+
 typedef enum ASheetsDirectionMoveFrame {
     ASHEETS_DIRECTION_MOVE_FRAME_LEFT = -1,
     ASHEETS_DIRECTION_MOVE_FRAME_RIGHT = 1
@@ -27,7 +34,7 @@ struct _GbAppAsprites
     GtkSingleSelection* selection_anim;
     GtkSingleSelection* selection_frame;
     int timeout_check_anim;
-    gb_world_t* world;
+    ecs_world_t* world;
     //
     gchar* filename;
     ecs_entity_t entity;
@@ -489,8 +496,8 @@ static void signal_viewport_start(GtkWidget* viewport, GbAppAsprites* asheets)
     const char* key = gb_resource_set(asheets->world, asheets->filename);
 
     asheets->entity = gb_ecs_entity_new(asheets->world, 0, "AnimationSprite", gb_ecs_transform(0, 0));
-    gb_ecs_entity_set(asheets->world, asheets->entity, gb_animate_sprite_t, { .resource = key });
-    gb_ecs_entity_set(asheets->world, asheets->entity, gb_sprite_t, { 0 });
+    ecs_set(asheets->world, asheets->entity, gb_animate_sprite_t, { .resource = key });
+    ecs_set(asheets->world, asheets->entity, gb_sprite_t, { 0 });
     ecs_remove(asheets->world, asheets->entity, gb_gizmos_t);
 
     asheets->animate_sprite = ecs_get(asheets->world, asheets->entity, gb_animate_sprite_t);

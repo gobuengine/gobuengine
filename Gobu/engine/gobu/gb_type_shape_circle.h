@@ -17,7 +17,7 @@ extern "C" {
         float x;
         float y;
         float radius;
-        gb_color_t background_color;
+        gb_color_t color;
     }gb_shape_circle_t;
 
 

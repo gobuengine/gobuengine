@@ -3,8 +3,13 @@
 #include "gapp_level_outliner.h"
 #include "gapp_level_viewport.h"
 #include "gapp_tool_console.h"
+
 #include "gapp_widget.h"
 #include "gapp_main.h"
+
+#include "gb_fs.h"
+#include "gb_ecs_camera.h"
+#include "gb_type_transform.h"
 
 struct _GappLevelEditor
 {

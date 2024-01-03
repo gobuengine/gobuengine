@@ -15,7 +15,7 @@ void gb_type_shape_circle_moduleImport(ecs_world_t* world)
             {.name = "x", .type = ecs_id(ecs_f32_t) },
             {.name = "y", .type = ecs_id(ecs_f32_t) },
             {.name = "radius", .type = ecs_id(ecs_f32_t) },
-            {.name = "background_color", .type = ecs_id(gb_color_t) },
+            {.name = "color", .type = ecs_id(gb_color_t) },
         }
     });
 }

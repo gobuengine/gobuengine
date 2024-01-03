@@ -1,4 +1,5 @@
 #include "gb_ecs_gizmos.h"
+#include "gb_input.h"
 
 static void update_gb_gizmos_t(ecs_iter_t* it);
 
@@ -33,13 +34,13 @@ static void update_gb_gizmos_t(ecs_iter_t* it)
     ecs_entity_t Engine = ecs_lookup(it->world, "Engine");
     gb_camera_t* camera = ecs_get(it->world, Engine, gb_camera_t);
 
-    gb_vec2_t mouse = engine.screen_to_world(*camera, engine.input.mouse_position());
-    gb_vec2_t delta = engine.input.mouse_delta();
+    gb_vec2_t mouse = screen_to_world(*camera, input_mouse_position());
+    gb_vec2_t delta = input_mouse_delta();
 
-    bool shift = engine.input.key_down(KEY_LEFT_SHIFT);
-    // bool ctrl = engine.input.key_down(KEY_LEFT_CONTROL);
-    bool mouse_btn_pres_left = engine.input.mouse_button_pressed(MOUSE_BUTTON_LEFT);
-    bool mouse_btn_down_left = engine.input.mouse_button_down(MOUSE_BUTTON_LEFT);
+    bool shift = input_is_key_down(KEY_LEFT_SHIFT);
+    // bool ctrl = input_is_key_down(KEY_LEFT_CONTROL);
+    bool mouse_btn_pres_left = input_is_mouse_button_pressed(MOUSE_BUTTON_LEFT);
+    bool mouse_btn_down_left = input_is_mouse_button_down(MOUSE_BUTTON_LEFT);
 
     for (int i = it->count - 1; i >= 0; i--)
     {

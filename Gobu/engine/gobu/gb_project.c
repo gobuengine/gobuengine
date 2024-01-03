@@ -1,5 +1,6 @@
 #include "gb_project.h"
 #include "gb_setting.h"
+#include "gb_path.h"
 
 static char* project_path = NULL;
 

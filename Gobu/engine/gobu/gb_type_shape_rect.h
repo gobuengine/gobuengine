@@ -18,7 +18,7 @@ extern "C" {
         float y;
         float width;
         float height;
-        gb_color_t background_color;
+        gb_color_t color;
         int border_width;
         gb_color_t border_color;
         int border_radius_top_left;

@@ -1,8 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <glib.h>
+#include "gb_setting.h"
+#include "gb_string.h"
 
 struct gb_setting_project_t {
     char* thumbnail;

@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksource.h>
-#include "../gobu/gobu.h"
+#include "thirdparty/binn/binn_json.h"
+#include "thirdparty/flecs/flecs.h"
 
 #include "gapp_widget.h"
 #include "gapp_tool_console.h"

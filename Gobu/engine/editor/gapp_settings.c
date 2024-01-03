@@ -2,6 +2,8 @@
 #include "gapp_main.h"
 #include "gapp_widget.h"
 
+#include "gb_setting.h"
+
 extern GAPP* EditorCore;
 
 typedef enum _GappSettingsType
@@ -211,7 +213,7 @@ static void signal_changed_input_str(GObject* object, GappSettingsGameInfo type)
         break;
     }
 
-    gb_setting_save();
+    gb_setting_project_save();
 }
 
 static void signal_toggle_input(GtkCheckButton* button, GappSettingsDisplay type)
@@ -248,7 +250,7 @@ static void signal_toggle_input(GtkCheckButton* button, GappSettingsDisplay type
         break;
     }
 
-    gb_setting_save();
+    gb_setting_project_save();
 }
 
 static void signal_activate_selected(GtkDropDown* self, GParamSpec* pspec, GappSettings* setting)
@@ -281,7 +283,7 @@ static void signal_activate_selected(GtkDropDown* self, GParamSpec* pspec, GappS
         break;
     }
 
-    gb_setting_save();
+    gb_setting_project_save();
 }
 
 static void signal_spin_input(GtkSpinButton* self, GappSettingsDisplay type)
@@ -300,7 +302,7 @@ static void signal_spin_input(GtkSpinButton* self, GappSettingsDisplay type)
         break;
     }
 
-    gb_setting_save();
+    gb_setting_project_save();
 }
 
 static void signal_clicked_resolution_orientation_toggle(GtkButton* button, GappSettings* self)
@@ -314,7 +316,7 @@ static void signal_clicked_resolution_orientation_toggle(GtkButton* button, Gapp
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_width), height);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(self->display_height), width);
 
-    gb_setting_save();
+    gb_setting_project_save();
 }
 
 static void gapp_settings_init(GappSettings* self)

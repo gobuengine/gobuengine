@@ -1,4 +1,5 @@
 #include "gb_ecs_camera.h"
+#include "gb_input.h"
 
 static void observer_set_gb_camera_t(ecs_iter_t* it);
 static void update_gb_camera_t(ecs_iter_t* it);
@@ -45,20 +46,20 @@ static void update_gb_camera_t(ecs_iter_t* it)
         else if (camera[i].mode == GB_CAMERA_EDITOR)
         {
             // move camera mouse movement
-            if (engine.input.mouse_button_down(MOUSE_BUTTON_RIGHT))
+            if (input_is_mouse_button_down(MOUSE_BUTTON_RIGHT))
             {
-                gb_vec2_t delta = engine.input.mouse_delta();
+                gb_vec2_t delta = input_mouse_delta();
                 camera[i].target.x -= delta.x / camera[i].zoom;
                 camera[i].target.y -= delta.y / camera[i].zoom;
             }
 
             // zoom with mouse wheel
-            float wheel = engine.input.mouse_wheel();
+            float wheel = input_mouse_wheel();
             if (wheel != 0)
             {
-                gb_vec2_t mouseWorld = engine.screen_to_world(camera[i], engine.input.mouse_position());
+                gb_vec2_t mouseWorld = screen_to_world(camera[i], input_mouse_position());
 
-                camera[i].offset = engine.input.mouse_position();
+                camera[i].offset = input_mouse_position();
                 camera[i].target = mouseWorld;
                 camera[i].zoom -= wheel * 0.05f;
                 if (camera[i].zoom < 0.1f) camera[i].zoom = 0.1f;

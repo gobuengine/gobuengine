@@ -1,4 +1,6 @@
 #include "gb_ecs_resource.h"
+#include "gb_log.h"
+#include "gb_path.h"
 
 static void observe_set_gb_resource(ecs_iter_t* it);
 
@@ -15,7 +17,7 @@ void gb_resource_moduleImport(ecs_world_t* world)
 }
 
 // -- 
-// gb_sprite_t:EVENTS
+// :EVENTS
 // --  
 static void observe_set_gb_resource(ecs_iter_t* it)
 {
@@ -52,6 +54,71 @@ static void observe_set_gb_resource(ecs_iter_t* it)
 }
 
 // -- 
-// gb_sprite_t:API
+// :API
 // -- 
+
+const char* gb_resource_key_normalize(const char* path)
+{
+    if (strstr(path, "resource://") != NULL)
+        return path;
+    else
+        return gb_path_normalize(gb_strdups("resource://%s", gb_str_replace(path, ".", "!")));
+}
+
+/**
+ * @brief Establece un recurso en el mundo de entidades.
+ *
+ * Esta función permite establecer un recurso en el mundo de entidades especificado.
+ * El recurso se identifica mediante una clave y se especifica su ruta de acceso.
+ *
+ * @param world El mundo de entidades en el que se establecerá el recurso.
+ * @param key La clave que identifica el recurso.
+ * @param path La ruta de acceso al recurso.
+ * @return true si se estableció el recurso correctamente, false en caso contrario.
+ */
+const char* gb_resource_set(ecs_world_t* world, const char* path)
+{
+    const char* path_relative = gb_path_relative_content(path);
+    const char* key = gb_path_normalize(gb_strdups("resource://%s", gb_str_replace(path_relative, ".", "!")));
+
+    if (ecs_is_valid(world, ecs_lookup(world, key)) == false) {
+        ecs_entity_t resource = ecs_new_entity(world, key);
+        ecs_set(world, resource, gb_resource_t, { .path = gb_strdup(path_relative) });
+    }
+
+    return key;
+}
+
+/**
+ * @brief Obtiene un recurso de Gobu.
+ *
+ * Esta función devuelve un puntero al recurso identificado por la clave especificada.
+ *
+ * @param world Puntero al mundo de entidades de Gobu.
+ * @param key Clave del recurso a obtener.
+ * @return Puntero al recurso correspondiente a la clave especificada, o NULL si no se encuentra.
+ */
+const gb_resource_t* gb_resource(ecs_world_t* world, const char* key)
+{
+    ecs_entity_t resource = ecs_lookup(world, key);
+    gb_return_val_if_fail(resource != 0, NULL);
+    return (gb_resource_t*)ecs_get(world, resource, gb_resource_t);
+}
+
+/**
+ * @brief Elimina un recurso del mundo.
+ *
+ * Esta función elimina un recurso del mundo dado utilizando la clave especificada.
+ *
+ * @param world El mundo del cual eliminar el recurso.
+ * @param key La clave del recurso a eliminar.
+ * @return true si el recurso se eliminó correctamente, false en caso contrario.
+ */
+bool gb_resource_remove(ecs_world_t* world, const char* key)
+{
+    ecs_entity_t resource = ecs_lookup(world, key);
+    gb_return_val_if_fail(resource != 0, false);
+    ecs_delete(world, resource);
+    return ecs_lookup(world, key) == 0;
+}
 

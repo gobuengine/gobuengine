@@ -1,5 +1,7 @@
 #include "gb_path.h"
 #include <glib.h>
+#include "gb_fs.h"
+#include "config.h"
 
 /**
  * @brief Retorna el contenido de una ruta relativa.

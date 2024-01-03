@@ -1,6 +1,7 @@
 #ifndef GB_SETTING_PROJECT_H
 #define GB_SETTING_PROJECT_H
 
+#include <stdbool.h>
 #include <glib.h>
 
 #ifdef __cplusplus

@@ -29,10 +29,9 @@
 #define __GAPP_TOOL_CONSOLE_H__
 #include <stdio.h>
 #include <gtk/gtk.h>
+#include "gb_log.h"
 
 G_BEGIN_DECLS
-
-#define TF gb_strdups
 
 typedef struct _GobuToolConsolePrivate GobuToolConsolePrivate;
 

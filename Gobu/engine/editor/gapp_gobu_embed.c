@@ -1,4 +1,7 @@
 #include "gapp_gobu_embed.h"
+#include "thirdparty/goburender/raylib.h"
+
+#include "gb_ecs_rendering.h"
 
 enum
 {
@@ -117,7 +120,7 @@ static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed* viewport, gpointer 
 
     if (!priv->initialize)
     {
-        priv->world = gb_app_init(&(gb_app_t) { .width = priv->width, .height = priv->height, .show_grid = priv->show_grid });
+        priv->world = gb_init(&(gb_app_t) { .width = priv->width, .height = priv->height, .show_grid = priv->show_grid });
         g_signal_emit(viewport, w_signals[SIGNAL_START], 0);
         priv->initialize = TRUE;
     }
@@ -216,7 +219,7 @@ int gapp_gobu_embed_get_height(GappGobuEmbed* embed)
     return priv->height;
 }
 
-gb_world_t* gapp_gobu_embed_get_world(GappGobuEmbed* embed)
+ecs_world_t* gapp_gobu_embed_get_world(GappGobuEmbed* embed)
 {
     GappGobuEmbedPrivate* priv = gapp_gobu_embed_get_instance_private(embed);
     return priv->world;
