@@ -18,6 +18,7 @@ extern "C"
         ecs_entity_t Background;
         ecs_entity_t Draw;
         ecs_entity_t PostDraw;
+        ecs_entity_t ClearDraw;
     } gb_render_phases_t;
 
     typedef struct gb_app_t

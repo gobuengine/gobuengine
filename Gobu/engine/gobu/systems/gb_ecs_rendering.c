@@ -2,6 +2,7 @@
 
 #include "gobu.h"
 #include "gb_gfx.h"
+#include "thirdparty/goburender/raylib.h"
 
 ECS_COMPONENT_DECLARE(gb_render_phases_t);
 ECS_COMPONENT_DECLARE(gb_app_t);
@@ -42,48 +43,44 @@ void gb_rendering_moduleImport(ecs_world_t *world)
     ecs_add_pair(world, render_phases.Draw, EcsDependsOn, render_phases.Background);
     ecs_add_pair(world, render_phases.PostDraw, EcsDependsOn, render_phases.Draw);
 
-    ecs_observer(world, {
-        .filter = {.terms = {{.id = ecs_id(gb_app_t)}}},
-        .events = { EcsOnSet, EcsOnRemove },
-        .callback = observer_set_gb_app_t
-    });
+    ecs_observer(world, {.filter = {.terms = {{.id = ecs_id(gb_app_t)}}},
+                         .events = {EcsOnSet, EcsOnRemove},
+                         .callback = observer_set_gb_app_t});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = {ecs_dependson(render_phases.PreDraw)}}),
-        .query.filter.terms = {
-            {.id = ecs_id(gb_app_t)},
-            {.id = ecs_id(gb_camera_t)},
-        },
-        .callback = predraw_begin_rendering
-    });
+                       .query.filter.terms = {
+                           {.id = ecs_id(gb_app_t)},
+                           {.id = ecs_id(gb_camera_t)},
+                       },
+                       .callback = predraw_begin_rendering});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = {ecs_dependson(render_phases.Draw)}}),
-        .query.filter.terms = {
-            {.id = ecs_id(gb_transform_t)},
-            {.id = ecs_id(gb_bounding_t)},
-            {.id = ecs_id(gb_gizmos_t), .oper = EcsOptional},
-            {.id = ecs_id(gb_shape_rect_t), .oper = EcsOptional},
-            {.id = ecs_id(gb_sprite_t), .oper = EcsOptional},
-            {.id = ecs_id(gb_text_t), .oper = EcsOptional},
-        },
-        .callback = drawing_rendering
-    });
+                       .query.filter.terms = {
+                           {.id = ecs_id(gb_transform_t)},
+                           {.id = ecs_id(gb_bounding_t)},
+                           {.id = ecs_id(gb_gizmos_t), .oper = EcsOptional},
+                           {.id = ecs_id(gb_shape_rect_t), .oper = EcsOptional},
+                           {.id = ecs_id(gb_sprite_t), .oper = EcsOptional},
+                           {.id = ecs_id(gb_text_t), .oper = EcsOptional},
+                       },
+                       .callback = drawing_rendering});
 
-    ecs_system(world, {.entity = ecs_entity(world,{.add = {ecs_dependson(render_phases.PostDraw)}}),
-        .query.filter.terms = {
-            {.id = ecs_id(gb_app_t)},
-        },
-        .callback = postdraw_end_rendering
-    });
+    ecs_system(world, {.entity = ecs_entity(world, {.add = {ecs_dependson(render_phases.PostDraw)}}),
+                       .query.filter.terms = {
+                           {.id = ecs_id(gb_app_t)},
+                           {.id = ecs_id(gb_camera_t)},
+                       },
+                       .callback = postdraw_end_rendering});
 }
 
 // --
 // :EVENTS
 // --
 
-static void observer_set_gb_app_t(ecs_iter_t* it)
+static void observer_set_gb_app_t(ecs_iter_t *it)
 {
     ecs_entity_t event = it->event;
-    gb_app_t* win = ecs_field(it, gb_app_t, 1);
+    gb_app_t *win = ecs_field(it, gb_app_t, 1);
 
     for (int i = 0; i < it->count; i++)
     {
@@ -109,8 +106,13 @@ static void predraw_begin_rendering(ecs_iter_t *it)
         };
 
         BeginDrawing();
-        ClearBackground(BLACK);
+        // ClearBackground(BLACK);
+        // gb_rect_t render_camera = {0.0f, 0.0f, (float)camera[i].render.texture.width, (float)-camera[i].render.texture.height};
+        // DrawTextureRec(camera[i].render.texture, render_camera, (Vector2){0, 0}, WHITE);
+        // EndDrawing();
 
+        // BeginTextureMode(camera[i].render);
+        ClearBackground(BLACK);
         BeginMode2D(cam);
 
         if (win[i].show_grid)
@@ -170,19 +172,20 @@ static void drawing_rendering(ecs_iter_t *it)
 static void postdraw_end_rendering(ecs_iter_t *it)
 {
     gb_app_t *win = ecs_field(it, gb_app_t, 1);
+    gb_camera_t *camera = ecs_field(it, gb_camera_t, 2);
 
     for (int i = 0; i < it->count; i++)
     {
+        EndMode2D();
+
         if (win[i].show_fps)
             DrawFPS(10, 20);
 
-        EndMode2D();
+        // EndTextureMode();
         EndDrawing();
 
         if (WindowShouldClose())
-        {
             ecs_quit(it->world);
-        }
     }
 }
 

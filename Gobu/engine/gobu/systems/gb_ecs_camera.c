@@ -1,42 +1,51 @@
 #include "gb_ecs_camera.h"
 #include "gb_input.h"
 
-static void observer_set_gb_camera_t(ecs_iter_t* it);
-static void update_gb_camera_t(ecs_iter_t* it);
+static void observer_set_gb_camera_t(ecs_iter_t *it);
+static void update_gb_camera_t(ecs_iter_t *it);
 
-void gb_camera_moduleImport(ecs_world_t* world)
+void gb_camera_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, gb_camera_module);
     ECS_IMPORT(world, gb_type_camera_module);
 
-    ecs_observer(world, {
-        .filter = {.terms = {{.id = ecs_id(gb_camera_t)}}},
-        .events = { EcsOnSet },
-        .callback = observer_set_gb_camera_t
-    });
+    ecs_observer(world, {.filter = {.terms = {{.id = ecs_id(gb_camera_t)}}},
+                         .events = {EcsOnSet, EcsOnRemove},
+                         .callback = observer_set_gb_camera_t});
 
-    ecs_system(world, {
-        .entity = ecs_entity(world, {.add = {ecs_dependson(EcsOnUpdate)} }),
-        .query.filter.terms = { {.id = ecs_id(gb_camera_t)} },
-        .callback = update_gb_camera_t
-    });
+    ecs_system(world, {.entity = ecs_entity(world, {.add = {ecs_dependson(EcsOnUpdate)}}),
+                       .query.filter.terms = {{.id = ecs_id(gb_camera_t)}},
+                       .callback = update_gb_camera_t});
 }
 
-// -- 
+// --
 // gb_sprite_t:EVENTS
-// --  
-static void observer_set_gb_camera_t(ecs_iter_t* it)
+// --
+static void observer_set_gb_camera_t(ecs_iter_t *it)
 {
-    gb_camera_t* camera = ecs_field(it, gb_camera_t, 1);
+    ecs_entity_t event = it->event;
+    gb_camera_t *camera = ecs_field(it, gb_camera_t, 1);
+
+    ecs_entity_t Engine = ecs_lookup(it->world, "Engine");
+    gb_app_t *win = ecs_get(it->world, Engine, gb_app_t);
+
     for (int i = 0; i < it->count; i++)
     {
-        camera[i].zoom = (camera[i].zoom == 0) ? 1.0f : camera[i].zoom;
+        if (event == EcsOnSet)
+        {
+            camera[i].zoom = (camera[i].zoom == 0) ? 1.0f : camera[i].zoom;
+            camera[i].render = LoadRenderTexture(win->width, win->height);
+        }
+        else if (event == EcsOnRemove)
+        {
+            UnloadRenderTexture(camera[i].render);
+        }
     }
 }
 
-static void update_gb_camera_t(ecs_iter_t* it)
+static void update_gb_camera_t(ecs_iter_t *it)
 {
-    gb_camera_t* camera = ecs_field(it, gb_camera_t, 1);
+    gb_camera_t *camera = ecs_field(it, gb_camera_t, 1);
 
     for (int i = 0; i < it->count; i++)
     {
@@ -62,13 +71,13 @@ static void update_gb_camera_t(ecs_iter_t* it)
                 camera[i].offset = input_mouse_position();
                 camera[i].target = mouseWorld;
                 camera[i].zoom -= wheel * 0.05f;
-                if (camera[i].zoom < 0.1f) camera[i].zoom = 0.1f;
+                if (camera[i].zoom < 0.1f)
+                    camera[i].zoom = 0.1f;
             }
         }
     }
 }
 
-// -- 
+// --
 // gb_sprite_t:API
-// -- 
-
+// --

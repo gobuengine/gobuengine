@@ -25,6 +25,7 @@ extern "C" {
         float rotation;         // Camera rotation in degrees
         float zoom;             // Camera zoom (scaling), should be 1.0f by default
         eCameraMode mode;
+        RenderTexture render;   // Camera unique render texture
     }gb_camera_t;
 
     typedef Color gb_color_t;

@@ -62,8 +62,8 @@ static void gapp_gobu_embed_class_init(GappGobuEmbedClass *klass)
 
 static void gapp_gobu_embed_signal_focus(GtkWidget *viewport, gpointer data)
 {
-    // gtk_widget_set_can_focus(GTK_GL_AREA(viewport), true);
-    // gtk_widget_grab_focus(viewport);
+    gtk_widget_set_can_focus(GTK_GL_AREA(viewport), true);
+    gtk_widget_grab_focus(viewport);
 
     printf("focus\n");
 }
@@ -156,6 +156,7 @@ static void gapp_gobu_embed_init(GappGobuEmbed *self)
 
     gtk_gl_area_set_required_version(GTK_GL_AREA(self), 3, 3);
     // gtk_gl_area_set_auto_render(GTK_GL_AREA(self), TRUE);
+    // gtk_gl_area_attach_buffers(GTK_GL_AREA(self));
     gtk_widget_set_focus_on_click(GTK_GL_AREA(self), true);
     gtk_widget_set_focusable(GTK_GL_AREA(self), true);
     gtk_widget_set_hexpand(GTK_WIDGET(self), TRUE);
