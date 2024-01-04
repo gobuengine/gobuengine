@@ -3,16 +3,19 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include "config.h"
 
 #include "components/gb_components.h"
 #include "systems/gb_systems.h"
 
+#include "gb_ecs.h"
 #include "gb_fs.h"
 #include "gb_input.h"
 #include "gb_log.h"
 #include "gb_path.h"
+#include "gb_project.h"
+#include "gb_setting.h"
 #include "gb_string.h"
-#include "gb_ecs.h"
 
 #ifdef __cplusplus
 extern "C"

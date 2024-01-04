@@ -3,8 +3,6 @@
 #include "gapp_script_editor.h"
 #include "gapp_extrasprites.h"
 
-#include "gobu.h"
-
 enum
 {
     ACTION_CREATE_FOLDER,

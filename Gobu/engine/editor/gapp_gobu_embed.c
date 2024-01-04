@@ -106,13 +106,6 @@ static void gapp_gobu_embed_signal_unrealize(GappGobuEmbed *self)
 
 static gboolean gapp_gobu_embed_signal_render(GappGobuEmbed *viewport, gpointer data)
 {
-    gtk_gl_area_make_current(viewport);
-    if (gtk_gl_area_get_error(viewport) != NULL)
-    {
-        g_error("gapp_gobu_embed_signal_render");
-        return;
-    }
-
     GappGobuEmbedPrivate *priv = gapp_gobu_embed_get_instance_private(viewport);
 
     if (!priv->initialize)

@@ -4,6 +4,7 @@
 #include "browser.h"
 #include "gapp_level_editor.h"
 #include "gapp_settings.h"
+#include "gb_setting.h"
 
 extern GAPP* EditorCore;
 
@@ -95,7 +96,7 @@ void gapp_project_editor_window_new(GtkApplication* app)
     {
         {
             titlew = gtk_label_new(NULL);
-            gtk_label_set_markup(titlew, gb_strdups("[ %s ] - GobuEngine", gb_setting_project_name()));
+            gtk_label_set_markup(titlew, gb_strdups("[ %s ] - GobuEngine", gb_setting_project_name(), NULL));
             gtk_header_bar_pack_start(headerbar, titlew);
         }
 

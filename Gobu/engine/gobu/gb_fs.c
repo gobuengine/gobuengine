@@ -1,4 +1,6 @@
 #include "gb_fs.h"
+#include "gb_string.h"
+#include "gb_path.h"
 
 /**
  * @brief Copia un archivo desde la ruta de origen a la ruta de destino.

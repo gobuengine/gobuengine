@@ -47,6 +47,8 @@ bool gb_setting_project_load_from_file(const char* filename)
         project.highdpi = g_key_file_get_boolean(project.setting, "display.window", "highdpi", NULL);
         project.vsync = g_key_file_get_boolean(project.setting, "display.window", "vsync", NULL);
         project.aspectration = g_key_file_get_boolean(project.setting, "display.window", "aspectration", NULL);
+
+        printf("Load project setting: %s\n", project.name);
     }
 
     return r;

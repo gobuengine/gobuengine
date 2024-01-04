@@ -1,7 +1,9 @@
-#include "gb_path.h"
 #include <glib.h>
-#include "gb_fs.h"
 #include "config.h"
+#include "gb_path.h"
+#include "gb_fs.h"
+#include "gb_string.h"
+#include "gb_project.h"
 
 /**
  * @brief Retorna el contenido de una ruta relativa.

@@ -85,6 +85,9 @@
         "gb_project.h": "c",
         "stdbool.h": "c",
         "gb_components.h": "c",
-        "gb_input.h": "c"
+        "gb_input.h": "c",
+        "gb_setting.h": "c",
+        "gb_fs.h": "c",
+        "gb_systems.h": "c"
     }
 }

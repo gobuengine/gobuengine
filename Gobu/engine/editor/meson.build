@@ -45,5 +45,5 @@ executable('gobu-editor',
     include_directories:[gobuapp_header],
     install : true,
     install_dir:base_dir+'/bin/',
-    c_args : ['-W','-w','-ggdb','-DPLATFORM_VIEWPORT', '-DGRAPHICS_API_OPENGL_33', '-DBUILD_LIBTYPE_SHARED', '-DEDITOR'],
+    c_args : ['-ggdb','-DPLATFORM_VIEWPORT', '-DGRAPHICS_API_OPENGL_33', '-DBUILD_LIBTYPE_SHARED', '-DEDITOR'],
 )

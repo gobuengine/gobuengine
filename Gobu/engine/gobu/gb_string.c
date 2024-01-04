@@ -1,5 +1,5 @@
 #include "gb_string.h"
-
+#include <glib.h>
 
 /**
  * @brief Duplica una cadena de texto con formato opcional.
