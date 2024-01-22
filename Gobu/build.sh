@@ -1,3 +1,4 @@
+meson build --wip
 cd build
 ninja && meson install
 cd ..

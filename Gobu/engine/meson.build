@@ -1,4 +1,2 @@
-# subdir('thirdparty')
-subdir('gobu')
-subdir('editor')
-# subdir('platforms')
+subdir('thirdparty')
+subdir('app')

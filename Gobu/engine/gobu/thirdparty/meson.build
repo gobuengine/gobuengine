@@ -1,5 +1,0 @@
-subdir('goburender')
-subdir('flecs')
-subdir('binn')
-# subdir('lua')
-# subdir('box2c')
