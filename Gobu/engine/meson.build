@@ -1,2 +1,0 @@
-subdir('thirdparty')
-subdir('app')

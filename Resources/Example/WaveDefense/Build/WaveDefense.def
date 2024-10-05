@@ -1,4 +1,0 @@
-LIBRARY WaveDefense.dll
-
-EXPORTS
-ExportMainGame
