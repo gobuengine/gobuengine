@@ -1,5 +1,5 @@
-#ifndef PIXIO_TEXT_H
-#define PIXIO_TEXT_H
+#ifndef PIXIO_BASE_H
+#define PIXIO_BASE_H
 
 #include <stdio.h>
 #include <stdint.h>
@@ -13,11 +13,11 @@ extern "C"
     // API
 
     // module import
-    void pixio_text_moduleImport(ecs_world_t *world);
+    void pixio_base_moduleImport(ecs_world_t *world);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // PIXIO_TEXT_H
+#endif // PIXIO_BASE_H
 

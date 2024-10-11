@@ -6,12 +6,15 @@ ECS_COMPONENT_DECLARE(pixio_vector2_t);
 ECS_COMPONENT_DECLARE(pixio_resource_t);
 ECS_COMPONENT_DECLARE(pixio_resource_font_t);
 ECS_COMPONENT_DECLARE(pixio_resource_texture_t);
+ECS_COMPONENT_DECLARE(pixio_script_t);
 ECS_COMPONENT_DECLARE(pixio_rect_t);
 ECS_COMPONENT_DECLARE(pixio_font_t);
 ECS_COMPONENT_DECLARE(pixio_texture_t);
 ECS_COMPONENT_DECLARE(pixio_transform_t);
 ECS_COMPONENT_DECLARE(pixio_text_t);
 ECS_COMPONENT_DECLARE(pixio_sprite_t);
+ECS_COMPONENT_DECLARE(pixio_shape_circle_t);
+ECS_COMPONENT_DECLARE(pixio_shape_rec_t);
 
 void pixio_type_moduleImport(ecs_world_t *world)
 {
@@ -22,12 +25,15 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ECS_COMPONENT_DEFINE(world, pixio_resource_t);
     ECS_COMPONENT_DEFINE(world, pixio_resource_font_t);
     ECS_COMPONENT_DEFINE(world, pixio_resource_texture_t);
+    ECS_COMPONENT_DEFINE(world, pixio_script_t);
     ECS_COMPONENT_DEFINE(world, pixio_rect_t);
     ECS_COMPONENT_DEFINE(world, pixio_font_t);
     ECS_COMPONENT_DEFINE(world, pixio_texture_t);
     ECS_COMPONENT_DEFINE(world, pixio_transform_t);
     ECS_COMPONENT_DEFINE(world, pixio_text_t);
     ECS_COMPONENT_DEFINE(world, pixio_sprite_t);
+    ECS_COMPONENT_DEFINE(world, pixio_shape_circle_t);
+    ECS_COMPONENT_DEFINE(world, pixio_shape_rec_t);
 
     ecs_enum(world, {
         .entity = ecs_id(pixio_texture_filter_t),
@@ -88,6 +94,13 @@ void pixio_type_moduleImport(ecs_world_t *world)
     });
 
     ecs_struct(world, {
+        .entity = ecs_id(pixio_script_t),
+        .members = {
+            {.name = "script", .type = ecs_id(ecs_string_t)},
+        },
+    });
+
+    ecs_struct(world, {
         .entity = ecs_id(pixio_transform_t),
         .members = {
             {.name = "position", .type = ecs_id(pixio_vector2_t)},
@@ -114,6 +127,28 @@ void pixio_type_moduleImport(ecs_world_t *world)
             {.name = "texture", .type = ecs_id(pixio_resource_texture_t)},
             {.name = "tint", .type = ecs_id(pixio_color_t)},
             {.name = "filter", .type = ecs_id(pixio_texture_filter_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_shape_circle_t),
+        .members = {
+            {.name = "radius", .type = ecs_id(ecs_f32_t)},
+            {.name = "thickness", .type = ecs_id(ecs_f32_t), .range = {0, 20}},
+            {.name = "color", .type = ecs_id(pixio_color_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_shape_rec_t),
+        .members = {
+            {.name = "width", .type = ecs_id(ecs_f32_t)},
+            {.name = "height", .type = ecs_id(ecs_f32_t)},
+            {.name = "roundness", .type = ecs_id(ecs_f32_t), .range = {0.0, 1.0}},
+            // {.name = "segments", .type = ecs_id(ecs_f32_t), .range = {0, 60}},
+            {.name = "color", .type = ecs_id(pixio_color_t)},
+            {.name = "lineWidth", .type = ecs_id(ecs_f32_t), .range = {0, 20}},
+            {.name = "lineColor", .type = ecs_id(pixio_color_t)},
         },
     });
 }

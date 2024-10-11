@@ -17,6 +17,7 @@ extern "C"
     typedef ecs_string_t pixio_resource_t;
     typedef pixio_resource_t pixio_resource_font_t;
     typedef pixio_resource_t pixio_resource_texture_t;
+    typedef pixio_resource_t pixio_script_t;
 
     typedef struct pixio_transform_t
     {
@@ -46,18 +47,39 @@ extern "C"
         pixio_texture_t sresource;
     } pixio_sprite_t;
 
+    typedef struct pixio_shape_circle_t
+    {
+        ecs_f32_t radius;
+        ecs_f32_t thickness;
+        pixio_color_t color;
+    } pixio_shape_circle_t;
+
+    typedef struct pixio_shape_rec_t
+    {
+        ecs_f32_t width;
+        ecs_f32_t height;
+        ecs_f32_t roundness;
+        pixio_color_t color;
+        ecs_f32_t lineWidth;
+        pixio_color_t lineColor;
+        ecs_f32_t segments;
+    } pixio_shape_rec_t;
+
     extern ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
     extern ECS_COMPONENT_DECLARE(pixio_color_t);
     extern ECS_COMPONENT_DECLARE(pixio_vector2_t);
     extern ECS_COMPONENT_DECLARE(pixio_resource_t);
     extern ECS_COMPONENT_DECLARE(pixio_resource_font_t);
     extern ECS_COMPONENT_DECLARE(pixio_resource_texture_t);
+    extern ECS_COMPONENT_DECLARE(pixio_script_t);
     extern ECS_COMPONENT_DECLARE(pixio_rect_t);
     extern ECS_COMPONENT_DECLARE(pixio_font_t);
     extern ECS_COMPONENT_DECLARE(pixio_texture_t);
     extern ECS_COMPONENT_DECLARE(pixio_transform_t);
     extern ECS_COMPONENT_DECLARE(pixio_text_t);
     extern ECS_COMPONENT_DECLARE(pixio_sprite_t);
+    extern ECS_COMPONENT_DECLARE(pixio_shape_circle_t);
+    extern ECS_COMPONENT_DECLARE(pixio_shape_rec_t);
 
     void pixio_type_moduleImport(ecs_world_t *world);
 

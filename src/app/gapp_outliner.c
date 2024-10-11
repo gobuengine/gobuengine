@@ -2,7 +2,7 @@
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_level_editor.h"
-#include "gapp_inspector_entity.h"
+#include "gapp_inspector.h"
 
 // #include "pixio/pixio.h"
 #include "pixio/pixio_components.h"
@@ -383,7 +383,7 @@ static void gapp_outliner_s_list_view_activated(GtkMultiSelection *selection, gu
         {
             GtkTreeListRow *row = g_list_model_get_item(model, i);
             OutlinerItem *item = gtk_tree_list_row_get_item(row);
-            gapp_inspector_entity_set_entity(gobu_level_editor_get_inspector(gtk_widget_get_parent(gtk_widget_get_parent(outliner))), outliner->world, item->entity);
+            gapp_inspector_set_entity(gobu_level_editor_get_inspector(gtk_widget_get_parent(gtk_widget_get_parent(outliner))), outliner->world, item->entity);
         }
     }
 }
@@ -528,6 +528,7 @@ static GListStore *gapp_outliner_ui_popover_new(void)
         {"input-dialpad-symbolic", "Particle System", "entity.empty"},
         {"face-monkey-symbolic", "Panel", "entity.empty"},
         {"face-monkey", "Text", "pixio_type_module.pixio_text_t"},
+        {"face-monkey", "Shape Rectangle", "pixio_type_module.pixio_shape_rec_t"},
     };
 
     for (size_t i = 0; i < G_N_ELEMENTS(items); i++)

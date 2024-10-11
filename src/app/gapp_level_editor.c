@@ -3,7 +3,7 @@
 #include "gapp_widget.h"
 #include "gapp_viewport.h"
 #include "gapp_outliner.h"
-#include "gapp_inspector_entity.h"
+#include "gapp_inspector.h"
 
 struct _GobuLevelEditor
 {
@@ -61,7 +61,7 @@ static void gobu_level_editor_init(GobuLevelEditor *self)
             self->viewport = gapp_viewport_new();
             gtk_paned_set_start_child(GTK_PANED(paned_b), self->viewport);
 
-            self->inspector = gapp_inspector_entity_new();
+            self->inspector = gapp_inspector_new();
             gtk_widget_set_size_request(self->inspector, 300, -1);
             gtk_paned_set_end_child(GTK_PANED(paned_b), self->inspector);
 

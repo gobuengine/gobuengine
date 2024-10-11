@@ -150,6 +150,10 @@ static void gapp_script_setup_ui(GappScript *self)
     {
         GtkWidget *item;
 
+        item = gapp_widget_button_new_icon_with_label("edit-select-all-symbolic", "Build");
+        gtk_box_append(GTK_BOX(toolbar), item);
+        gtk_widget_set_tooltip_text(item, "Build script");
+
         item = gapp_widget_button_new_icon_with_label("media-removable-symbolic", "Save");
         gtk_box_append(GTK_BOX(toolbar), item);
         gtk_widget_set_tooltip_text(item, "Save script");
@@ -158,10 +162,39 @@ static void gapp_script_setup_ui(GappScript *self)
 
     gtk_box_append(self, gapp_widget_separator_h());
 
+    // paned
+    // GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+    // gtk_paned_set_position(GTK_PANED(paned), 200);
+    // gtk_box_append(GTK_BOX(self), paned);
+
+    // { // panel left
+    //     GtkWidget *expander;
+
+    //     GtkWidget *scroll = gtk_scrolled_window_new();
+    //     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    //     gtk_widget_set_vexpand(scroll, TRUE);
+    //     gtk_paned_set_start_child(GTK_PANED(paned), scroll);
+    //     gtk_paned_set_resize_start_child(GTK_PANED(paned), FALSE);
+
+    //     GtkWidget *boxleft = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    //     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), boxleft);
+
+    //     // expander
+    //     expander = gapp_widget_expander_new_label_icon("Components", "tab-new-symbolic", TRUE);
+    //     gtk_box_append(GTK_BOX(boxleft), expander);
+
+    //     expander = gapp_widget_expander_new_label_icon("Functions", "tab-new-symbolic", TRUE);
+    //     gtk_box_append(GTK_BOX(boxleft), expander);
+
+    //     expander = gapp_widget_expander_new_label_icon("Variables", "tab-new-symbolic", TRUE);
+    //     gtk_box_append(GTK_BOX(boxleft), expander);
+    // }
+
     { // panel right
         GtkWidget *scroll = gtk_scrolled_window_new();
         gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
         gtk_widget_set_vexpand(scroll, TRUE);
+        // gtk_paned_set_end_child(GTK_PANED(paned), scroll);
         gtk_box_append(GTK_BOX(self), scroll);
 
         self->view_source = gtk_source_view_new();

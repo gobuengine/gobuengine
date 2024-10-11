@@ -1,7 +1,7 @@
 #define PIXI_RLGL_API
 #include "pixio_render.h"
 #include "pixio_type.h"
-#include "pixio_text.h"
+#include "pixio_base.h"
 
 ECS_COMPONENT_DECLARE(pixio_render_phases_t);
 ECS_COMPONENT_DECLARE(pixio_render_t);
@@ -19,7 +19,7 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
     ECS_COMPONENT_DEFINE(world, pixio_render_t);
 
     ECS_IMPORT(world, pixio_type_module);
-    ECS_IMPORT(world, pixio_text_module);
+    ECS_IMPORT(world, pixio_base_module);
 
     render_phases.PreDraw = ecs_new_w_id(world, EcsPhase);
     render_phases.Background = ecs_new_w_id(world, EcsPhase);
@@ -36,7 +36,7 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
                        .callback = pixio_render_pre_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.Draw))}),
-                       .query.terms = {{ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}},
+                       .query.terms = {{ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}},
                        .callback = pixio_render_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.PostDraw))}),
@@ -50,10 +50,17 @@ static void pixio_render_pre_draw(ecs_iter_t *it)
     ClearBackground(RAYWHITE);
 }
 
+// ecs_iter_t child_it = ecs_children(it->world, it->entities[i]);
+// while (ecs_children_next(&it)) {
+//     printf("it.count: %d\n",child_it.count);
+// }
+
 static void pixio_render_draw(ecs_iter_t *it)
 {
     pixio_transform_t *transform = ecs_field(it, pixio_transform_t, 0);
     pixio_text_t *draw_text = ecs_field(it, pixio_text_t, 1);
+    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, 2);
+    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, 3);
 
     for (int i = 0; i < it->count; i++)
     {
@@ -69,7 +76,19 @@ static void pixio_render_draw(ecs_iter_t *it)
             // draw textures
 
             // draw graphics
+            if (shape_circle)
+            {
+                // DrawCircle(shape_circle[i].center.x, shape_circle[i].center.y, shape_circle[i].radius, shape_circle[i].color);
+                // DrawCircleLines(shape_circle[i].center.x, shape_circle[i].center.y, shape_circle[i].radius, shape_circle[i].color);
+            }
+            if (shape_rect)
+            {
+                Rectangle shape_rect_rec = {0, 0, shape_rect[i].width, shape_rect[i].height};
 
+                DrawRectangleRounded(shape_rect_rec, shape_rect[i].roundness, shape_rect[i].segments, shape_rect[i].color);
+                if (shape_rect[i].lineWidth > 0)
+                    DrawRectangleRoundedLinesEx(shape_rect_rec, shape_rect[i].roundness, shape_rect[i].segments, shape_rect[i].lineWidth, shape_rect[i].lineColor);
+            }
             // draw text
             if (draw_text)
             {
