@@ -45,7 +45,7 @@ static GLFWbool cursorInContentArea(_GLFWwindow* window)
 
 // Hides the cursor if not already hidden
 //
-static void hideCursor(_GLFWwindow* window)
+static void pixi_input_hide_cursor(_GLFWwindow* window)
 {
     if (!_glfw.ns.cursorHidden)
     {
@@ -56,7 +56,7 @@ static void hideCursor(_GLFWwindow* window)
 
 // Shows the cursor if not already shown
 //
-static void showCursor(_GLFWwindow* window)
+static void pixi_input_show_cursor(_GLFWwindow* window)
 {
     if (_glfw.ns.cursorHidden)
     {
@@ -71,7 +71,7 @@ static void updateCursorImage(_GLFWwindow* window)
 {
     if (window->cursorMode == GLFW_CURSOR_NORMAL)
     {
-        showCursor(window);
+        pixi_input_show_cursor(window);
 
         if (window->cursor)
             [(NSCursor*) window->cursor->ns.object set];
@@ -79,7 +79,7 @@ static void updateCursorImage(_GLFWwindow* window)
             [[NSCursor arrowCursor] set];
     }
     else
-        hideCursor(window);
+        pixi_input_hide_cursor(window);
 }
 
 // Apply chosen cursor mode to a focused window
@@ -491,7 +491,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)mouseExited:(NSEvent *)event
 {
     if (window->cursorMode == GLFW_CURSOR_HIDDEN)
-        showCursor(window);
+        pixi_input_show_cursor(window);
 
     _glfwInputCursorEnter(window, GLFW_FALSE);
 }
@@ -499,7 +499,7 @@ static const NSRange kEmptyRange = { NSNotFound, 0 };
 - (void)mouseEntered:(NSEvent *)event
 {
     if (window->cursorMode == GLFW_CURSOR_HIDDEN)
-        hideCursor(window);
+        pixi_input_hide_cursor(window);
 
     _glfwInputCursorEnter(window, GLFW_TRUE);
 }

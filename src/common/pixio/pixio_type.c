@@ -1,7 +1,9 @@
 #include "pixio_type.h"
 
+ECS_COMPONENT_DECLARE(pixio_entity_t);
 ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
 ECS_COMPONENT_DECLARE(pixio_color_t);
+ECS_COMPONENT_DECLARE(pixio_size_t);
 ECS_COMPONENT_DECLARE(pixio_vector2_t);
 ECS_COMPONENT_DECLARE(pixio_resource_t);
 ECS_COMPONENT_DECLARE(pixio_resource_font_t);
@@ -19,8 +21,10 @@ ECS_COMPONENT_DECLARE(pixio_shape_rec_t);
 void pixio_type_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, pixio_type_module);
+    ECS_COMPONENT_DEFINE(world, pixio_entity_t);
     ECS_COMPONENT_DEFINE(world, pixio_texture_filter_t);
     ECS_COMPONENT_DEFINE(world, pixio_color_t);
+    ECS_COMPONENT_DEFINE(world, pixio_size_t);
     ECS_COMPONENT_DEFINE(world, pixio_vector2_t);
     ECS_COMPONENT_DEFINE(world, pixio_resource_t);
     ECS_COMPONENT_DEFINE(world, pixio_resource_font_t);
@@ -45,12 +49,28 @@ void pixio_type_moduleImport(ecs_world_t *world)
     });
 
     ecs_struct(world, {
+        .entity = ecs_id(pixio_entity_t),
+        .members = {
+            {.name = "enabled", .type = ecs_id(ecs_bool_t)},
+            {.name = "name", .type = ecs_id(ecs_string_t)},
+        },
+    });
+
+    ecs_struct(world, {
         .entity = ecs_id(pixio_color_t),
         .members = {
             {.name = "r", .type = ecs_id(ecs_char_t)},
             {.name = "g", .type = ecs_id(ecs_char_t)},
             {.name = "b", .type = ecs_id(ecs_char_t)},
             {.name = "a", .type = ecs_id(ecs_char_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_size_t),
+        .members = {
+            {.name = "width", .type = ecs_id(ecs_f32_t)},
+            {.name = "height", .type = ecs_id(ecs_f32_t)},
         },
     });
 

@@ -2,6 +2,20 @@
 #include "pixio_type.h"
 
 // -- -- -- -- -- -- -- -- --
+// MARK: - ENTITY_INFO COMPONENT
+// -- -- -- -- -- -- -- -- --
+static void observe_set_entity_info(ecs_iter_t *it)
+{
+    pixio_entity_t *info = ecs_field(it, pixio_entity_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_enable(it->world, it->entities[i], info[i].enabled);
+        //ecs_set_name(it->world, it->entities[i], info[i].name);
+    }
+}
+
+// -- -- -- -- -- -- -- -- --
 // MARK: - TEXT COMPONENT
 // -- -- -- -- -- -- -- -- --
 static void observe_set_text_default(ecs_iter_t *it)
@@ -47,7 +61,7 @@ static void observe_set_shape_rect_default(ecs_iter_t *it)
         shape[i].roundness = (shape[i].roundness == 0) ? 0 : shape[i].roundness;
         shape[i].segments = (shape[i].segments == 0) ? 60 : shape[i].segments;
         shape[i].color = (shape[i].color.a == 0) ? PURPLE : shape[i].color;
-        
+
         shape[i].lineWidth = (shape[i].lineWidth == 0) ? 2.0 : shape[i].lineWidth;
         shape[i].lineColor = (shape[i].lineColor.a == 0) ? PURPLE : shape[i].lineColor;
     }
@@ -72,6 +86,8 @@ void pixio_base_moduleImport(ecs_world_t *world)
     ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_shape_rec_t)}}},
                          .events = {EcsOnAdd, EcsOnSet},
                          .callback = observe_set_shape_rect_default});
+
+    // ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_entity_t)}}},
+    //                      .events = {EcsOnSet},
+    //                      .callback = observe_set_entity_info});
 }
-
-

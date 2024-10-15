@@ -960,72 +960,31 @@ extern "C" {            // Prevents name mangling of functions
 #endif
 
 // Window-related functions
-RLAPI void UpdateViewportSize(int width, int height);
-RLAPI void InitWindow(int width, int height);                     // Initialize window and OpenGL context
-RLAPI void CloseWindow(void);                                     // Close window and unload OpenGL context
-RLAPI bool WindowShouldClose(void);                               // Check if application should close (KEY_ESCAPE pressed or windows close icon clicked)
-RLAPI bool IsWindowReady(void);                                   // Check if window has been initialized successfully
-RLAPI bool IsWindowFullscreen(void);                              // Check if window is currently fullscreen
-RLAPI bool IsWindowHidden(void);                                  // Check if window is currently hidden (only PLATFORM_DESKTOP)
-RLAPI bool IsWindowMinimized(void);                               // Check if window is currently minimized (only PLATFORM_DESKTOP)
-RLAPI bool IsWindowMaximized(void);                               // Check if window is currently maximized (only PLATFORM_DESKTOP)
-RLAPI bool IsWindowFocused(void);                                 // Check if window is currently focused (only PLATFORM_DESKTOP)
-RLAPI bool IsWindowResized(void);                                 // Check if window has been resized last frame
-RLAPI bool IsWindowState(unsigned int flag);                      // Check if one specific window flag is enabled
-RLAPI void SetWindowState(unsigned int flags);                    // Set window configuration state using flags (only PLATFORM_DESKTOP)
-RLAPI void ClearWindowState(unsigned int flags);                  // Clear window configuration state flags
-RLAPI void ToggleFullscreen(void);                                // Toggle window state: fullscreen/windowed [resizes monitor to match window resolution] (only PLATFORM_DESKTOP)
-RLAPI void ToggleBorderlessWindowed(void);                        // Toggle window state: borderless windowed [resizes window to match monitor resolution] (only PLATFORM_DESKTOP)
-RLAPI void MaximizeWindow(void);                                  // Set window state: maximized, if resizable (only PLATFORM_DESKTOP)
-RLAPI void MinimizeWindow(void);                                  // Set window state: minimized, if resizable (only PLATFORM_DESKTOP)
-RLAPI void RestoreWindow(void);                                   // Set window state: not minimized/maximized (only PLATFORM_DESKTOP)
-RLAPI void SetWindowIcon(Image image);                            // Set icon for window (single image, RGBA 32bit, only PLATFORM_DESKTOP)
-RLAPI void SetWindowIcons(Image *images, int count);              // Set icon for window (multiple images, RGBA 32bit, only PLATFORM_DESKTOP)
-RLAPI void SetWindowTitle(const char *title);                     // Set title for window (only PLATFORM_DESKTOP and PLATFORM_WEB)
-RLAPI void SetWindowPosition(int x, int y);                       // Set window position on screen (only PLATFORM_DESKTOP)
-RLAPI void SetWindowMonitor(int monitor);                         // Set monitor for the current window
-RLAPI void SetWindowMinSize(int width, int height);               // Set window minimum dimensions (for FLAG_WINDOW_RESIZABLE)
-RLAPI void SetWindowMaxSize(int width, int height);               // Set window maximum dimensions (for FLAG_WINDOW_RESIZABLE)
-RLAPI void SetWindowSize(int width, int height);                  // Set window dimensions
-RLAPI void SetWindowOpacity(float opacity);                       // Set window opacity [0.0f..1.0f] (only PLATFORM_DESKTOP)
-RLAPI void SetWindowFocused(void);                                // Set window focused (only PLATFORM_DESKTOP)
-RLAPI void *GetWindowHandle(void);                                // Get native window handle
-RLAPI int GetScreenWidth(void);                                   // Get current screen width
-RLAPI int GetScreenHeight(void);                                  // Get current screen height
-RLAPI int GetRenderWidth(void);                                   // Get current render width (it considers HiDPI)
-RLAPI int GetRenderHeight(void);                                  // Get current render height (it considers HiDPI)
-RLAPI int GetMonitorCount(void);                                  // Get number of connected monitors
-RLAPI int GetCurrentMonitor(void);                                // Get current connected monitor
-RLAPI Vector2 GetMonitorPosition(int monitor);                    // Get specified monitor position
-RLAPI int GetMonitorWidth(int monitor);                           // Get specified monitor width (current video mode used by monitor)
-RLAPI int GetMonitorHeight(int monitor);                          // Get specified monitor height (current video mode used by monitor)
-RLAPI int GetMonitorPhysicalWidth(int monitor);                   // Get specified monitor physical width in millimetres
-RLAPI int GetMonitorPhysicalHeight(int monitor);                  // Get specified monitor physical height in millimetres
-RLAPI int GetMonitorRefreshRate(int monitor);                     // Get specified monitor refresh rate
-RLAPI Vector2 GetWindowPosition(void);                            // Get window position XY on monitor
-RLAPI Vector2 GetScaleDPI(void);                                  // Get window scale DPI factor
-RLAPI const char *GetMonitorName(int monitor);                    // Get the human-readable, UTF-8 encoded name of the specified monitor
+RLAPI void pixi_adjust_viewport_size(int width, int height);
+RLAPI void pixi_init(int width, int height);                                       // Initialize window and OpenGL context
+RLAPI void pixi_shutdown(void);                                   // Close window and unload OpenGL context
+RLAPI int pixi_screen_width(void);                                   // Get current screen width
+RLAPI int pixi_screen_height(void);                                  // Get current screen height
+RLAPI int pixi_render_width(void);                                   // Get current render width (it considers HiDPI)
+RLAPI int pixi_render_height(void);                                  // Get current render height (it considers HiDPI)
+RLAPI Vector2 pixi_get_dpi(void);                                  // Get window scale DPI factor
 RLAPI void SetClipboardText(const char *text);                    // Set clipboard text content
 RLAPI const char *GetClipboardText(void);                         // Get clipboard text content
-RLAPI void EnableEventWaiting(void);                              // Enable waiting for events on EndDrawing(), no automatic event polling
-RLAPI void DisableEventWaiting(void);                             // Disable waiting for events on EndDrawing(), automatic events polling
 
 // Cursor-related functions
-RLAPI void ShowCursor(void);                                      // Shows cursor
-RLAPI void HideCursor(void);                                      // Hides cursor
-RLAPI bool IsCursorHidden(void);                                  // Check if cursor is not visible
-RLAPI void EnableCursor(void);                                    // Enables cursor (unlock cursor)
-RLAPI void DisableCursor(void);                                   // Disables cursor (lock cursor)
-RLAPI bool IsCursorOnScreen(void);                                // Check if cursor is on the screen
+RLAPI void pixi_input_show_cursor(void);                                      // Shows cursor
+RLAPI void pixi_input_hide_cursor(void);                                      // Hides cursor
+RLAPI bool pixi_input_is_cursor_hidden(void);                                  // Check if cursor is not visible
+RLAPI void pixi_input_enable_cursor(void);                                    // Enables cursor (unlock cursor)
+RLAPI void pixi_input_disable_cursor(void);                                   // Disables cursor (lock cursor)
+RLAPI bool pixi_input_is_cursor_on_screen(void);                                // Check if cursor is on the screen
 
 // Drawing-related functions
-RLAPI void ClearBackground(Color color);                          // Set background color (framebuffer clear color)
-RLAPI void BeginDrawing(void);                                    // Setup canvas (framebuffer) to start drawing
-RLAPI void EndDrawing(void);                                      // End canvas drawing and swap buffers (double buffering)
+RLAPI void pixi_render_clear_color(Color color);                          // Set background color (framebuffer clear color)
+RLAPI void pixi_render_begin(void);                                    // Setup canvas (framebuffer) to start drawing
+RLAPI void pixi_render_end(void);                                      // End canvas drawing and swap buffers (double buffering)
 RLAPI void BeginMode2D(Camera2D camera);                          // Begin 2D mode with custom camera (2D)
 RLAPI void EndMode2D(void);                                       // Ends 2D mode with custom camera
-RLAPI void BeginMode3D(Camera3D camera);                          // Begin 3D mode with custom camera (3D)
-RLAPI void EndMode3D(void);                                       // Ends 3D mode and returns to default 2D orthographic mode
 RLAPI void BeginTextureMode(RenderTexture2D target);              // Begin drawing to render texture
 RLAPI void EndTextureMode(void);                                  // Ends drawing to render texture
 RLAPI void BeginShaderMode(Shader shader);                        // Begin custom shader drawing
@@ -1034,12 +993,6 @@ RLAPI void BeginBlendMode(int mode);                              // Begin blend
 RLAPI void EndBlendMode(void);                                    // End blending mode (reset to default: alpha blending)
 RLAPI void BeginScissorMode(int x, int y, int width, int height); // Begin scissor mode (define screen area for following drawing)
 RLAPI void EndScissorMode(void);                                  // End scissor mode
-RLAPI void BeginVrStereoMode(VrStereoConfig config);              // Begin stereo rendering (requires VR simulator)
-RLAPI void EndVrStereoMode(void);                                 // End stereo rendering (requires VR simulator)
-
-// VR stereo config functions for VR simulator
-RLAPI VrStereoConfig LoadVrStereoConfig(VrDeviceInfo device);     // Load VR stereo config for VR simulator device parameters
-RLAPI void UnloadVrStereoConfig(VrStereoConfig config);           // Unload VR stereo config
 
 // Shader management functions
 // NOTE: Shader functionality is not available on OpenGL 1.1
@@ -1073,7 +1026,7 @@ RLAPI int GetFPS(void);                                           // Get current
 
 // Custom frame control functions
 // NOTE: Those functions are intended for advanced users that want full control over the frame processing
-// By default EndDrawing() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
+// By default pixi_render_end() does this job: draws everything + SwapScreenBuffer() + manage frame timing + PollInputEvents()
 // To avoid that behaviour and control frame processes manually, enable in config.h: SUPPORT_CUSTOM_FRAME_CONTROL
 RLAPI void SwapScreenBuffer(void);                                // Swap back buffer with front buffer (screen drawing)
 RLAPI void PollInputEvents(void);                                 // Register all input events
@@ -1376,7 +1329,7 @@ RLAPI Color GetImageColor(Image image, int x, int y);                           
 
 // Image drawing functions
 // NOTE: Image software-rendering functions (CPU)
-RLAPI void ImageClearBackground(Image *dst, Color color);                                                // Clear image background with given color
+RLAPI void Imagepixi_render_clear_color(Image *dst, Color color);                                                // Clear image background with given color
 RLAPI void ImageDrawPixel(Image *dst, int posX, int posY, Color color);                                  // Draw pixel within an image
 RLAPI void ImageDrawPixelV(Image *dst, Vector2 position, Color color);                                   // Draw pixel within an image (Vector version)
 RLAPI void ImageDrawLine(Image *dst, int startPosX, int startPosY, int endPosX, int endPosY, Color color); // Draw line within an image

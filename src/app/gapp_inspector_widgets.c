@@ -1,4 +1,5 @@
 #include "gapp_inspector_widgets.h"
+#include "gapp_common.h"
 
 /**
  * @brief Convierte un color de pixio_color_t a GdkRGBA.
@@ -42,11 +43,24 @@ static pixio_color_t gdk_rgba_to_pixio_color(const GdkRGBA *gdk_color)
 static void signal_input_string(GtkEditable *self, ecs_string_t **field)
 {
     const gchar *text = gtk_editable_get_text(self);
-    if (*field)
-    {
-        ecs_os_free(*field);
-    }
     *field = ecs_os_strdup(text);
+}
+
+/**
+ * Manejador de señal para actualizar un campo booleano desde un GtkCheckButton.
+ *
+ * Esta función se conecta a la señal "toggled" de un GtkCheckButton y actualiza
+ * un campo booleano (ecs_bool_t) con el estado actual del botón.
+ *
+ * @param self El GtkCheckButton que emitió la señal.
+ * @param field Puntero al campo ecs_bool_t que se actualizará.
+ */
+static void signal_input_bool(GtkCheckButton *self, ecs_bool_t *field)
+{
+    g_return_if_fail(GTK_IS_CHECK_BUTTON(self));
+    g_return_if_fail(field != NULL);
+
+    *field = gtk_check_button_get_active(GTK_CHECK_BUTTON(self));
 }
 
 /**
@@ -73,6 +87,21 @@ static void signal_input_u32(GtkSpinButton *self, ecs_u32_t *field)
  * @param field Puntero al campo f64 de ECS que se actualizará.
  */
 static void signal_input_f64(GtkSpinButton *self, ecs_f64_t *field)
+{
+    *field = gtk_spin_button_get_value(self);
+}
+
+/**
+ * Signal handler for updating a float (f32) field when a GtkSpinButton value changes.
+ *
+ * This function is designed to be connected as a callback to a GtkSpinButton's
+ * value-changed signal. It updates the float value pointed to by 'field' with
+ * the current value of the spin button.
+ *
+ * @param self The GtkSpinButton that triggered the signal.
+ * @param field Pointer to the float (ecs_f32_t) field to be updated.
+ */
+static void signal_input_f32(GtkSpinButton *self, ecs_f32_t *field)
 {
     *field = gtk_spin_button_get_value(self);
 }
@@ -143,6 +172,29 @@ GtkWidget *gapp_inspector_widgets_input_string(ecs_meta_cursor_t cursor)
 }
 
 /**
+ * Crea un widget de entrada booleana para el inspector.
+ * 
+ * Esta función crea un GtkCheckButton basado en un cursor de metadatos ECS.
+ * El estado del botón se inicializa con el valor actual del campo booleano,
+ * y se conecta una señal para actualizar el campo cuando el estado del botón cambie.
+ *
+ * @param cursor Cursor de metadatos ECS que apunta al campo booleano.
+ * @return GtkWidget* Un nuevo GtkCheckButton configurado y conectado.
+ */
+GtkWidget *gapp_inspector_widgets_input_bool(ecs_meta_cursor_t cursor)
+{
+    ecs_bool_t *field = (ecs_bool_t *)ecs_meta_get_ptr(&cursor);
+
+    GtkWidget *check = gtk_check_button_new();
+    gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(check), (ecs_bool_t)*field);
+
+    g_signal_connect(check, "toggled", G_CALLBACK(signal_input_bool), field);
+
+    return check;
+}
+
+/**
  * @brief Crea un widget de entrada para un campo u32.
  *
  * Esta función crea un widget GtkSpinButton para un campo u32 de ECS,
@@ -181,10 +233,35 @@ GtkWidget *gapp_inspector_widgets_input_f64(ecs_meta_cursor_t cursor)
     GtkWidget *number_spin = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
-    gtk_spin_button_set_digits(GTK_SPIN_BUTTON(number_spin), 6); // Establecer 6 dígitos decimales
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);
 
     g_signal_connect(number_spin, "value-changed", G_CALLBACK(signal_input_f64), field);
+
+    return number_spin;
+}
+
+/**
+ * Creates a spin button widget for inputting float (f32) values in the inspector.
+ *
+ * This function generates a GtkSpinButton widget for editing a float value.
+ * It sets up the spin button with a wide range, fine-grained step size,
+ * and high precision. The current value is set based on the field pointed
+ * to by the ECS meta cursor, and a signal handler is connected to update
+ * the field when the value changes.
+ *
+ * @param cursor ECS meta cursor pointing to an ecs_f32_t field.
+ * @return A GtkWidget (GtkSpinButton) for inputting float values.
+ */
+GtkWidget *gapp_inspector_widgets_input_f32(ecs_meta_cursor_t cursor)
+{
+    ecs_f32_t *field = (ecs_f32_t *)ecs_meta_get_ptr(&cursor);
+
+    GtkWidget *number_spin = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
+    gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(number_spin, TRUE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);
+
+    g_signal_connect(number_spin, "value-changed", G_CALLBACK(signal_input_f32), field);
 
     return number_spin;
 }
@@ -282,6 +359,43 @@ GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
  * @param cursor Cursor de metadatos ECS (no utilizado en esta implementación).
  * @return Un widget GtkBox que contiene el menú desplegable de recursos.
  */
+static void setup_listitem(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data)
+{
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+    gtk_widget_set_margin_start(box, 6);
+    gtk_widget_set_margin_end(box, 6);
+    gtk_widget_set_margin_top(box, 6);
+    gtk_widget_set_margin_bottom(box, 6);
+    gtk_list_item_set_child(list_item, box);
+
+    GtkWidget *icon = gtk_image_new();
+    gtk_box_append(GTK_BOX(box), icon);
+
+    GtkWidget *label = gtk_label_new(NULL);
+    gtk_box_append(GTK_BOX(box), label);
+}
+
+static void bind_listitem(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data)
+{
+    GFileInfo *fileinfo = gtk_list_item_get_item(list_item);
+    GFile *file = G_FILE(g_file_info_get_attribute_object(fileinfo, "standard::file"));
+
+    GtkWidget *box = gtk_list_item_get_child(list_item);
+
+    GtkWidget *icon = gtk_widget_get_first_child(box);
+    GtkWidget *label = gtk_widget_get_last_child(box);
+
+    // TODO: Una func para obtener el icono de los archivos...
+    const char *ext_file = g_file_info_get_name(fileinfo);
+    if (gobu_fs_is_extension(ext_file, ".png") || gobu_fs_is_extension(ext_file, ".jpg"))
+        gtk_image_set_from_file(icon, g_file_get_path(file));
+    else
+        gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileinfo));
+
+    const char *name = g_file_info_get_display_name(fileinfo);
+    gtk_label_set_text(GTK_LABEL(label), name);
+}
+
 static GtkWidget *gapp_inspector_widgets_input_resource(GtkCustomFilter *filter, ecs_meta_cursor_t cursor)
 {
     const char *content_path = "C:/Users/hbibl/OneDrive/Documentos/Gobu Projects/Platformer/Data/Content/";
@@ -292,8 +406,14 @@ static GtkWidget *gapp_inspector_widgets_input_resource(GtkCustomFilter *filter,
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 1);
 
+    GtkListItemFactory *factory = gtk_signal_list_item_factory_new();
+    g_signal_connect(factory, "setup", G_CALLBACK(setup_listitem), NULL);
+    g_signal_connect(factory, "bind", G_CALLBACK(bind_listitem), NULL);
+
     GtkWidget *dropdown = gtk_drop_down_new(G_LIST_MODEL(filter_model), NULL);
     gtk_drop_down_set_enable_search(GTK_DROP_DOWN(dropdown), TRUE);
+    // gtk_drop_down_set_expression(GTK_DROP_DOWN(dropdown), gtk_property_expression_new(G_TYPE_FILE_INFO, NULL, "name"));
+    gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown), factory);
     gtk_box_append(GTK_BOX(box), dropdown);
 
     g_object_unref(content_dir);
@@ -312,9 +432,9 @@ static gboolean filter_texture_func(GFileInfo *file, gpointer data)
 
 GtkWidget *gapp_inspector_widgets_input_texture(ecs_meta_cursor_t cursor)
 {
-    GtkCustomFilter *filter = gtk_custom_filter_new((GtkCustomFilterFunc)filter_texture_func, NULL, NULL);
+    GtkCustomFilter *filter = gtk_custom_filter_new(filter_texture_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
-    g_object_unref(filter);
+    // g_object_unref(filter);
     return widget;
 }
 
@@ -327,9 +447,9 @@ static gboolean filter_font_func(GFileInfo *file, gpointer data)
 
 GtkWidget *gapp_inspector_widgets_input_font(ecs_meta_cursor_t cursor)
 {
-    GtkCustomFilter *filter = gtk_custom_filter_new((GtkCustomFilterFunc)filter_font_func, NULL, NULL);
+    GtkCustomFilter *filter = gtk_custom_filter_new(filter_font_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
-    g_object_unref(filter);
+    // g_object_unref(filter);
     return widget;
 }
 
@@ -343,9 +463,9 @@ static gboolean filter_sounds_func(GFileInfo *file, gpointer data)
 
 GtkWidget *gapp_inspector_widgets_input_sound(ecs_meta_cursor_t cursor)
 {
-    GtkCustomFilter *filter = gtk_custom_filter_new((GtkCustomFilterFunc)filter_sounds_func, NULL, NULL);
+    GtkCustomFilter *filter = gtk_custom_filter_new(filter_sounds_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
-    g_object_unref(filter);
+    // g_object_unref(filter);
     return widget;
 }
 
@@ -358,8 +478,8 @@ static gboolean filter_scene_func(GFileInfo *file, gpointer data)
 
 GtkWidget *gapp_inspector_widgets_input_scene(ecs_meta_cursor_t cursor)
 {
-    GtkCustomFilter *filter = gtk_custom_filter_new((GtkCustomFilterFunc)filter_scene_func, NULL, NULL);
+    GtkCustomFilter *filter = gtk_custom_filter_new(filter_scene_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
-    g_object_unref(filter);
+    // g_object_unref(filter);
     return widget;
 }

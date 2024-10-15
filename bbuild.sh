@@ -1,13 +1,15 @@
 #!/bin/bash
 
+#GSK_RENDERER=cairo ./gobu
+
 if [ "$1" = "run" ]; then
     cd bin
-    GSK_RENDERER=cairo ./gobu
+    ./gobu
 else
     meson --reconfigure --wipe build
     cd build
     ninja install
     cd ..
     cd bin
-    GSK_RENDERER=cairo ./gobu
+    ./gobu
 fi

@@ -7,5 +7,7 @@
 #include "src/rlgl.h"
 #endif
 
+void pixi_draw_grid(int width, int height, int size);
+
 #endif // PIXI_H
 

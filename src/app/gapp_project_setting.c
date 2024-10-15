@@ -42,13 +42,6 @@ static void gobu_project_setting_init(GappProjectSetting *self)
 // MARK:FUNCTION
 // -----------------
 
-static GtkWidget *gobu_project_setting_stack_page_new(const gchar *title, const gchar *icon_name, GtkWidget *child)
-{
-    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    {
-    }
-}
-
 // ---------------------------
 // WIDGET PROPERTY COLOR
 // ---------------------------

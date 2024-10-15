@@ -269,7 +269,7 @@ static gboolean gobu_fn_open_editor_main(const gchar *path, GobuProjectManager *
         return FALSE;
     }
 
-    gobu_editor_main_init_project(gapp_get_editor_instance(), path);
+    gapp_open_project(gapp_get_editor_instance(), path);
 
     g_debug("Editor main opened successfully for project: %s", path);
     return TRUE;

@@ -703,11 +703,11 @@ Image LoadImageFromTexture(Texture2D texture)
 // Load image from screen buffer and (screenshot)
 Image LoadImageFromScreen(void)
 {
-    Vector2 scale = GetScaleDPI();
+    Vector2 scale = pixi_get_dpi();
     Image image = { 0 };
 
-    image.width = (int)(GetScreenWidth()*scale.x);
-    image.height = (int)(GetScreenHeight()*scale.y);
+    image.width = (int)(pixi_screen_width()*scale.x);
+    image.height = (int)(pixi_screen_height()*scale.y);
     image.mipmaps = 1;
     image.format = PIXELFORMAT_UNCOMPRESSED_R8G8B8A8;
     image.data = rlReadScreenPixels(image.width, image.height);
@@ -3425,7 +3425,7 @@ Color GetImageColor(Image image, int x, int y)
 // Image drawing functions
 //------------------------------------------------------------------------------------
 // Clear image background with given color
-void ImageClearBackground(Image *dst, Color color)
+void Imagepixi_render_clear_color(Image *dst, Color color)
 {
     // Security check to avoid program crash
     if ((dst->data == NULL) || (dst->width == 0) || (dst->height == 0)) return;

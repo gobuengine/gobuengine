@@ -289,7 +289,7 @@ static void disableRawMouseMotion(_GLFWwindow* window)
 
 // Apply disabled cursor mode to a focused window
 //
-static void disableCursor(_GLFWwindow* window)
+static void pixi_input_disable_cursor(_GLFWwindow* window)
 {
     _glfw.win32.disabledCursorWindow = window;
     _glfwGetCursorPosWin32(window,
@@ -305,7 +305,7 @@ static void disableCursor(_GLFWwindow* window)
 
 // Exit disabled cursor mode for the specified window
 //
-static void enableCursor(_GLFWwindow* window)
+static void pixi_input_enable_cursor(_GLFWwindow* window)
 {
     if (window->rawMouseMotion)
         disableRawMouseMotion(window);
@@ -577,7 +577,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             if (lParam == 0 && window->win32.frameAction)
             {
                 if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                    disableCursor(window);
+                    pixi_input_disable_cursor(window);
                 else if (window->cursorMode == GLFW_CURSOR_CAPTURED)
                     captureCursor(window);
 
@@ -597,7 +597,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
                 break;
 
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                disableCursor(window);
+                pixi_input_disable_cursor(window);
             else if (window->cursorMode == GLFW_CURSOR_CAPTURED)
                 captureCursor(window);
 
@@ -607,7 +607,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
         case WM_KILLFOCUS:
         {
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                enableCursor(window);
+                pixi_input_enable_cursor(window);
             else if (window->cursorMode == GLFW_CURSOR_CAPTURED)
                 releaseCursor();
 
@@ -998,7 +998,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             // HACK: Enable the cursor while the user is moving or
             //       resizing the window or using the window menu
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                enableCursor(window);
+                pixi_input_enable_cursor(window);
             else if (window->cursorMode == GLFW_CURSOR_CAPTURED)
                 releaseCursor();
 
@@ -1014,7 +1014,7 @@ static LRESULT CALLBACK windowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
             // HACK: Disable the cursor once the user is done moving or
             //       resizing the window or using the menu
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                disableCursor(window);
+                pixi_input_disable_cursor(window);
             else if (window->cursorMode == GLFW_CURSOR_CAPTURED)
                 captureCursor(window);
 
@@ -1563,7 +1563,7 @@ void _glfwDestroyWindowWin32(_GLFWwindow* window)
         window->context.destroy(window);
 
     if (_glfw.win32.disabledCursorWindow == window)
-        enableCursor(window);
+        pixi_input_enable_cursor(window);
 
     if (_glfw.win32.capturedCursorWindow == window)
         releaseCursor();

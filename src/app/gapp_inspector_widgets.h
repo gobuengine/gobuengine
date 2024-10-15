@@ -7,8 +7,10 @@
 
 
 GtkWidget *gapp_inspector_widgets_input_string(ecs_meta_cursor_t cursor);
+GtkWidget *gapp_inspector_widgets_input_bool(ecs_meta_cursor_t cursor);
 GtkWidget *gapp_inspector_widgets_input_u32(ecs_meta_cursor_t cursor);
 GtkWidget *gapp_inspector_widgets_input_f64(ecs_meta_cursor_t cursor);
+GtkWidget *gapp_inspector_widgets_input_f32(ecs_meta_cursor_t cursor);
 GtkWidget *gapp_inspector_widgets_input_color(ecs_meta_cursor_t cursor);
 GtkWidget *gapp_inspector_widgets_input_vector2(ecs_meta_cursor_t cursor);
 

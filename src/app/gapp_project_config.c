@@ -1,5 +1,5 @@
 #include "gapp_project_config.h"
-#include "binn/binn_json.h"
+// #include "binn/binn_json.h"
 
 // --------------------
 // MARK:BASE CLASS

@@ -2,7 +2,6 @@
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_level_editor.h"
-#include "gapp_editor.h"
 #include "gapp_script.h"
 #include "gapp.h"
 
@@ -60,6 +59,23 @@ static void gapp_browser_init(GappBrowser *self)
 // --- END CLASS ---
 
 // MARK: API PRIVATE
+
+/**
+ * Configura un GtkDirectoryList para monitoreo con prioridad de inactividad.
+ *
+ * Esta función habilita el monitoreo en el GtkDirectoryList proporcionado
+ * y establece su prioridad de E/S a la prioridad predeterminada de inactividad.
+ *
+ * @param directory Puntero al GtkDirectoryList a configurar.
+ */
+static void gapp_browser_set_monitored_directory(GtkDirectoryList *directory)
+{
+    g_return_if_fail(GTK_IS_DIRECTORY_LIST(directory));
+
+    gtk_directory_list_set_monitored(directory, TRUE);
+    gtk_directory_list_set_io_priority(directory, G_PRIORITY_DEFAULT_IDLE);
+}
+
 /**
  * Crea un modelo de lista ordenado a partir de los archivos en un directorio.
  *
@@ -73,8 +89,7 @@ static void gapp_browser_init(GappBrowser *self)
 static GListModel *gapp_browser_fn_create_list_model(GFile *file)
 {
     GtkDirectoryList *list = gtk_directory_list_new("standard::*", file);
-    gtk_directory_list_set_io_priority(GTK_DIRECTORY_LIST(list), G_PRIORITY_DEFAULT_IDLE);
-    // gtk_directory_list_set_monitored(GTK_DIRECTORY_LIST(list), TRUE);
+    gapp_browser_set_monitored_directory(list);
     return G_LIST_MODEL(gtk_sort_list_model_new(G_LIST_MODEL(list), gtk_custom_sorter_new(gapp_browser_fn_sorting, NULL, NULL)));
 }
 
@@ -503,11 +518,11 @@ static void gapp_browser_s_view_file_activated(GtkListView *self, guint position
     const char *filename = g_file_info_get_name(info);
     if (gobu_fs_is_extension(filename, BROWSER_FILE_SCRIPT))
     {
-        gapp_editor_append_right_panel(gapp_get_editor_instance(), filename, gapp_script_new(g_file_get_path(file)), TRUE);
+        gapp_append_right_panel(gapp_get_editor_instance(), filename, gapp_script_new(g_file_get_path(file)), TRUE);
     }
     else if (gobu_fs_is_extension(filename, BROWSER_FILE_SCENE))
     {
-        gapp_editor_append_right_panel(gapp_get_editor_instance(), filename, gobu_level_editor_new(), TRUE);
+        gapp_append_right_panel(gapp_get_editor_instance(), filename, gobu_level_editor_new(), TRUE);
     }
 }
 
@@ -716,7 +731,7 @@ static void gapp_browser_ui_setup(GappBrowser *self)
     gtk_box_append(GTK_BOX(self), scroll);
     {
         self->directory = gtk_directory_list_new("standard::*", NULL);
-        gtk_directory_list_set_monitored(GTK_DIRECTORY_LIST(self->directory), TRUE);
+        gapp_browser_set_monitored_directory(self->directory);
 
         GtkTreeListModel *tree_model = gtk_tree_list_model_new(G_LIST_MODEL(self->directory),
                                                                FALSE,
@@ -786,6 +801,7 @@ void gapp_browser_set_folder(GappBrowser *browser, const gchar *path)
 
     g_return_if_fail(GTK_IS_DIRECTORY_LIST(browser->directory));
     gtk_directory_list_set_file(GTK_DIRECTORY_LIST(browser->directory), file);
+    gapp_browser_set_monitored_directory(GTK_DIRECTORY_LIST(browser->directory));
 
     g_object_unref(file);
 }

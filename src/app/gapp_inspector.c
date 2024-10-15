@@ -39,6 +39,8 @@ static void gapp_inspector_init(GappInspector *self)
     gtk_widget_add_css_class(self->listbox, "inspector_list");
     gtk_list_box_set_selection_mode(self->listbox, GTK_SELECTION_NONE);
     gtk_box_append(GTK_BOX(self), self->listbox);
+
+
 }
 
 // ---------------------------
@@ -117,40 +119,44 @@ static GtkWidget *gapp_inspector_group_new(GtkWidget *list, const gchar *title_s
 static void gapp_inspector_component_add_props_widget(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component)
 {
     ecs_meta_cursor_t cursor = ecs_meta_cursor(world, component, ptr);
+
     ecs_meta_push(&cursor);
-    do
+    for (int i = 0; i < ECS_MEMBER_DESC_CACHE_SIZE; i++)
     {
         GtkWidget *input = NULL;
-        ecs_entity_t field_type = ecs_meta_get_type(&cursor);
         const char *field_name = ecs_meta_get_member(&cursor);
+        if (!field_name)
+            break;
 
-        printf("A: %s\n", ecs_meta_get_member(&cursor));
+        struct WidgetCreator
+        {
+            ecs_entity_t type;
+            GtkWidget *(*create_widget)(ecs_meta_cursor_t);
+        } WidgetCreator[] = {
+            {ecs_id(ecs_string_t), gapp_inspector_widgets_input_string},
+            {ecs_id(ecs_bool_t), gapp_inspector_widgets_input_bool},
+            {ecs_id(ecs_u32_t), gapp_inspector_widgets_input_u32},
+            {ecs_id(ecs_f64_t), gapp_inspector_widgets_input_f64},
+            {ecs_id(ecs_f32_t), gapp_inspector_widgets_input_f32},
+            {ecs_id(pixio_vector2_t), gapp_inspector_widgets_input_vector2},
+            {ecs_id(pixio_color_t), gapp_inspector_widgets_input_color},
+            {ecs_id(pixio_resource_texture_t), gapp_inspector_widgets_input_texture},
+            {ecs_id(pixio_resource_font_t), gapp_inspector_widgets_input_font},
+            {ecs_id(pixio_texture_filter_t), gapp_inspector_widgets_input_enum},
+            {0, NULL} // Marca de fin
+            // Agregar más tipos según sea necesario
+        };
 
-        // struct WidgetCreator
-        // {
-        //     ecs_entity_t type;
-        //     GtkWidget *(*create_widget)(ecs_meta_cursor_t);
-        // } WidgetCreator[] = {
-        //     {ecs_id(ecs_string_t), widget_input_string},
-        //     {ecs_id(ecs_u32_t), widget_input_number},
-        //     {ecs_id(ecs_f64_t), widget_input_number_f64_t},
-        //     {ecs_id(ecs_f32_t), widget_input_number_f32_t},
-        //     {ecs_id(pixio_vector2_t), widget_input_vector2},
-        //     {ecs_id(pixio_color_t), widget_input_color},
-        //     {ecs_id(pixio_resource_font_t), widget_input_resource},
-        //     {ecs_id(pixio_resource_texture_t), widget_input_resource},
-        //     {ecs_id(pixio_texture_filter_t), widget_input_enums},
-        //     // Agregar más tipos según sea necesario
-        // };
+        ecs_entity_t field_type = ecs_meta_get_type(&cursor);
 
-        // for (size_t i = 0; i < G_N_ELEMENTS(WidgetCreator); i++)
-        // {
-        //     if (WidgetCreator[i].type == field_type)
-        //     {
-        //         input = WidgetCreator[i].create_widget(cursor);
-        //         break;
-        //     }
-        // }
+        for (size_t i = 0; i < G_N_ELEMENTS(WidgetCreator); i++)
+        {
+            if (WidgetCreator[i].type == field_type && WidgetCreator[i].create_widget != NULL)
+            {
+                input = WidgetCreator[i].create_widget(cursor);
+                break;
+            }
+        }
 
         if (input)
         {
@@ -158,7 +164,9 @@ static void gapp_inspector_component_add_props_widget(GtkWidget *content, ecs_wo
             GtkWidget *child = gapp_inspector_group_child_new(size_group, field_name, input, GTK_ORIENTATION_HORIZONTAL);
             gtk_box_append(GTK_BOX(content), child);
         }
-    } while (ecs_meta_next(&cursor) == 0);
+
+        ecs_meta_next(&cursor);
+    }
     ecs_meta_pop(&cursor);
 }
 

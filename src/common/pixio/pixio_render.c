@@ -36,7 +36,7 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
                        .callback = pixio_render_pre_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.Draw))}),
-                       .query.terms = {{ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}},
+                       .query.terms = {{ecs_id(pixio_entity_t)}, {ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}},
                        .callback = pixio_render_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.PostDraw))}),
@@ -46,8 +46,14 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
 
 static void pixio_render_pre_draw(ecs_iter_t *it)
 {
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
+    pixio_render_t *render = ecs_field(it, pixio_render_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        pixi_render_begin();
+        pixi_render_clear_color(render[i].clear_color);
+        pixi_draw_grid(pixi_screen_width(), pixi_screen_height(), render[i].grid_size);
+    }
 }
 
 // ecs_iter_t child_it = ecs_children(it->world, it->entities[i]);
@@ -57,14 +63,18 @@ static void pixio_render_pre_draw(ecs_iter_t *it)
 
 static void pixio_render_draw(ecs_iter_t *it)
 {
-    pixio_transform_t *transform = ecs_field(it, pixio_transform_t, 0);
-    pixio_text_t *draw_text = ecs_field(it, pixio_text_t, 1);
-    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, 2);
-    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, 3);
+    pixio_entity_t *einfo = ecs_field(it, pixio_entity_t, 0);
+    pixio_transform_t *transform = ecs_field(it, pixio_transform_t, 1);
+    pixio_text_t *draw_text = ecs_field(it, pixio_text_t, 2);
+    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, 3);
+    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, 4);
 
     for (int i = 0; i < it->count; i++)
     {
         pixio_transform_t t = transform[i];
+
+        if (einfo[i].enabled == false)
+            continue;
 
         rlPushMatrix();
         {
@@ -101,5 +111,13 @@ static void pixio_render_draw(ecs_iter_t *it)
 
 static void pixio_render_post_draw(ecs_iter_t *it)
 {
-    EndDrawing();
+    pixio_render_t *render = ecs_field(it, pixio_render_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        int vwidth = render[i].viewport.width;
+        int vheight = render[i].viewport.height;
+        DrawRectangleRoundedLinesEx((Rectangle){0, 0, vwidth, vheight}, 0.0, 1, 4.0, render[i].viewport_lineColor);
+        pixi_render_end();
+    }
 }

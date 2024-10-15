@@ -22,6 +22,10 @@ extern "C"
     typedef struct pixio_render_t
     {
         int id;
+        pixio_size_t viewport;
+        pixio_color_t clear_color;
+        pixio_color_t viewport_lineColor;
+        int grid_size;
     } pixio_render_t;
 
     // global component

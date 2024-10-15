@@ -209,31 +209,15 @@ typedef struct { unsigned int width; unsigned int height; } Size;
 // Core global state context data
 typedef struct CoreData {
     struct {
-        const char *title;                  // Window text title const pointer
-        unsigned int flags;                 // Configuration flags (bit based), keeps window state
-        bool ready;                         // Check if window has been initialized successfully
-        bool fullscreen;                    // Check if fullscreen mode is enabled
-        bool shouldClose;                   // Check if window set for closing
-        bool resizedLastFrame;              // Check if window has been resized last frame
-        bool eventWaiting;                  // Wait for events before ending frame
         bool usingFbo;                      // Using FBO (RenderTexture) for rendering instead of default framebuffer
-
-        Point position;                     // Window position (required on fullscreen toggle)
-        Point previousPosition;             // Window previous position (required on borderless windowed toggle)
+        
         Size display;                       // Display width and height (monitor, device-screen, LCD, ...)
         Size screen;                        // Screen width and height (used render area)
-        Size previousScreen;                // Screen previous width and height (required on borderless windowed toggle)
         Size currentFbo;                    // Current render width and height (depends on active fbo)
         Size render;                        // Framebuffer width and height (render area, including black bars if required)
         Point renderOffset;                 // Offset from render area (must be divided by 2)
-        Size screenMin;                     // Screen minimum width and height (for resizable window)
-        Size screenMax;                     // Screen maximum width and height (for resizable window)
         Matrix screenScale;                 // Matrix to scale screen (framebuffer rendering)
-
-        char **dropFilepaths;               // Store dropped files paths pointers (provided by GLFW)
-        unsigned int dropFileCount;         // Count dropped files strings
-
-    } Window;
+    } Render;
     struct {
         const char *basePath;               // Base path for data storage
 
@@ -348,17 +332,14 @@ const char *TextFormat(const char *text, ...);              // Formatting of tex
 
 // Initialize window and OpenGL context
 // NOTE: data parameter could be used to pass any kind of required data to the initialization
-void InitWindow(int width, int height)
+void pixi_init(int width, int height)
 {
-    TRACELOG(LOG_INFO, "Initializing raylib %s", RAYLIB_VERSION);
-
     // Initialize window data
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-    CORE.Window.eventWaiting = false;
-    CORE.Window.screenScale = MatrixIdentity();     // No draw scaling required by default
+    CORE.Render.screen.width = width;
+    CORE.Render.screen.height = height;
+    CORE.Render.currentFbo.width = width;
+    CORE.Render.currentFbo.height = height;
+    CORE.Render.screenScale = MatrixIdentity();     // No draw scaling required by default
 
     // Initialize global input state
     memset(&CORE.Input, 0, sizeof(CORE.Input));     // Reset CORE.Input structure to 0
@@ -370,12 +351,12 @@ void InitWindow(int width, int height)
     rlLoadExtensions(NULL);
 
     // Initialize rlgl default data (buffers and shaders)
-    // NOTE: CORE.Window.currentFbo.width and CORE.Window.currentFbo.height not used, just stored as globals in rlgl
-    rlglInit(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    // NOTE: CORE.Render.currentFbo.width and CORE.Render.currentFbo.height not used, just stored as globals in rlgl
+    rlglInit(CORE.Render.currentFbo.width, CORE.Render.currentFbo.height);
     isGpuReady = true; // Flag to note GPU has been initialized successfully
 
     // Setup default viewport
-    SetupViewport(CORE.Window.currentFbo.width, CORE.Window.currentFbo.height);
+    SetupViewport(CORE.Render.currentFbo.width, CORE.Render.currentFbo.height);
 
 #if defined(SUPPORT_MODULE_RTEXT)
     #if defined(SUPPORT_DEFAULT_FONT)
@@ -386,16 +367,7 @@ void InitWindow(int width, int height)
         // Set font white rectangle for shapes drawing, so shapes and text can be batched together
         // WARNING: rshapes module is required, if not available, default internal white rectangle is used
         Rectangle rec = GetFontDefault().recs[95];
-        if (CORE.Window.flags & FLAG_MSAA_4X_HINT)
-        {
-            // NOTE: We try to maxime rec padding to avoid pixel bleeding on MSAA filtering
-            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
-        }
-        else
-        {
-            // NOTE: We set up a 1px padding on char rectangle to avoid pixel bleeding
-            SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 1, rec.y + 1, rec.width - 2, rec.height - 2 });
-        }
+        SetShapesTexture(GetFontDefault().texture, (Rectangle){ rec.x + 2, rec.y + 2, 1, 1 });
         #endif
     #endif
 #else
@@ -408,7 +380,6 @@ void InitWindow(int width, int height)
 #endif
 
     CORE.Time.frameCounter = 0;
-    CORE.Window.shouldClose = false;
 
     // Initialize random seed
     SetRandomSeed((unsigned int)time(NULL));
@@ -417,7 +388,7 @@ void InitWindow(int width, int height)
 }
 
 // Close window and unload OpenGL context
-void CloseWindow(void)
+void pixi_shutdown(void)
 {
 
 #if defined(SUPPORT_MODULE_RTEXT) && defined(SUPPORT_DEFAULT_FONT)
@@ -426,80 +397,61 @@ void CloseWindow(void)
 
     rlglClose();                // De-init rlgl
 
-    CORE.Window.ready = false;
     TRACELOG(LOG_INFO, "Window closed successfully");
 }
 
-Vector2 GetScaleDPI(void)
+Vector2 pixi_get_dpi(void)
 {
     Vector2 scale = { 1.0f, 1.0f };
     return scale;
 }
 
-// Check if window has been initialized successfully
-bool IsWindowReady(void)
-{
-    return CORE.Window.ready;
-}
-
 // Get current screen width
-int GetScreenWidth(void)
+int pixi_screen_width(void)
 {
-    return CORE.Window.screen.width;
+    return CORE.Render.screen.width;
 }
 
 // Get current screen height
-int GetScreenHeight(void)
+int pixi_screen_height(void)
 {
-    return CORE.Window.screen.height;
+    return CORE.Render.screen.height;
 }
 
 // Get current render width which is equal to screen width*dpi scale
-int GetRenderWidth(void)
+int pixi_render_width(void)
 {
     int width = 0;
 #if defined(__APPLE__)
-    Vector2 scale = GetScaleDPI();
-    width = (int)((float)CORE.Window.render.width*scale.x);
+    Vector2 scale = pixi_get_dpi();
+    width = (int)((float)CORE.Render.render.width*scale.x);
 #else
-    width = CORE.Window.render.width;
+    width = CORE.Render.render.width;
 #endif
     return width;
 }
 
 // Get current screen height which is equal to screen height*dpi scale
-int GetRenderHeight(void)
+int pixi_render_height(void)
 {
     int height = 0;
 #if defined(__APPLE__)
-    Vector2 scale = GetScaleDPI();
-    height = (int)((float)CORE.Window.render.height*scale.y);
+    Vector2 scale = pixi_get_dpi();
+    height = (int)((float)CORE.Render.render.height*scale.y);
 #else
-    height = CORE.Window.render.height;
+    height = CORE.Render.render.height;
 #endif
     return height;
 }
 
-// Enable waiting for events on EndDrawing(), no automatic event polling
-void EnableEventWaiting(void)
-{
-    CORE.Window.eventWaiting = true;
-}
-
-// Disable waiting for events on EndDrawing(), automatic events polling
-void DisableEventWaiting(void)
-{
-    CORE.Window.eventWaiting = false;
-}
-
 // Check if cursor is not visible
-bool IsCursorHidden(void)
+bool pixi_input_is_cursor_hidden(void)
 {
     return CORE.Input.Mouse.cursorHidden;
 }
 
 // Check if cursor is on the current screen
-bool IsCursorOnScreen(void)
+bool pixi_input_is_cursor_on_screen(void)
 {
     return CORE.Input.Mouse.cursorOnScreen;
 }
@@ -509,16 +461,16 @@ bool IsCursorOnScreen(void)
 //----------------------------------------------------------------------------------
 
 // Set background color (framebuffer clear color)
-void ClearBackground(Color color)
+void pixi_render_clear_color(Color color)
 {
     rlClearColor(color.r, color.g, color.b, color.a);   // Set clear color
     rlClearScreenBuffers();                             // Clear current framebuffers
 }
 
 // Setup canvas (framebuffer) to start drawing
-void BeginDrawing(void)
+void pixi_render_begin(void)
 {
-    // WARNING: Previously to BeginDrawing() other render textures drawing could happen,
+    // WARNING: Previously to pixi_render_begin() other render textures drawing could happen,
     // consequently the measure for update vs draw is not accurate (only the total frame time is accurate)
 
     CORE.Time.current = GetTime();      // Number of elapsed seconds since InitTimer()
@@ -526,14 +478,14 @@ void BeginDrawing(void)
     CORE.Time.previous = CORE.Time.current;
 
     rlLoadIdentity();                   // Reset current matrix (modelview)
-    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling
+    rlMultMatrixf(MatrixToFloat(CORE.Render.screenScale)); // Apply screen scaling
 
     //rlTranslatef(0.375, 0.375, 0);    // HACK to have 2D pixel-perfect drawing on OpenGL 1.1
                                         // NOTE: Not required with OpenGL 3.3+
 }
 
 // End canvas drawing and swap buffers (double buffering)
-void EndDrawing(void)
+void pixi_render_end(void)
 {
     rlDrawRenderBatchActive();      // Update and draw internal render batch
 
@@ -583,7 +535,7 @@ void EndMode2D(void)
 
     rlLoadIdentity();               // Reset current matrix (modelview)
 
-    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    if (rlGetActiveFramebuffer() == 0) rlMultMatrixf(MatrixToFloat(CORE.Render.screenScale)); // Apply screen scaling if required
 }
 
 // Initializes render texture for drawing
@@ -612,9 +564,9 @@ void BeginTextureMode(RenderTexture2D target)
 
     // Setup current width/height for proper aspect ratio
     // calculation when using BeginMode3D()
-    CORE.Window.currentFbo.width = target.texture.width;
-    CORE.Window.currentFbo.height = target.texture.height;
-    CORE.Window.usingFbo = true;
+    CORE.Render.currentFbo.width = target.texture.width;
+    CORE.Render.currentFbo.height = target.texture.height;
+    CORE.Render.usingFbo = true;
 }
 
 // Ends drawing to render texture
@@ -625,17 +577,17 @@ void EndTextureMode(void)
     rlDisableFramebuffer();         // Disable render target (fbo)
 
     // Set viewport to default framebuffer size
-    SetupViewport(CORE.Window.render.width, CORE.Window.render.height);
+    SetupViewport(CORE.Render.render.width, CORE.Render.render.height);
 
-    // Go back to the modelview state from BeginDrawing since we are back to the default FBO
+    // Go back to the modelview state from pixi_render_begin since we are back to the default FBO
     rlMatrixMode(RL_MODELVIEW);     // Switch back to modelview matrix
     rlLoadIdentity();               // Reset current matrix (modelview)
-    rlMultMatrixf(MatrixToFloat(CORE.Window.screenScale)); // Apply screen scaling if required
+    rlMultMatrixf(MatrixToFloat(CORE.Render.screenScale)); // Apply screen scaling if required
 
     // Reset current fbo to screen size
-    CORE.Window.currentFbo.width = CORE.Window.render.width;
-    CORE.Window.currentFbo.height = CORE.Window.render.height;
-    CORE.Window.usingFbo = false;
+    CORE.Render.currentFbo.width = CORE.Render.render.width;
+    CORE.Render.currentFbo.height = CORE.Render.render.height;
+    CORE.Render.usingFbo = false;
 }
 
 // Begin custom shader mode
@@ -672,21 +624,22 @@ void BeginScissorMode(int x, int y, int width, int height)
     rlEnableScissorTest();
 
 #if defined(__APPLE__)
-    if (!CORE.Window.usingFbo)
+    if (!CORE.Render.usingFbo)
     {
-        Vector2 scale = GetScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(GetScreenHeight()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
+        Vector2 scale = pixi_get_dpi();
+        rlScissor((int)(x*scale.x), (int)(pixi_screen_height()*scale.y - (((y + height)*scale.y))), (int)(width*scale.x), (int)(height*scale.y));
     }
 #else
-    if (!CORE.Window.usingFbo && ((CORE.Window.flags & FLAG_WINDOW_HIGHDPI) > 0))
+    if (!CORE.Render.usingFbo)
     {
-        Vector2 scale = GetScaleDPI();
-        rlScissor((int)(x*scale.x), (int)(CORE.Window.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
+        Vector2 scale = pixi_get_dpi();
+        if (scale.x >= 0 && scale.y >= 0)
+            rlScissor((int)(x*scale.x), (int)(CORE.Render.currentFbo.height - (y + height)*scale.y), (int)(width*scale.x), (int)(height*scale.y));
     }
 #endif
     else
     {
-        rlScissor(x, CORE.Window.currentFbo.height - (y + height), width, height);
+        rlScissor(x, CORE.Render.currentFbo.height - (y + height), width, height);
     }
 }
 
@@ -1150,9 +1103,9 @@ void TakeScreenshot(const char *fileName)
     // Security check to (partially) avoid malicious code
     if (strchr(fileName, '\'') != NULL) { TRACELOG(LOG_WARNING, "SYSTEM: Provided fileName could be potentially malicious, avoid [\'] character"); return; }
 
-    Vector2 scale = GetScaleDPI();
-    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y));
-    Image image = { imgData, (int)((float)CORE.Window.render.width*scale.x), (int)((float)CORE.Window.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
+    Vector2 scale = pixi_get_dpi();
+    unsigned char *imgData = rlReadScreenPixels((int)((float)CORE.Render.render.width*scale.x), (int)((float)CORE.Render.render.height*scale.y));
+    Image image = { imgData, (int)((float)CORE.Render.render.width*scale.x), (int)((float)CORE.Render.render.height*scale.y), 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8 };
 
     char path[512] = { 0 };
     strcpy(path, TextFormat("%s/%s", CORE.Storage.basePath, GetFileName(fileName)));
@@ -1175,7 +1128,7 @@ void SetConfigFlags(unsigned int flags)
 {
     // Selected flags are set but not evaluated at this point,
     // flag evaluation happens at InitWindow() or SetWindowState()
-    CORE.Window.flags |= flags;
+    // CORE.Render.flags |= flags;
 }
 
 //----------------------------------------------------------------------------------
@@ -1694,43 +1647,6 @@ bool IsFileNameValid(const char *fileName)
     }
 
     return valid;
-}
-
-// Check if a file has been dropped into window
-bool IsFileDropped(void)
-{
-    bool result = false;
-
-    if (CORE.Window.dropFileCount > 0) result = true;
-
-    return result;
-}
-
-// Load dropped filepaths
-FilePathList LoadDroppedFiles(void)
-{
-    FilePathList files = { 0 };
-
-    files.count = CORE.Window.dropFileCount;
-    files.paths = CORE.Window.dropFilepaths;
-
-    return files;
-}
-
-// Unload dropped filepaths
-void UnloadDroppedFiles(FilePathList files)
-{
-    // WARNING: files pointers are the same as internal ones
-
-    if (files.count > 0)
-    {
-        for (unsigned int i = 0; i < files.count; i++) RL_FREE(files.paths[i]);
-
-        RL_FREE(files.paths);
-
-        CORE.Window.dropFileCount = 0;
-        CORE.Window.dropFilepaths = NULL;
-    }
 }
 
 // Get file modification time (last write time)
@@ -2318,21 +2234,17 @@ void InitTimer(void)
     CORE.Time.previous = GetTime();     // Get time as double
 }
 
-void UpdateViewportSize(int width, int height)
+void pixi_adjust_viewport_size(int width, int height)
 {
     // Reset viewport and projection matrix for new size
     SetupViewport(width, height);
 
-    CORE.Window.currentFbo.width = width;
-    CORE.Window.currentFbo.height = height;
-    CORE.Window.resizedLastFrame = true;
-
-    // if (IsWindowFullscreen()) return;
+    CORE.Render.currentFbo.width = width;
+    CORE.Render.currentFbo.height = height;
 
     // Set current screen size
-
-    CORE.Window.screen.width = width;
-    CORE.Window.screen.height = height;
+    CORE.Render.screen.width = width;
+    CORE.Render.screen.height = height;
 
     // NOTE: Postprocessing texture is not scaled to new size
 }
@@ -2340,17 +2252,17 @@ void UpdateViewportSize(int width, int height)
 // Set viewport for a provided width and height
 void SetupViewport(int width, int height)
 {
-    CORE.Window.render.width = width;
-    CORE.Window.render.height = height;
+    CORE.Render.render.width = width;
+    CORE.Render.render.height = height;
 
     // Set viewport width and height
     // NOTE: We consider render size (scaled) and offset in case black bars are required and
     // render area does not match full display area (this situation is only applicable on fullscreen mode)
 #if defined(__APPLE__)
-    Vector2 scale = GetScaleDPI();
-    rlViewport(CORE.Window.renderOffset.x/2*scale.x, CORE.Window.renderOffset.y/2*scale.y, (CORE.Window.render.width)*scale.x, (CORE.Window.render.height)*scale.y);
+    Vector2 scale = pixi_get_dpi();
+    rlViewport(CORE.Render.renderOffset.x/2*scale.x, CORE.Render.renderOffset.y/2*scale.y, (CORE.Render.render.width)*scale.x, (CORE.Render.render.height)*scale.y);
 #else
-    rlViewport(CORE.Window.renderOffset.x/2, CORE.Window.renderOffset.y/2, CORE.Window.render.width, CORE.Window.render.height);
+    rlViewport(CORE.Render.renderOffset.x/2, CORE.Render.renderOffset.y/2, CORE.Render.render.width, CORE.Render.render.height);
 #endif
 
     rlMatrixMode(RL_PROJECTION);        // Switch to projection matrix
@@ -2358,87 +2270,87 @@ void SetupViewport(int width, int height)
 
     // Set orthographic projection to current framebuffer size
     // NOTE: Configured top-left corner as (0, 0)
-    rlOrtho(0, CORE.Window.render.width, CORE.Window.render.height, 0, 0.0f, 1.0f);
+    rlOrtho(0, CORE.Render.render.width, CORE.Render.render.height, 0, 0.0f, 1.0f);
 
     rlMatrixMode(RL_MODELVIEW);         // Switch back to modelview matrix
     rlLoadIdentity();                   // Reset current matrix (modelview)
 }
 
 // Compute framebuffer size relative to screen size and display size
-// NOTE: Global variables CORE.Window.render.width/CORE.Window.render.height and CORE.Window.renderOffset.x/CORE.Window.renderOffset.y can be modified
+// NOTE: Global variables CORE.Render.render.width/CORE.Render.render.height and CORE.Render.renderOffset.x/CORE.Render.renderOffset.y can be modified
 void SetupFramebuffer(int width, int height)
 {
-    // Calculate CORE.Window.render.width and CORE.Window.render.height, we have the display size (input params) and the desired screen size (global var)
-    if ((CORE.Window.screen.width > CORE.Window.display.width) || (CORE.Window.screen.height > CORE.Window.display.height))
+    // Calculate CORE.Render.render.width and CORE.Render.render.height, we have the display size (input params) and the desired screen size (global var)
+    if ((CORE.Render.screen.width > CORE.Render.display.width) || (CORE.Render.screen.height > CORE.Render.display.height))
     {
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_WARNING, "DISPLAY: Downscaling required: Screen size (%ix%i) is bigger than display size (%ix%i)", CORE.Render.screen.width, CORE.Render.screen.height, CORE.Render.display.width, CORE.Render.display.height);
 
         // Downscaling to fit display with border-bars
-        float widthRatio = (float)CORE.Window.display.width/(float)CORE.Window.screen.width;
-        float heightRatio = (float)CORE.Window.display.height/(float)CORE.Window.screen.height;
+        float widthRatio = (float)CORE.Render.display.width/(float)CORE.Render.screen.width;
+        float heightRatio = (float)CORE.Render.display.height/(float)CORE.Render.screen.height;
 
         if (widthRatio <= heightRatio)
         {
-            CORE.Window.render.width = CORE.Window.display.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.height*widthRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.display.height - CORE.Window.render.height);
+            CORE.Render.render.width = CORE.Render.display.width;
+            CORE.Render.render.height = (int)round((float)CORE.Render.screen.height*widthRatio);
+            CORE.Render.renderOffset.x = 0;
+            CORE.Render.renderOffset.y = (CORE.Render.display.height - CORE.Render.render.height);
         }
         else
         {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.width*heightRatio);
-            CORE.Window.render.height = CORE.Window.display.height;
-            CORE.Window.renderOffset.x = (CORE.Window.display.width - CORE.Window.render.width);
-            CORE.Window.renderOffset.y = 0;
+            CORE.Render.render.width = (int)round((float)CORE.Render.screen.width*heightRatio);
+            CORE.Render.render.height = CORE.Render.display.height;
+            CORE.Render.renderOffset.x = (CORE.Render.display.width - CORE.Render.render.width);
+            CORE.Render.renderOffset.y = 0;
         }
 
         // Screen scaling required
-        float scaleRatio = (float)CORE.Window.render.width/(float)CORE.Window.screen.width;
-        CORE.Window.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
+        float scaleRatio = (float)CORE.Render.render.width/(float)CORE.Render.screen.width;
+        CORE.Render.screenScale = MatrixScale(scaleRatio, scaleRatio, 1.0f);
 
         // NOTE: We render to full display resolution!
         // We just need to calculate above parameters for downscale matrix and offsets
-        CORE.Window.render.width = CORE.Window.display.width;
-        CORE.Window.render.height = CORE.Window.display.height;
+        CORE.Render.render.width = CORE.Render.display.width;
+        CORE.Render.render.height = CORE.Render.display.height;
 
-        TRACELOG(LOG_WARNING, "DISPLAY: Downscale matrix generated, content will be rendered at (%ix%i)", CORE.Window.render.width, CORE.Window.render.height);
+        TRACELOG(LOG_WARNING, "DISPLAY: Downscale matrix generated, content will be rendered at (%ix%i)", CORE.Render.render.width, CORE.Render.render.height);
     }
-    else if ((CORE.Window.screen.width < CORE.Window.display.width) || (CORE.Window.screen.height < CORE.Window.display.height))
+    else if ((CORE.Render.screen.width < CORE.Render.display.width) || (CORE.Render.screen.height < CORE.Render.display.height))
     {
         // Required screen size is smaller than display size
-        TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Window.screen.width, CORE.Window.screen.height, CORE.Window.display.width, CORE.Window.display.height);
+        TRACELOG(LOG_INFO, "DISPLAY: Upscaling required: Screen size (%ix%i) smaller than display size (%ix%i)", CORE.Render.screen.width, CORE.Render.screen.height, CORE.Render.display.width, CORE.Render.display.height);
 
-        if ((CORE.Window.screen.width == 0) || (CORE.Window.screen.height == 0))
+        if ((CORE.Render.screen.width == 0) || (CORE.Render.screen.height == 0))
         {
-            CORE.Window.screen.width = CORE.Window.display.width;
-            CORE.Window.screen.height = CORE.Window.display.height;
+            CORE.Render.screen.width = CORE.Render.display.width;
+            CORE.Render.screen.height = CORE.Render.display.height;
         }
 
         // Upscaling to fit display with border-bars
-        float displayRatio = (float)CORE.Window.display.width/(float)CORE.Window.display.height;
-        float screenRatio = (float)CORE.Window.screen.width/(float)CORE.Window.screen.height;
+        float displayRatio = (float)CORE.Render.display.width/(float)CORE.Render.display.height;
+        float screenRatio = (float)CORE.Render.screen.width/(float)CORE.Render.screen.height;
 
         if (displayRatio <= screenRatio)
         {
-            CORE.Window.render.width = CORE.Window.screen.width;
-            CORE.Window.render.height = (int)round((float)CORE.Window.screen.width/displayRatio);
-            CORE.Window.renderOffset.x = 0;
-            CORE.Window.renderOffset.y = (CORE.Window.render.height - CORE.Window.screen.height);
+            CORE.Render.render.width = CORE.Render.screen.width;
+            CORE.Render.render.height = (int)round((float)CORE.Render.screen.width/displayRatio);
+            CORE.Render.renderOffset.x = 0;
+            CORE.Render.renderOffset.y = (CORE.Render.render.height - CORE.Render.screen.height);
         }
         else
         {
-            CORE.Window.render.width = (int)round((float)CORE.Window.screen.height*displayRatio);
-            CORE.Window.render.height = CORE.Window.screen.height;
-            CORE.Window.renderOffset.x = (CORE.Window.render.width - CORE.Window.screen.width);
-            CORE.Window.renderOffset.y = 0;
+            CORE.Render.render.width = (int)round((float)CORE.Render.screen.height*displayRatio);
+            CORE.Render.render.height = CORE.Render.screen.height;
+            CORE.Render.renderOffset.x = (CORE.Render.render.width - CORE.Render.screen.width);
+            CORE.Render.renderOffset.y = 0;
         }
     }
     else
     {
-        CORE.Window.render.width = CORE.Window.screen.width;
-        CORE.Window.render.height = CORE.Window.screen.height;
-        CORE.Window.renderOffset.x = 0;
-        CORE.Window.renderOffset.y = 0;
+        CORE.Render.render.width = CORE.Render.screen.width;
+        CORE.Render.render.height = CORE.Render.screen.height;
+        CORE.Render.renderOffset.x = 0;
+        CORE.Render.renderOffset.y = 0;
     }
 }
 

@@ -203,7 +203,6 @@ struct _GappOutliner
 
     GListStore *store;
     ecs_world_t *world;
-    ecs_entity_t root;
 };
 
 static void gapp_outliner_ui_setup(GappOutliner *self);
@@ -330,6 +329,25 @@ static void fn_hooks_callback(ecs_iter_t *it)
     }
 }
 
+/**
+ * Maneja la selección de una entidad en el Outliner.
+ *
+ * Esta función se llama cuando se selecciona una entidad en el Outliner.
+ * Actualiza el inspector para mostrar los detalles de la entidad seleccionada.
+ *
+ * @param outliner Puntero al GappOutliner donde se realizó la selección.
+ * @param entity La entidad seleccionada.
+ */
+static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_t entity)
+{
+    g_return_if_fail(outliner != NULL);
+    g_return_if_fail(entity != 0);
+
+    GtkWidget *parent = gtk_widget_get_parent(gtk_widget_get_parent(outliner));
+    GtkWidget *inspector = gobu_level_editor_get_inspector(parent);
+    gapp_inspector_set_entity(inspector, outliner->world, entity);
+}
+
 // MARK: --- SIGNAL ---
 static void gapp_outliner_s_toolbar_add_clicked(GtkWidget *widget, GtkWidget *popover)
 {
@@ -371,6 +389,8 @@ static void gapp_outliner_s_toolbar_remove_clicked(GtkWidget *widget, GappOutlin
             g_free(item);
         }
     }
+
+    gapp_outliner_fn_selected_entity(outliner, ecs_lookup(outliner->world, "Root"));
 }
 
 static void gapp_outliner_s_list_view_activated(GtkMultiSelection *selection, guint position, guint n_items, GappOutliner *outliner)
@@ -383,7 +403,7 @@ static void gapp_outliner_s_list_view_activated(GtkMultiSelection *selection, gu
         {
             GtkTreeListRow *row = g_list_model_get_item(model, i);
             OutlinerItem *item = gtk_tree_list_row_get_item(row);
-            gapp_inspector_set_entity(gobu_level_editor_get_inspector(gtk_widget_get_parent(gtk_widget_get_parent(outliner))), outliner->world, item->entity);
+            gapp_outliner_fn_selected_entity(outliner, item->entity);
         }
     }
 }

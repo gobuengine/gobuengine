@@ -19,6 +19,18 @@ extern "C"
     typedef pixio_resource_t pixio_resource_texture_t;
     typedef pixio_resource_t pixio_script_t;
 
+    typedef struct pixio_size_t
+    {
+        ecs_f32_t width;
+        ecs_f32_t height;
+    } pixio_size_t;
+
+    typedef struct pixio_entity_t
+    {
+        ecs_bool_t enabled;
+        ecs_string_t name;
+    } pixio_entity_t;
+
     typedef struct pixio_transform_t
     {
         pixio_vector2_t position;
@@ -65,6 +77,8 @@ extern "C"
         ecs_f32_t segments;
     } pixio_shape_rec_t;
 
+    extern ECS_COMPONENT_DECLARE(pixio_size_t);
+    extern ECS_COMPONENT_DECLARE(pixio_entity_t);
     extern ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
     extern ECS_COMPONENT_DECLARE(pixio_color_t);
     extern ECS_COMPONENT_DECLARE(pixio_vector2_t);

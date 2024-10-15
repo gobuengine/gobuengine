@@ -525,7 +525,7 @@ static void disableRawMouseMotion(_GLFWwindow* window)
 
 // Apply disabled cursor mode to a focused window
 //
-static void disableCursor(_GLFWwindow* window)
+static void pixi_input_disable_cursor(_GLFWwindow* window)
 {
     if (window->rawMouseMotion)
         enableRawMouseMotion(window);
@@ -541,7 +541,7 @@ static void disableCursor(_GLFWwindow* window)
 
 // Exit disabled cursor mode for the specified window
 //
-static void enableCursor(_GLFWwindow* window)
+static void pixi_input_enable_cursor(_GLFWwindow* window)
 {
     if (window->rawMouseMotion)
         disableRawMouseMotion(window);
@@ -1748,7 +1748,7 @@ static void processEvent(XEvent *event)
             }
 
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                disableCursor(window);
+                pixi_input_disable_cursor(window);
             else if (window->cursorMode == GLFW_CURSOR_CAPTURED)
                 captureCursor(window);
 
@@ -1770,7 +1770,7 @@ static void processEvent(XEvent *event)
             }
 
             if (window->cursorMode == GLFW_CURSOR_DISABLED)
-                enableCursor(window);
+                pixi_input_enable_cursor(window);
             else if (window->cursorMode == GLFW_CURSOR_CAPTURED)
                 releaseCursor();
 
@@ -2048,7 +2048,7 @@ GLFWbool _glfwCreateWindowX11(_GLFWwindow* window,
 void _glfwDestroyWindowX11(_GLFWwindow* window)
 {
     if (_glfw.x11.disabledCursorWindow == window)
-        enableCursor(window);
+        pixi_input_enable_cursor(window);
 
     if (window->monitor)
         releaseMonitorX11(window);

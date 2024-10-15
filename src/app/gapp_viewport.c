@@ -22,6 +22,7 @@ static gboolean gtk_ray_ticka(GtkWidget *self, GdkFrameClock *frame_clock, gpoin
 static void gapp_s_resize(GtkWidget *widget, gint width, gint height);
 static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewport *self);
 static void gapp_s_realize(GtkWidget *widget);
+static void gapp_s_unrealize(GtkWidget *widget);
 
 static void gapp_viewport_class_init(GappViewportClass *klass)
 {
@@ -45,7 +46,22 @@ static void gapp_viewport_init(GappViewport *self)
 
     g_signal_connect(self, "render", G_CALLBACK(gapp_s_render), self);
     g_signal_connect(self, "realize", G_CALLBACK(gapp_s_realize), self);
+    g_signal_connect(self, "unrealize", G_CALLBACK(gapp_s_unrealize), self);
     g_signal_connect(self, "resize", G_CALLBACK(gapp_s_resize), self);
+
+    // GtkEventController *zoom = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
+    // gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(zoom));
+    // g_signal_connect(zoom, "scroll", G_CALLBACK(signal_viewport_zoom), self);
+
+    // GtkEventController *motion = gtk_event_controller_motion_new();
+    // gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(motion));
+    // g_signal_connect(motion, "motion", G_CALLBACK(signal_viewport_mouse_move), self);
+
+    // GtkGesture *gesture = gtk_gesture_click_new();
+    // gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(gesture));
+    // gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(gesture), 0);
+    // g_signal_connect(gesture, "pressed", G_CALLBACK(signal_viewport_mouse_button_pressed), self);
+    // g_signal_connect(gesture, "released", G_CALLBACK(signal_viewport_mouse_button_released), self);
 
     gtk_widget_add_tick_callback(GTK_WIDGET(self), gtk_ray_ticka, self, NULL);
 }
@@ -61,7 +77,7 @@ static void gapp_s_resize(GtkWidget *widget, gint width, gint height)
     if (gtk_gl_area_get_error(GTK_GL_AREA(widget)) != NULL)
         return;
 
-    UpdateViewportSize(width, height);
+    pixi_adjust_viewport_size(width, height);
 }
 
 static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewport *self)
@@ -75,7 +91,7 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
         int height = gtk_widget_get_height(GTK_WIDGET(area));
         self->initialized = true;
 
-        InitWindow(width, height);
+        pixi_init(width, height);
         self->world = pixio_init();
 
         g_signal_emit_by_name(self, "viewport-ready", width, height, 0);
@@ -104,6 +120,16 @@ static void gapp_s_realize(GtkWidget *widget)
 
     if (gtk_gl_area_get_error(GTK_GL_AREA(widget)) != NULL)
         return;
+}
+
+static void gapp_s_unrealize(GtkWidget *widget)
+{
+    gtk_gl_area_make_current(GTK_GL_AREA(widget));
+
+    if (gtk_gl_area_get_error(GTK_GL_AREA(widget)) != NULL)
+        return;
+
+    pixi_shutdown();
 }
 
 // -- BEGIN API PUBLIC
