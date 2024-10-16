@@ -78,9 +78,11 @@ static void pixio_render_draw(ecs_iter_t *it)
 
         rlPushMatrix();
         {
+            pixio_vector2_t origin = {0.0f, 0.0f};
+
             rlTranslatef(t.position.x, t.position.y, 0.0f);
             rlRotatef(t.rotation, 0.0f, 0.0f, 1.0f);
-            rlTranslatef(-t.origin.x, -t.origin.y, 0.0f);
+            rlTranslatef(-origin.x, -origin.y, 0.0f);
             rlScalef(t.scale.x, t.scale.y, 1.0f);
 
             // draw textures

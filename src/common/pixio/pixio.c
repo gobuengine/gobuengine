@@ -32,7 +32,7 @@ ecs_entity_t pixio_entity_new(ecs_world_t *world, ecs_entity_t parent, const cha
 
     // component:transform
     ecs_set(world, entity, pixio_entity_t, {.name = g_strdup(name_id), .enabled = TRUE});
-    ecs_set(world, entity, pixio_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = {0.5, 0.5}});
+    ecs_set(world, entity, pixio_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = 4});
 
     return entity;
 }

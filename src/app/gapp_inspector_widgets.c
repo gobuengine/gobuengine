@@ -144,9 +144,10 @@ static void signal_input_vect2_y(GtkSpinButton *self, pixio_vector2_t *field)
     field->y = (float)gtk_spin_button_get_value(self);
 }
 
-static void signal_input_enum(GtkSpinButton *self, pixio_texture_filter_t *field)
+static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_ptr)
 {
-    *field = gtk_drop_down_get_selected(self);
+    int newposition = gtk_drop_down_get_selected(self);
+    *(int32_t*)field_ptr = newposition;
 }
 
 /**
@@ -173,7 +174,7 @@ GtkWidget *gapp_inspector_widgets_input_string(ecs_meta_cursor_t cursor)
 
 /**
  * Crea un widget de entrada booleana para el inspector.
- * 
+ *
  * Esta función crea un GtkCheckButton basado en un cursor de metadatos ECS.
  * El estado del botón se inicializa con el valor actual del campo booleano,
  * y se conecta una señal para actualizar el campo cuando el estado del botón cambie.
@@ -336,14 +337,21 @@ GtkWidget *gapp_inspector_widgets_input_vector2(ecs_meta_cursor_t cursor)
  */
 GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
 {
-    const char *const strings[] = {"None", "Linear", "Nearest", NULL};
+    void *field_ptr = ecs_meta_get_ptr(&cursor);
+    ecs_entity_t field_type = ecs_meta_get_type(&cursor);
+    GtkStringList *enum_list = gtk_string_list_new(NULL);
+    const EcsEnum *enum_type = ecs_get(cursor.world, field_type, EcsEnum);
 
-    pixio_texture_filter_t *field = (pixio_texture_filter_t *)ecs_meta_get_ptr(&cursor);
+    ecs_map_iter_t it = ecs_map_iter(&enum_type->constants);
+    while (ecs_map_next(&it))
+    {
+        ecs_enum_constant_t *constant = ecs_map_ptr(&it);
+        gtk_string_list_append(enum_list, constant->name);
+    }
 
-    GtkWidget *select_option = gtk_drop_down_new_from_strings(strings);
-    gtk_drop_down_set_selected(GTK_DROP_DOWN(select_option), *field);
-
-    g_signal_connect(select_option, "notify::selected", G_CALLBACK(signal_input_enum), field);
+    GtkWidget *select_option = gtk_drop_down_new(G_LIST_MODEL(enum_list), NULL);
+    gtk_drop_down_set_selected(GTK_DROP_DOWN(select_option), ecs_meta_get_int(&cursor));
+    g_signal_connect(select_option, "notify::selected", G_CALLBACK(signal_input_enum), field_ptr);
 
     return select_option;
 }

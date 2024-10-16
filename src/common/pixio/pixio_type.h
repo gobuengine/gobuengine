@@ -19,27 +19,40 @@ extern "C"
     typedef pixio_resource_t pixio_resource_texture_t;
     typedef pixio_resource_t pixio_script_t;
 
-    typedef struct pixio_size_t
+    typedef enum _pixio_transform_origin_t
+    {
+        PIXIO_TOP_LEFT,      // Esquina superior izquierda
+        PIXIO_TOP_CENTER,    // Centro superior
+        PIXIO_TOP_RIGHT,     // Esquina superior derecha
+        PIXIO_CENTER_LEFT,   // Centro izquierdo
+        PIXIO_CENTER,        // Centro
+        PIXIO_CENTER_RIGHT,  // Centro derecho
+        PIXIO_BOTTOM_LEFT,   // Esquina inferior izquierda
+        PIXIO_BOTTOM_CENTER, // Centro inferior
+        PIXIO_BOTTOM_RIGHT   // Esquina inferior derecha
+    } pixio_transform_origin_t;
+
+    typedef struct _pixio_size_t
     {
         ecs_f32_t width;
         ecs_f32_t height;
     } pixio_size_t;
 
-    typedef struct pixio_entity_t
+    typedef struct _pixio_entity_t
     {
         ecs_bool_t enabled;
         ecs_string_t name;
     } pixio_entity_t;
 
-    typedef struct pixio_transform_t
+    typedef struct _pixio_transform_t
     {
         pixio_vector2_t position;
         pixio_vector2_t scale;
         ecs_f32_t rotation;
-        pixio_vector2_t origin;
+        pixio_transform_origin_t origin;
     } pixio_transform_t;
 
-    typedef struct pixio_text_t
+    typedef struct _pixio_text_t
     {
         ecs_string_t text;
         ecs_u32_t fontSize;
@@ -49,7 +62,7 @@ extern "C"
         pixio_font_t sresource;
     } pixio_text_t;
 
-    typedef struct pixio_sprite_t
+    typedef struct _pixio_sprite_t
     {
         pixio_resource_texture_t texture;
         pixio_color_t tint;
@@ -59,14 +72,14 @@ extern "C"
         pixio_texture_t sresource;
     } pixio_sprite_t;
 
-    typedef struct pixio_shape_circle_t
+    typedef struct _pixio_shape_circle_t
     {
         ecs_f32_t radius;
         ecs_f32_t thickness;
         pixio_color_t color;
     } pixio_shape_circle_t;
 
-    typedef struct pixio_shape_rec_t
+    typedef struct _pixio_shape_rec_t
     {
         ecs_f32_t width;
         ecs_f32_t height;
@@ -79,6 +92,7 @@ extern "C"
 
     extern ECS_COMPONENT_DECLARE(pixio_size_t);
     extern ECS_COMPONENT_DECLARE(pixio_entity_t);
+    extern ECS_COMPONENT_DECLARE(pixio_transform_origin_t);
     extern ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
     extern ECS_COMPONENT_DECLARE(pixio_color_t);
     extern ECS_COMPONENT_DECLARE(pixio_vector2_t);
