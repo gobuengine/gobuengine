@@ -26,14 +26,16 @@ struct _GappMain
     GtkWidget *browser;
     GtkWidget *config;
     GtkWidget *window;
+    GtkWidget *title_window;
 };
 
-G_DEFINE_TYPE(GappMain, gapp_main, GTK_TYPE_APPLICATION);
+G_DEFINE_TYPE(GappMain, gapp_main, GTK_TYPE_APPLICATION)
 
 static void gapp_main_activate(GappMain *app);
 static void gapp_main_open(GappMain *app, GFile **files, gint n_files, const gchar *hint);
 static void gapp_set_headerbar_button_sensitives(GappMain *self, gboolean sensitive);
 static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self);
+static bool gapp_config_init(void);
 
 static void gapp_main_class_init(GappMainClass *klass)
 {
@@ -53,16 +55,14 @@ static void gapp_main_activate(GappMain *app)
 {
     gapp_config_init();
 
+    app->title_window = gtk_label_new(GOBU_VERSION_STR);
+
     app->window = gtk_window_new();
     gtk_window_set_application(GTK_WINDOW(app->window), GTK_APPLICATION(app));
-    gtk_window_set_title(GTK_WINDOW(app->window), "GobuEditor");
     gtk_window_set_default_size(GTK_WINDOW(app->window), 1280, 800);
-    // gtk_window_set_resizable(GTK_WINDOW(app->window), FALSE);
-
     {
         GtkWidget *header_bar = gtk_header_bar_new();
-        gtk_header_bar_pack_start(GTK_HEADER_BAR(header_bar),
-                                  gtk_label_new(GOBU_VERSION_STR));
+        gtk_header_bar_pack_start(GTK_HEADER_BAR(header_bar), app->title_window);
         gtk_window_set_titlebar(GTK_WINDOW(app->window), header_bar);
 
         { // #toolbar headerbar
@@ -176,6 +176,63 @@ static GappMain *gapp_new(void)
 }
 
 /**
+ * Carga un archivo de configuración en un objeto GKeyFile.
+ *
+ * @param filename El nombre del archivo de configuración a cargar.
+ * @return Un puntero al objeto GKeyFile cargado, o NULL si ocurrió un error.
+ */
+static GKeyFile *gapp_config_load_from_file(const char *filename)
+{
+    GKeyFile *keyfile = g_key_file_new();
+    GError *error = NULL;
+
+    gchar *fileconfig = g_build_filename(g_get_current_dir(), "Config", filename, NULL);
+
+    if (!g_key_file_load_from_file(keyfile, fileconfig, G_KEY_FILE_NONE, &error))
+    {
+        g_error("Error loading key file: %s\n", error->message);
+        g_error_free(error);
+        g_key_file_free(keyfile);
+        return NULL;
+    }
+
+    g_free(fileconfig);
+
+    return keyfile;
+}
+
+/**
+ * Inicializa la configuración de la aplicación.
+ *
+ * Esta función carga el archivo de configuración, establece el tema
+ * (oscuro o claro) y aplica los estilos CSS.
+ *
+ * @return TRUE si la inicialización fue exitosa, FALSE en caso contrario.
+ */
+static bool gapp_config_init(void)
+{
+    GKeyFile *keyfile = gapp_config_load_from_file("editor.config.ini");
+    if (keyfile == NULL)
+        return FALSE;
+
+    // load config file properties
+    bool darkmode = g_key_file_get_boolean(keyfile, "Editor", "darkMode", NULL);
+    // g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", darkmode, NULL);
+
+    AdwStyleManager *style_manager = adw_style_manager_get_default();
+    adw_style_manager_set_color_scheme(style_manager, darkmode ? ADW_COLOR_SCHEME_PREFER_DARK : ADW_COLOR_SCHEME_FORCE_LIGHT);
+
+    // css provider
+    GtkCssProvider *css_provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(css_provider, "Content/theme/default.css");
+    gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    g_key_file_free(keyfile);
+
+    return TRUE;
+}
+
+/**
  * Obtiene la instancia del editor principal.
  *
  * Esta función devuelve un puntero a la instancia global del editor principal
@@ -228,6 +285,10 @@ void gapp_open_project(GappMain *self, const gchar *path)
     // Cambiar el path del navegador
     g_autofree gchar *data_path = gobu_path_join(gobu_path_dirname(path), "Data", NULL);
     gapp_browser_set_folder(self->browser, data_path);
+
+    // actualizamos el titulo
+    g_autofree gchar *title = g_strdup_printf("%s - %s", GOBU_VERSION_STR, gapp_project_config_get_name(gappMain->config));
+    gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
 
 /**

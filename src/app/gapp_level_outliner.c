@@ -1,11 +1,10 @@
-#include "gapp_outliner.h"
+#include "gapp_level_outliner.h"
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_level_editor.h"
-#include "gapp_inspector.h"
+#include "gapp_level_inspector.h"
 
-// #include "pixio/pixio.h"
-#include "pixio/pixio_components.h"
+#include "pixio/pixio.h"
 
 // MARK: OutlinerPopoverItem
 // - - - - - - - - - -
@@ -326,25 +325,69 @@ static void fn_hooks_callback(ecs_iter_t *it)
             if (item && g_list_store_find(item->root, item, &position))
                 g_list_store_remove(item->root, position);
         }
+        else if (event == EcsOnSet)
+        {
+        }
     }
 }
 
 /**
- * Maneja la selección de una entidad en el Outliner.
+ * Enfoca y selecciona una entidad específica en el outliner.
  *
- * Esta función se llama cuando se selecciona una entidad en el Outliner.
- * Actualiza el inspector para mostrar los detalles de la entidad seleccionada.
+ * Esta función busca la entidad especificada en el modelo del outliner,
+ * la selecciona si la encuentra, y devuelve un valor booleano indicando
+ * si la operación tuvo éxito.
  *
- * @param outliner Puntero al GappOutliner donde se realizó la selección.
- * @param entity La entidad seleccionada.
+ * @param outliner El puntero al GappOutliner.
+ * @param entity La entidad a enfocar y seleccionar.
+ * @return gboolean TRUE si la entidad fue encontrada y seleccionada, FALSE en caso contrario.
  */
-static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_t entity)
+static gboolean gapp_outliner_fn_focus_entity(GappOutliner *outliner, ecs_entity_t entity)
 {
-    g_return_if_fail(outliner != NULL);
-    g_return_if_fail(entity != 0);
+    g_return_val_if_fail(outliner != NULL && entity != 0, FALSE);
 
-    GtkWidget *parent = gtk_widget_get_parent(gtk_widget_get_parent(outliner));
-    GtkWidget *inspector = gobu_level_editor_get_inspector(parent);
+    GtkSelectionModel *selection_model = GTK_SELECTION_MODEL(outliner->selection);
+    GListModel *model = gtk_multi_selection_get_model(outliner->selection);
+    guint n_items = g_list_model_get_n_items(model);
+
+    for (guint i = 0; i < n_items; i++)
+    {
+        GtkTreeListRow *row = g_list_model_get_item(model, i);
+        OutlinerItem *item = gtk_tree_list_row_get_item(row);
+
+        if (item->entity == entity)
+        {
+            gtk_selection_model_select_item(selection_model, i, TRUE);
+            g_object_unref(row);
+            return TRUE;
+        }
+        g_object_unref(row);
+    }
+
+    return FALSE;
+}
+
+/**
+ * Maneja la selección de una entidad en el outliner.
+ *
+ * Esta función se encarga de actualizar la selección visual en el outliner
+ * y actualizar el inspector con la entidad seleccionada.
+ *
+ * @param outliner El puntero al GappOutliner.
+ * @param entity La entidad seleccionada.
+ * @param selected Indica si la entidad está seleccionada (TRUE) o deseleccionada (FALSE).
+ */
+static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_t entity, gboolean selected)
+{
+    g_return_if_fail(outliner != NULL && entity != 0);
+
+    if (selected)
+    {
+        gapp_outliner_fn_focus_entity(outliner, entity);
+    }
+
+    GtkWidget *level_editor = gtk_widget_get_ancestor(GTK_WIDGET(outliner), GOBU_TYPE_LEVEL_EDITOR);
+    GtkWidget *inspector = gobu_level_editor_get_inspector(level_editor);
     gapp_inspector_set_entity(inspector, outliner->world, entity);
 }
 
@@ -390,20 +433,39 @@ static void gapp_outliner_s_toolbar_remove_clicked(GtkWidget *widget, GappOutlin
         }
     }
 
-    gapp_outliner_fn_selected_entity(outliner, ecs_lookup(outliner->world, "Root"));
+    gapp_outliner_fn_selected_entity(outliner, ecs_lookup(outliner->world, "Root"), TRUE);
 }
 
+/**
+ * Maneja la activación de elementos en la vista de lista del outliner.
+ *
+ * Esta función se llama cuando se activan elementos en la vista de lista.
+ * Recorre los elementos seleccionados y llama a la función de selección
+ * de entidad para cada uno de ellos.
+ *
+ * @param selection El modelo de selección múltiple.
+ * @param position La posición del primer elemento activado.
+ * @param n_items El número de elementos activados.
+ * @param outliner El puntero al GappOutliner.
+ */
 static void gapp_outliner_s_list_view_activated(GtkMultiSelection *selection, guint position, guint n_items, GappOutliner *outliner)
 {
+    g_return_if_fail(selection != NULL && outliner != NULL);
+
     GListModel *model = gtk_multi_selection_get_model(selection);
-    guint n = g_list_model_get_n_items(model);
-    for (guint i = 0; i < n; i++)
+    GtkSelectionModel *selection_model = GTK_SELECTION_MODEL(selection);
+    guint total_items = g_list_model_get_n_items(model);
+
+    for (guint i = 0; i < total_items; i++)
     {
-        if (gtk_selection_model_is_selected(GTK_SELECTION_MODEL(selection), i))
+        if (gtk_selection_model_is_selected(selection_model, i))
         {
             GtkTreeListRow *row = g_list_model_get_item(model, i);
             OutlinerItem *item = gtk_tree_list_row_get_item(row);
-            gapp_outliner_fn_selected_entity(outliner, item->entity);
+
+            gapp_outliner_fn_selected_entity(outliner, item->entity, TRUE);
+
+            g_object_unref(row);
         }
     }
 }
@@ -500,17 +562,16 @@ static void s_outliner_popover_entity_item_activated(GtkListView *self, guint po
 
     GappOutliner *outliner = g_object_get_data(G_OBJECT(popover), "outliner");
 
-    {
-        // create a new entity and add it to the world
-        OutlinerItem *item_selected = gapp_outliner_fn_get_selected_item(outliner->selection);
-        ecs_entity_t parent = item_selected != NULL ? item_selected->entity : ecs_lookup(outliner->world, "Root");
-        // create entity
-        ecs_entity_t entity = pixio_entity_new(outliner->world, parent, popoverItem->name);
-        // add components
-        if (strcmp(popoverItem->component, "entity.empty") != 0)
-            ecs_add_id(outliner->world, entity, ecs_lookup(outliner->world, popoverItem->component));
-    }
+    // create a new entity and add it to the world
+    OutlinerItem *item_selected = gapp_outliner_fn_get_selected_item(outliner->selection);
+    ecs_entity_t parent = item_selected != NULL ? item_selected->entity : ecs_lookup(outliner->world, "Root");
+    // create entity
+    ecs_entity_t entity = pixio_entity_new(outliner->world, parent, popoverItem->name);
+    // add components
+    if (strcmp(popoverItem->component, "entity.empty") != 0)
+        ecs_add_id(outliner->world, entity, ecs_lookup(outliner->world, popoverItem->component));
 
+    gapp_outliner_fn_focus_entity(outliner, entity);
     gtk_popover_popdown(GTK_POPOVER(popover));
 }
 

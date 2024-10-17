@@ -1,4 +1,4 @@
-#include "gapp_inspector.h"
+#include "gapp_level_inspector.h"
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_inspector_widgets.h"
@@ -88,7 +88,7 @@ static GtkWidget *gapp_inspector_group_new(GtkWidget *list, const gchar *title_s
         gtk_widget_set_halign(label, GTK_ALIGN_START);
         gtk_box_append(GTK_BOX(title), label);
 
-        if (strcmp(title_str, "pixio_transform_t") != 0)
+        if (!(strcmp(title_str, "pixio_transform_t")==0 || strcmp(title_str, "pixio_entity_t")==0))
         {
             // GtkWidget *button_off = gtk_switch_new();
             // gtk_box_append(GTK_BOX(title), button_off);
@@ -101,9 +101,9 @@ static GtkWidget *gapp_inspector_group_new(GtkWidget *list, const gchar *title_s
 
             GtkWidget *button = gtk_button_new_from_icon_name("user-trash-symbolic");
             gtk_widget_add_css_class(button, "expander_button");
-            gtk_box_append(GTK_BOX(title), button);
             gtk_widget_set_margin_start(button, 0);
             gtk_widget_set_tooltip_text(button, "Remove component");
+            gtk_box_append(GTK_BOX(title), button);
             // g_signal_connect(button, "clicked", G_CALLBACK(gapp_inspector_component_remove_clicked), entity);
         }
     }

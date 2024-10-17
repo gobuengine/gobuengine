@@ -1,6 +1,6 @@
-// gobu_outliner.h
-#ifndef GAPP_OUTLINER_H
-#define GAPP_OUTLINER_H
+// gobu_level_outliner.h
+#ifndef GAPP_LEVEL_OUTLINER_H
+#define GAPP_LEVEL_OUTLINER_H
 
 #include "config.h"
 #include "pixio/pixio.h"
@@ -16,4 +16,4 @@ void gapp_outliner_start_process(GappOutliner *outliner, ecs_world_t *world);
 
 G_END_DECLS
 
-#endif // GAPP_OUTLINER_H
+#endif // GAPP_LEVEL_OUTLINER_H

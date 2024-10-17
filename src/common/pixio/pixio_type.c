@@ -162,8 +162,8 @@ void pixio_type_moduleImport(ecs_world_t *world)
         .entity = ecs_id(pixio_sprite_t),
         .members = {
             {.name = "texture", .type = ecs_id(pixio_resource_texture_t)},
-            {.name = "tint", .type = ecs_id(pixio_color_t)},
             {.name = "filter", .type = ecs_id(pixio_texture_filter_t)},
+            {.name = "tint", .type = ecs_id(pixio_color_t)},
         },
     });
 

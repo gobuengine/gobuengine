@@ -67,6 +67,19 @@ static void observe_set_shape_rect_default(ecs_iter_t *it)
     }
 }
 
+static void observe_set_sprite_default(ecs_iter_t *it)
+{
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        //sprite[i].texture = gobu_resource(it->world, sprite[i].resource)->texture;
+        sprite[i].srcRect = (Rectangle){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
+        sprite[i].dstRect = (Rectangle){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
+        sprite[i].tint = (sprite[i].tint.a == 0) ? WHITE : sprite[i].tint;
+    }
+}
+
 // -- -- -- -- -- -- -- -- --
 // MARK: - MODULE IMPORT
 // -- -- -- -- -- -- -- -- --
@@ -87,7 +100,7 @@ void pixio_base_moduleImport(ecs_world_t *world)
                          .events = {EcsOnAdd, EcsOnSet},
                          .callback = observe_set_shape_rect_default});
 
-    // ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_entity_t)}}},
-    //                      .events = {EcsOnSet},
-    //                      .callback = observe_set_entity_info});
+    ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_sprite_t)}}},
+                         .events = {EcsOnAdd, EcsOnSet},
+                         .callback = observe_set_sprite_default});
 }

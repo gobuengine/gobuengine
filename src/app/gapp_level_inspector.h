@@ -1,6 +1,6 @@
-// gapp_inspector.h
-#ifndef GAPP_INSPECTOR_H
-#define GAPP_INSPECTOR_H
+// gapp_level_inspector.h
+#ifndef GAPP_LEVEL_INSPECTOR_H
+#define GAPP_LEVEL_INSPECTOR_H
 
 #include "config.h"
 #include "pixio/pixio.h"
@@ -16,5 +16,5 @@ void gapp_inspector_set_entity(GappInspector *self, ecs_world_t *world, ecs_enti
 
 G_END_DECLS
 
-#endif // GAPP_INSPECTOR_H
+#endif // GAPP_LEVEL_INSPECTOR_H
 

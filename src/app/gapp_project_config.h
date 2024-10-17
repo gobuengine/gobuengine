@@ -17,6 +17,8 @@ gboolean gapp_project_config_save(GappProjectConfig *self);
 
 gboolean gapp_project_config_create_file_default(GappProjectConfig *self, const gchar *filename, const gchar *name);
 
+const gchar *gapp_project_config_get_name(GappProjectConfig *self);
+
 G_END_DECLS
 
 #endif // GAPP_PROJECT_CONFIG_H

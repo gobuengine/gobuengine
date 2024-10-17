@@ -1,7 +1,6 @@
 #ifndef GAPP_H
 #define GAPP_H
 #include "config.h"
-#include "gapp_config.h"
 
 G_BEGIN_DECLS
 

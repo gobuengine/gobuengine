@@ -64,12 +64,12 @@ extern "C"
 
     typedef struct _pixio_sprite_t
     {
-        pixio_resource_texture_t texture;
-        pixio_color_t tint;
+        pixio_resource_texture_t texture_resource;
         pixio_texture_filter_t filter;
+        pixio_color_t tint;
         pixio_rect_t srcRect;
         pixio_rect_t dstRect;
-        pixio_texture_t sresource;
+        pixio_texture_t texture;
     } pixio_sprite_t;
 
     typedef struct _pixio_shape_circle_t

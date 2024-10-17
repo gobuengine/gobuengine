@@ -2,8 +2,8 @@
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_viewport.h"
-#include "gapp_outliner.h"
-#include "gapp_inspector.h"
+#include "gapp_level_outliner.h"
+#include "gapp_level_inspector.h"
 
 struct _GobuLevelEditor
 {

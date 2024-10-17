@@ -15,10 +15,8 @@
 struct _GappBrowser
 {
     GtkWidget parent_instance;
-
     GtkMultiSelection *selection;
     GtkDirectoryList *directory;
-    gchar *pathContent;
 };
 
 static void
@@ -255,7 +253,7 @@ static gchar *gapp_browser_fn_dialog_get_selected_path(GappWidgetDialogEntry *di
  */
 static gboolean gapp_browser_is_content_folder(GappBrowser *browser, const gchar *path)
 {
-    gchar *content_path = g_build_filename(g_file_get_path(gapp_browser_get_folder(browser)), "Content", NULL);
+    gchar *content_path = gapp_browser_get_content_path(browser);
     gboolean result = g_strcmp0(path, content_path) == 0;
     g_free(content_path);
     return result;
@@ -300,7 +298,7 @@ static gboolean gapp_browser_s_file_drop(GtkDropTarget *target, const GValue *va
         if (GAPP_IS_BROWSER(data))
         {
             GappBrowser *browser = GAPP_BROWSER(data);
-            pathfile = g_build_filename(g_file_get_path(gapp_browser_get_folder(browser)), "Content", NULL);
+            pathfile = gapp_browser_get_content_path(browser);
         }
         else
         {
@@ -446,15 +444,12 @@ static void gapp_browser_s_toolbar_create_script_clicked(GtkWidget *widget, Gapp
  * @param res El resultado asíncrono de la operación del diálogo.
  * @param self Puntero al objeto GappBrowser asociado.
  */
-static void s_responde_remove_script(GtkAlertDialog *dialog, GAsyncResult *res, GappBrowser *self)
+static void s_responde_remove_file_item(GtkAlertDialog *dialog, GAsyncResult *res, GappBrowser *self)
 {
     int response = gtk_alert_dialog_choose_finish(dialog, res, NULL);
 
     if (response == 1) // Aceptar
     {
-        // Construye la ruta base para la carpeta "Content"
-        g_autofree char *pathbase = g_build_filename(g_file_get_path(gapp_browser_get_folder(self)), "Content", NULL);
-
         GListModel *model = gtk_multi_selection_get_model(GTK_MULTI_SELECTION(self->selection));
         guint n = g_list_model_get_n_items(G_LIST_MODEL(model));
 
@@ -472,9 +467,6 @@ static void s_responde_remove_script(GtkAlertDialog *dialog, GAsyncResult *res, 
             if (!gapp_browser_is_content_folder(self, g_file_get_path(file)))
                 g_file_trash(gapp_browser_fn_file_info_to_file(info), NULL, NULL);
         }
-
-        // Libera la memoria asignada para pathbase
-        // g_free(pathbase);
     }
 }
 
@@ -483,7 +475,7 @@ static void gapp_browser_s_toolbar_remove_clicked(GtkWidget *widget, GappBrowser
     gapp_widget_dialog_new_confirm_action(gtk_widget_get_root(self),
                                           "Delete Selected Assets",
                                           "Are you sure you want to delete the selected assets?",
-                                          s_responde_remove_script, self);
+                                          s_responde_remove_file_item, self);
 }
 
 // -- -- --
@@ -807,21 +799,61 @@ void gapp_browser_set_folder(GappBrowser *browser, const gchar *path)
 }
 
 /**
- * Obtiene el directorio actual del navegador GappBrowser.
+ * Obtiene la ruta de la carpeta actual seleccionada en el navegador.
  *
- * Esta función recupera el objeto GFile que representa el directorio
- * actualmente mostrado en el navegador GappBrowser especificado.
+ * Esta función devuelve la ruta completa de la carpeta actualmente seleccionada
+ * en el navegador. Si se selecciona un archivo, devuelve la ruta de su directorio padre.
+ * La memoria del string devuelto debe ser liberada por el llamador usando g_free().
  *
- * @param browser Puntero al objeto GappBrowser del cual obtener el directorio.
- * @return GFile* Puntero al objeto GFile del directorio actual, o NULL si hay un error.
- *         El llamador no asume la propiedad del GFile retornado.
+ * @param browser El puntero al GappBrowser.
+ * @return gchar* La ruta a la carpeta actual, o NULL en caso de error.
  */
-GFile *gapp_browser_get_folder(GappBrowser *browser)
+gchar *gapp_browser_get_current_folder(GappBrowser *browser)
 {
     g_return_val_if_fail(GAPP_IS_BROWSER(browser), NULL);
 
-    GtkDirectoryList *dir_list = browser->directory;
-    g_return_val_if_fail(GTK_IS_DIRECTORY_LIST(dir_list), NULL);
+    GFileInfo *info = gapp_browser_fn_get_selected_file(browser->selection);
+    g_autofree gchar *pathfile = g_file_get_path(gapp_browser_fn_file_info_to_file(info));
 
-    return gtk_directory_list_get_file(dir_list);
+    if (!g_file_test(pathfile, G_FILE_TEST_IS_DIR))
+        pathfile = g_path_get_dirname(pathfile);
+
+    return pathfile;
 }
+
+/**
+ * Obtiene la ruta de la carpeta "Content" dentro del directorio actual del navegador.
+ *
+ * Esta función construye y devuelve la ruta completa a la carpeta "Content"
+ * dentro del directorio actual del navegador. La memoria del string devuelto
+ * debe ser liberada por el llamador usando g_free().
+ *
+ * @param browser El puntero al GappBrowser.
+ * @return gchar* La ruta a la carpeta "Content", o NULL en caso de error.
+ */
+gchar *gapp_browser_get_content_path(GappBrowser *browser)
+{
+    g_return_val_if_fail(GAPP_IS_BROWSER(browser), NULL);
+    g_return_val_if_fail(GTK_IS_DIRECTORY_LIST(browser->directory), NULL);
+
+    GFile *current_dir = gtk_directory_list_get_file(browser->directory);
+    g_return_val_if_fail(G_IS_FILE(current_dir), NULL);
+
+    gchar *current_path = g_file_get_path(current_dir);
+    if (!current_path)
+    {
+        g_warning("Failed to get path for current directory");
+        return NULL;
+    }
+
+    gchar *content_path = g_build_filename(current_path, "Content", NULL);
+    g_free(current_path);
+
+    if (!content_path)
+    {
+        g_warning("Failed to build content path");
+    }
+
+    return content_path;
+}
+

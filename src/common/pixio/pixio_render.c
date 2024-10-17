@@ -36,7 +36,7 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
                        .callback = pixio_render_pre_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.Draw))}),
-                       .query.terms = {{ecs_id(pixio_entity_t)}, {ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}},
+                       .query.terms = {{ecs_id(pixio_entity_t)}, {ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}, {ecs_id(pixio_sprite_t), .oper = EcsOptional}},
                        .callback = pixio_render_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.PostDraw))}),
@@ -68,6 +68,7 @@ static void pixio_render_draw(ecs_iter_t *it)
     pixio_text_t *draw_text = ecs_field(it, pixio_text_t, 2);
     pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, 3);
     pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, 4);
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 5);
 
     for (int i = 0; i < it->count; i++)
     {
@@ -85,15 +86,17 @@ static void pixio_render_draw(ecs_iter_t *it)
             rlTranslatef(-origin.x, -origin.y, 0.0f);
             rlScalef(t.scale.x, t.scale.y, 1.0f);
 
-            // draw textures
-
-            // draw graphics
-            if (shape_circle)
+            if (sprite && sprite[i].texture.id > 0)
+            {
+                DrawTexturePro(sprite[i].texture, sprite[i].srcRect, sprite[i].dstRect, (pixio_vector2_t){0.0, 0.0}, 0.0f, sprite[i].tint);
+                SetTextureFilter(sprite[i].texture, sprite[i].filter);
+            }
+            else if (shape_circle)
             {
                 // DrawCircle(shape_circle[i].center.x, shape_circle[i].center.y, shape_circle[i].radius, shape_circle[i].color);
                 // DrawCircleLines(shape_circle[i].center.x, shape_circle[i].center.y, shape_circle[i].radius, shape_circle[i].color);
             }
-            if (shape_rect)
+            else if (shape_rect)
             {
                 Rectangle shape_rect_rec = {0, 0, shape_rect[i].width, shape_rect[i].height};
 
@@ -101,8 +104,7 @@ static void pixio_render_draw(ecs_iter_t *it)
                 if (shape_rect[i].lineWidth > 0)
                     DrawRectangleRoundedLinesEx(shape_rect_rec, shape_rect[i].roundness, shape_rect[i].segments, shape_rect[i].lineWidth, shape_rect[i].lineColor);
             }
-            // draw text
-            if (draw_text)
+            else if (draw_text)
             {
                 DrawTextEx(draw_text[i].sresource, draw_text[i].text, (pixio_vector2_t){0, 0}, draw_text[i].fontSize, draw_text[i].spacing, draw_text[i].color);
             }

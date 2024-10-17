@@ -42,7 +42,9 @@ GappBrowser *gapp_browser_new(void);
 
 void gapp_browser_set_folder(GappBrowser *browser, const gchar *path);
 
-GFile *gapp_browser_get_folder(GappBrowser *browser);
+gchar *gapp_browser_get_current_folder(GappBrowser *browser);
+
+gchar *gapp_browser_get_content_path(GappBrowser *browser);
 
 G_END_DECLS
 

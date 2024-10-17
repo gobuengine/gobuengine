@@ -1,6 +1,5 @@
 #include "gapp_viewport.h"
 #include "pixio/pixio.h"
-#include "pixio/pixio_components.h"
 #include <epoxy/gl.h>
 
 enum
