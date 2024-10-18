@@ -11,6 +11,7 @@ static pixio_render_phases_t render_phases;
 static void pixio_render_pre_draw(ecs_iter_t *it);
 static void pixio_render_draw(ecs_iter_t *it);
 static void pixio_render_post_draw(ecs_iter_t *it);
+static void pixio_calculate_bounding_box(ecs_iter_t *it);
 
 void pixio_rendering_moduleImport(ecs_world_t *world)
 {
@@ -31,6 +32,10 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
     ecs_add_pair(world, render_phases.Draw, EcsDependsOn, render_phases.Background);
     ecs_add_pair(world, render_phases.PostDraw, EcsDependsOn, render_phases.Draw);
 
+    ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
+                       .query.terms = {{ecs_id(pixio_entity_t)}, {ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}, {ecs_id(pixio_sprite_t), .oper = EcsOptional}},
+                       .callback = pixio_calculate_bounding_box});
+
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.PreDraw))}),
                        .query.terms = {{ecs_id(pixio_render_t)}},
                        .callback = pixio_render_pre_draw});
@@ -42,6 +47,101 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.PostDraw))}),
                        .query.terms = {{ecs_id(pixio_render_t)}},
                        .callback = pixio_render_post_draw});
+}
+
+pixio_vector2_t calculate_origin(pixio_transform_origin_t alignment, float width, float height)
+{
+    pixio_vector2_t origin = {0.0f, 0.0f};
+
+    switch (alignment)
+    {
+    case PIXIO_TOP_LEFT:
+        origin.x = 0.0f;
+        origin.y = 0.0f;
+        break;
+    case PIXIO_TOP_CENTER:
+        origin.x = width / 2.0f;
+        origin.y = 0.0f;
+        break;
+    case PIXIO_TOP_RIGHT:
+        origin.x = width;
+        origin.y = 0.0f;
+        break;
+    case PIXIO_CENTER_LEFT:
+        origin.x = 0.0f;
+        origin.y = height / 2.0f;
+        break;
+    case PIXIO_CENTER:
+        origin.x = width / 2.0f;
+        origin.y = height / 2.0f;
+        break;
+    case PIXIO_CENTER_RIGHT:
+        origin.x = width;
+        origin.y = height / 2.0f;
+        break;
+    case PIXIO_BOTTOM_LEFT:
+        origin.x = 0.0f;
+        origin.y = height;
+        break;
+    case PIXIO_BOTTOM_CENTER:
+        origin.x = width / 2.0f;
+        origin.y = height;
+        break;
+    case PIXIO_BOTTOM_RIGHT:
+        origin.x = width;
+        origin.y = height;
+        break;
+    }
+
+    return origin;
+}
+
+static void pixio_calculate_bounding_box(ecs_iter_t *it)
+{
+    pixio_entity_t *einfo = ecs_field(it, pixio_entity_t, 0);
+    pixio_transform_t *transform = ecs_field(it, pixio_transform_t, 1);
+    pixio_text_t *draw_text = ecs_field(it, pixio_text_t, 2);
+    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, 3);
+    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, 4);
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 5);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        if (!einfo[i].enabled)
+            continue;
+
+        pixio_vector2_t size = {0, 0};
+        float paddind = 0.0f;
+
+        if (sprite && sprite[i].texture.id > 0)
+        {
+            size = (pixio_vector2_t){sprite[i].dstRect.width, sprite[i].dstRect.height};
+        }
+        else if (shape_circle)
+        {
+            // TODO: Implementar cálculo de bounding box para círculos
+            continue;
+        }
+        else if (shape_rect)
+        {
+            paddind = shape_rect[i].lineWidth;
+            size = (pixio_vector2_t){shape_rect[i].width + paddind, shape_rect[i].height + paddind};
+        }
+        else if (draw_text)
+        {
+            size = MeasureTextEx(draw_text[i].font, draw_text[i].text, draw_text[i].fontSize, draw_text[i].spacing);
+        }
+        else
+        {
+            continue; // Si no hay componente de renderizado, saltamos esta entidad
+        }
+
+        // Actualizar la caja delimitadora
+        transform[i].box.min = Vector2SubtractValue(transform[i].position, paddind);
+        transform[i].box.max.x = transform[i].position.x + size.x;
+        transform[i].box.max.y = transform[i].position.y + size.y;
+        transform[i].box.size = (pixio_size_t){transform[i].box.max.x - transform[i].box.min.x, transform[i].box.max.y - transform[i].box.min.y};
+    }
 }
 
 static void pixio_render_pre_draw(ecs_iter_t *it)
@@ -79,7 +179,7 @@ static void pixio_render_draw(ecs_iter_t *it)
 
         rlPushMatrix();
         {
-            pixio_vector2_t origin = {0.0f, 0.0f};
+            pixio_vector2_t origin = calculate_origin(t.origin, t.box.size.width, t.box.size.height);
 
             rlTranslatef(t.position.x, t.position.y, 0.0f);
             rlRotatef(t.rotation, 0.0f, 0.0f, 1.0f);
@@ -106,8 +206,14 @@ static void pixio_render_draw(ecs_iter_t *it)
             }
             else if (draw_text)
             {
-                DrawTextEx(draw_text[i].sresource, draw_text[i].text, (pixio_vector2_t){0, 0}, draw_text[i].fontSize, draw_text[i].spacing, draw_text[i].color);
+                DrawTextEx(draw_text[i].font, draw_text[i].text, (pixio_vector2_t){0, 0}, draw_text[i].fontSize, draw_text[i].spacing, draw_text[i].color);
             }
+
+            // Draw Bounding Box
+            DrawRectangleLines(t.box.min.x - t.position.x, t.box.min.y - t.position.y, t.box.size.width, t.box.size.height, RED);
+
+            // Draw Origin Point
+            DrawCircle(origin.x, origin.y, 5, RED);
         }
         rlPopMatrix();
     }

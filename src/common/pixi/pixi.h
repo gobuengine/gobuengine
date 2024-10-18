@@ -7,6 +7,8 @@
 #include "src/rlgl.h"
 #endif
 
+#include "src/raymath.h"
+
 void pixi_draw_grid(int width, int height, int size);
 
 #endif // PIXI_H

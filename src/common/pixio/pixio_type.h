@@ -38,6 +38,13 @@ extern "C"
         ecs_f32_t height;
     } pixio_size_t;
 
+    typedef struct _pixio_boundingbox_t
+    {
+        pixio_vector2_t min;
+        pixio_vector2_t max;
+        pixio_size_t size;
+    } pixio_boundingbox_t;
+
     typedef struct _pixio_entity_t
     {
         ecs_bool_t enabled;
@@ -50,6 +57,7 @@ extern "C"
         pixio_vector2_t scale;
         ecs_f32_t rotation;
         pixio_transform_origin_t origin;
+        pixio_boundingbox_t box;
     } pixio_transform_t;
 
     typedef struct _pixio_text_t
@@ -58,8 +66,8 @@ extern "C"
         ecs_u32_t fontSize;
         ecs_f32_t spacing;
         pixio_color_t color;
-        pixio_resource_font_t font;
-        pixio_font_t sresource;
+        pixio_resource_font_t font_resource;
+        pixio_font_t font;
     } pixio_text_t;
 
     typedef struct _pixio_sprite_t

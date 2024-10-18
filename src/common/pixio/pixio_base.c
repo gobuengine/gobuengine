@@ -24,6 +24,7 @@ static void observe_set_text_default(ecs_iter_t *it)
 
     for (int i = 0; i < it->count; i++)
     {
+        text[i].font = (text[i].font.texture.id == 0) ? GetFontDefault() : text[i].font;
         text[i].text = (text[i].text == NULL) ? "Text" : text[i].text;
         text[i].fontSize = (text[i].fontSize == 0) ? 10 : text[i].fontSize;
         text[i].spacing = (text[i].spacing <= 0.0f) ? (text[i].fontSize / 10) : text[i].spacing;
