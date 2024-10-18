@@ -74,7 +74,10 @@
         "sdefl.h": "c",
         "types.h": "c",
         "pixio_type.h": "c",
-        "gapp_inspector_widgets.h": "c"
+        "gapp_inspector_widgets.h": "c",
+        "compare": "c",
+        "cstddef": "c",
+        "limits": "c"
     },
     "mesonbuild.configureOnOpen": false
 }

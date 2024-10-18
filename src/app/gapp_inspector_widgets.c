@@ -1,5 +1,6 @@
 #include "gapp_inspector_widgets.h"
 #include "gapp_common.h"
+#include "types/gapp_itype_enum.h"
 
 /**
  * @brief Convierte un color de pixio_color_t a GdkRGBA.
@@ -146,8 +147,8 @@ static void signal_input_vect2_y(GtkSpinButton *self, pixio_vector2_t *field)
 
 static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_ptr)
 {
-    int newposition = gtk_drop_down_get_selected(self);
-    *(int32_t*)field_ptr = newposition;
+    GObject *item = gtk_drop_down_get_selected_item(self);
+    *(int32_t *)field_ptr = object_ienum_get_value(item);
 }
 
 /**
@@ -335,21 +336,43 @@ GtkWidget *gapp_inspector_widgets_input_vector2(ecs_meta_cursor_t cursor)
  * @param cursor ECS meta cursor pointing to a pixio_texture_filter_t field.
  * @return A GtkWidget (GtkDropDown) for selecting texture filter options.
  */
+
+static void _input_enum_factory_setup(GtkSignalListItemFactory *factory, GtkListItem *listitem, gpointer data)
+{
+    GtkWidget *label = gtk_label_new(NULL);
+    gtk_widget_set_halign(label, GTK_ALIGN_START);
+    gtk_list_item_set_child(GTK_LIST_ITEM(listitem), label);
+}
+
+static void _input_enum_factory_bind(GtkSignalListItemFactory *factory, GtkListItem *listitem, gpointer data)
+{
+    ObjectIEnum *ienum = gtk_list_item_get_item(listitem);
+
+    GtkWidget *label = gtk_list_item_get_child(listitem);
+    gtk_label_set_label(GTK_LABEL(label), object_ienum_get_name(ienum));
+}
+
 GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
 {
     void *field_ptr = ecs_meta_get_ptr(&cursor);
     ecs_entity_t field_type = ecs_meta_get_type(&cursor);
-    GtkStringList *enum_list = gtk_string_list_new(NULL);
     const EcsEnum *enum_type = ecs_get(cursor.world, field_type, EcsEnum);
+
+    GListStore *store = g_list_store_new(OBJECT_TYPE_IENUM);
 
     ecs_map_iter_t it = ecs_map_iter(&enum_type->constants);
     while (ecs_map_next(&it))
     {
         ecs_enum_constant_t *constant = ecs_map_ptr(&it);
-        gtk_string_list_append(enum_list, constant->name);
+        g_list_store_append(store, object_ienum_new(constant->name, constant->value));
     }
 
-    GtkWidget *select_option = gtk_drop_down_new(G_LIST_MODEL(enum_list), NULL);
+    GtkListItemFactory *factory = gtk_signal_list_item_factory_new();
+    g_signal_connect(factory, "setup", G_CALLBACK(_input_enum_factory_setup), NULL);
+    g_signal_connect(factory, "bind", G_CALLBACK(_input_enum_factory_bind), NULL);
+
+    GtkWidget *select_option = gtk_drop_down_new(G_LIST_MODEL(store), NULL);
+    gtk_drop_down_set_factory(GTK_DROP_DOWN(select_option), factory);
     gtk_drop_down_set_selected(GTK_DROP_DOWN(select_option), ecs_meta_get_int(&cursor));
     g_signal_connect(select_option, "notify::selected", G_CALLBACK(signal_input_enum), field_ptr);
 

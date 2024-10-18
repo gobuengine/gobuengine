@@ -3,6 +3,7 @@
 ECS_COMPONENT_DECLARE(pixio_entity_t);
 ECS_COMPONENT_DECLARE(pixio_transform_origin_t);
 ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
+ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
 ECS_COMPONENT_DECLARE(pixio_color_t);
 ECS_COMPONENT_DECLARE(pixio_size_t);
 ECS_COMPONENT_DECLARE(pixio_vector2_t);
@@ -25,6 +26,7 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ECS_COMPONENT_DEFINE(world, pixio_entity_t);
     ECS_COMPONENT_DEFINE(world, pixio_transform_origin_t);
     ECS_COMPONENT_DEFINE(world, pixio_texture_filter_t);
+    ECS_COMPONENT_DEFINE(world, pixio_texture_flip_t);
     ECS_COMPONENT_DEFINE(world, pixio_color_t);
     ECS_COMPONENT_DEFINE(world, pixio_size_t);
     ECS_COMPONENT_DEFINE(world, pixio_vector2_t);
@@ -59,9 +61,19 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ecs_enum(world, {
         .entity = ecs_id(pixio_texture_filter_t),
         .constants = {
-            {.name = "Point", .value = TEXTURE_FILTER_POINT},
-            {.name = "Bilinear", .value = TEXTURE_FILTER_BILINEAR},
             {.name = "Trilinear", .value = TEXTURE_FILTER_TRILINEAR},
+            {.name = "Bilinear", .value = TEXTURE_FILTER_BILINEAR},
+            {.name = "Point", .value = TEXTURE_FILTER_POINT},
+        },
+    });
+
+    ecs_enum(world, {
+        .entity = ecs_id(pixio_texture_flip_t),
+        .constants = {
+            {.name = "None", .value = PIXIO_NO_FLIP},
+            {.name = "Vertical", .value = PIXIO_FLIP_VERTICAL},
+            {.name = "Horizontal", .value = PIXIO_FLIP_HORIZONTAL},
+            {.name = "Both", .value = PIXIO_FLIP_BOTH},
         },
     });
 
@@ -163,6 +175,7 @@ void pixio_type_moduleImport(ecs_world_t *world)
         .members = {
             {.name = "texture", .type = ecs_id(pixio_resource_texture_t)},
             {.name = "filter", .type = ecs_id(pixio_texture_filter_t)},
+            {.name = "flip", .type = ecs_id(pixio_texture_flip_t)},
             {.name = "tint", .type = ecs_id(pixio_color_t)},
         },
     });

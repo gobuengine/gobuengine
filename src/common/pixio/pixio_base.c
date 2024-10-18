@@ -63,8 +63,8 @@ static void observe_set_shape_rect_default(ecs_iter_t *it)
         shape[i].segments = (shape[i].segments == 0) ? 60 : shape[i].segments;
         shape[i].color = (shape[i].color.a == 0) ? PURPLE : shape[i].color;
 
-        shape[i].lineWidth = (shape[i].lineWidth == 0) ? 2.0 : shape[i].lineWidth;
-        shape[i].lineColor = (shape[i].lineColor.a == 0) ? PURPLE : shape[i].lineColor;
+        // shape[i].lineWidth = (shape[i].lineWidth == 0) ? 0.0 : shape[i].lineWidth;
+        // shape[i].lineColor = (shape[i].lineColor.a == 0) ? BLANK : shape[i].lineColor;
     }
 }
 

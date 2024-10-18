@@ -26,6 +26,8 @@ extern "C"
         pixio_color_t clear_color;
         pixio_color_t viewport_lineColor;
         int grid_size;
+        bool grid_enabled;
+        bool debug_bounding_box;
     } pixio_render_t;
 
     // global component

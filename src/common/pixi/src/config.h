@@ -35,14 +35,11 @@
 #define SUPPORT_MODULE_RSHAPES          1
 #define SUPPORT_MODULE_RTEXTURES        1
 #define SUPPORT_MODULE_RTEXT            1       // WARNING: It requires SUPPORT_MODULE_RTEXTURES to load sprite font textures
-#define SUPPORT_MODULE_RMODELS          1
 #define SUPPORT_MODULE_RAUDIO           1
 
 //------------------------------------------------------------------------------------
 // Module: rcore - Configuration Flags
 //------------------------------------------------------------------------------------
-// Camera module is included (rcamera.h) and multiple predefined cameras are available: free, 1st/3rd person, orbital
-#define SUPPORT_CAMERA_SYSTEM           1
 // Gestures module is included (rgestures.h) to support gestures detection: tap, hold, swipe, drag
 #define SUPPORT_GESTURES_SYSTEM         1
 // Include pseudo-random numbers generator (rprand.h), based on Xoshiro128** and SplitMix64
@@ -210,26 +207,6 @@
                                                 // TextFormat(), TextSubtext(), TextToUpper(), TextToLower(), TextToPascal(), TextSplit()
 #define MAX_TEXTSPLIT_COUNT           128       // Maximum number of substrings to split: TextSplit()
 
-
-//------------------------------------------------------------------------------------
-// Module: rmodels - Configuration Flags
-//------------------------------------------------------------------------------------
-// Selected desired model fileformats to be supported for loading
-#define SUPPORT_FILEFORMAT_OBJ          1
-#define SUPPORT_FILEFORMAT_MTL          1
-#define SUPPORT_FILEFORMAT_IQM          1
-#define SUPPORT_FILEFORMAT_GLTF         1
-#define SUPPORT_FILEFORMAT_VOX          1
-#define SUPPORT_FILEFORMAT_M3D          1
-// Support procedural mesh generation functions, uses external par_shapes.h library
-// NOTE: Some generated meshes DO NOT include generated texture coordinates
-#define SUPPORT_MESH_GENERATION         1
-
-// rmodels: Configuration values
-//------------------------------------------------------------------------------------
-#define MAX_MATERIAL_MAPS              12       // Maximum number of shader maps supported
-#define MAX_MESH_VERTEX_BUFFERS         7       // Maximum vertex buffers (VBO) per mesh
-
 //------------------------------------------------------------------------------------
 // Module: raudio - Configuration Flags
 //------------------------------------------------------------------------------------
@@ -257,7 +234,7 @@
 #define SUPPORT_STANDARD_FILEIO         1
 // Show TRACELOG() output messages
 // NOTE: By default LOG_DEBUG traces not shown
-#define SUPPORT_TRACELOG                1
+// #define SUPPORT_TRACELOG                1
 //#define SUPPORT_TRACELOG_DEBUG          1
 
 // utils: Configuration values

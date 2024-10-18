@@ -9,7 +9,9 @@ ecs_world_t *pixio_init(void)
     // registro de componentes
     ECS_IMPORT(ecs, pixio_rendering_module);
 
-    ecs_insert(ecs, ecs_value(pixio_render_t, {.viewport = {800, 600}, .clear_color = WHITE, .viewport_lineColor = SKYBLUE, .grid_size = 64}));
+    // ecs_insert(ecs, ecs_value(pixio_render_t, {.viewport = {800, 600}, .clear_color = WHITE, .viewport_lineColor = SKYBLUE, .grid_size = 64}));
+
+    ecs_singleton_set(ecs, pixio_render_t, {.viewport = {800, 600}, .clear_color = WHITE, .viewport_lineColor = SKYBLUE, .grid_size = 64, .grid_enabled = true});
 
     return ecs;
 }

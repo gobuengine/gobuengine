@@ -32,6 +32,14 @@ extern "C"
         PIXIO_BOTTOM_RIGHT   // Esquina inferior derecha
     } pixio_transform_origin_t;
 
+    typedef enum _pixio_texture_flip_t
+    {
+        PIXIO_NO_FLIP = 0,                                            // No flip applied
+        PIXIO_FLIP_HORIZONTAL = 1 << 0,                               // Flip horizontally (mirror horizontally)
+        PIXIO_FLIP_VERTICAL = 1 << 1,                                 // Flip vertically (mirror vertically)
+        PIXIO_FLIP_BOTH = PIXIO_FLIP_HORIZONTAL | PIXIO_FLIP_VERTICAL // Flip both horizontally and vertically
+    } pixio_texture_flip_t;
+
     typedef struct _pixio_size_t
     {
         ecs_f32_t width;
@@ -74,6 +82,7 @@ extern "C"
     {
         pixio_resource_texture_t texture_resource;
         pixio_texture_filter_t filter;
+        pixio_texture_flip_t flip;
         pixio_color_t tint;
         pixio_rect_t srcRect;
         pixio_rect_t dstRect;
@@ -85,6 +94,8 @@ extern "C"
         ecs_f32_t radius;
         ecs_f32_t thickness;
         pixio_color_t color;
+        ecs_f32_t lineWidth;
+        pixio_color_t lineColor;
     } pixio_shape_circle_t;
 
     typedef struct _pixio_shape_rec_t
@@ -102,6 +113,7 @@ extern "C"
     extern ECS_COMPONENT_DECLARE(pixio_entity_t);
     extern ECS_COMPONENT_DECLARE(pixio_transform_origin_t);
     extern ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
+    extern ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
     extern ECS_COMPONENT_DECLARE(pixio_color_t);
     extern ECS_COMPONENT_DECLARE(pixio_vector2_t);
     extern ECS_COMPONENT_DECLARE(pixio_resource_t);

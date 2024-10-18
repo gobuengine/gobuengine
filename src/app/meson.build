@@ -15,10 +15,10 @@ deps += declare_dependency(link_with: libgobu_pixi)
 deps += declare_dependency(link_with: libgobu_pixio)
 deps += declare_dependency(link_with: libgobu_gbase)
 
-
 # Fuentes
 
 sources = [
+  'types/gapp_itype_enum.c',
   'gapp_asprite.c',
   'gapp_console.c',
   'gapp_inspector_widgets.c',
@@ -39,6 +39,7 @@ sources = [
 # Headers
 
 headers = [
+  'types/gapp_itype_enum.h',
   'config.h',
   'gapp_asprite.h',
   'gapp_console.h',
