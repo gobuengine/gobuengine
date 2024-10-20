@@ -3,6 +3,15 @@
 #include "pixio_type.h"
 #include "pixio_base.h"
 
+enum
+{
+    PIXIO_COMPONENT_TRANSFORM = 0,
+    PIXIO_COMPONENT_TEXT_RENDER,
+    PIXIO_COMPONENT_CIRCLE_RENDER,
+    PIXIO_COMPONENT_RECTANGLE_RENDER,
+    PIXIO_COMPONENT_SPRITE_RENDER
+} ORDER_COMPONENTS;
+
 ECS_COMPONENT_DECLARE(pixio_render_phases_t);
 ECS_COMPONENT_DECLARE(pixio_render_t);
 
@@ -70,17 +79,17 @@ static pixio_vector2_t transform_calculate_origin(pixio_transform_origin_t align
  */
 static void pixio_calculate_bounding_box(ecs_iter_t *it)
 {
-    pixio_entity_t *einfo = ecs_field(it, pixio_entity_t, 0);
-    pixio_transform_t *transform = ecs_field(it, pixio_transform_t, 1);
-    pixio_text_t *draw_text = ecs_field(it, pixio_text_t, 2);
-    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, 3);
-    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, 4);
-    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 5);
+    // pixio_entity_t *einfo = ecs_field(it, pixio_entity_t, 0);
+    pixio_transform_t *transform = ecs_field(it, pixio_transform_t, PIXIO_COMPONENT_TRANSFORM);
+    pixio_text_t *draw_text = ecs_field(it, pixio_text_t, PIXIO_COMPONENT_TEXT_RENDER);
+    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, PIXIO_COMPONENT_CIRCLE_RENDER);
+    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, PIXIO_COMPONENT_RECTANGLE_RENDER);
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, PIXIO_COMPONENT_SPRITE_RENDER);
 
     for (int i = 0; i < it->count; i++)
     {
-        if (!einfo[i].enabled)
-            continue;
+        // if (!einfo[i].enabled)
+        //     continue;
 
         pixio_vector2_t size = {0, 0};
         float padding = 0.0f;
@@ -158,17 +167,17 @@ static void pixio_render_draw(ecs_iter_t *it)
     if (!render)
         return;
 
-    pixio_entity_t *einfo = ecs_field(it, pixio_entity_t, 0);
-    pixio_transform_t *transform = ecs_field(it, pixio_transform_t, 1);
-    pixio_text_t *draw_text = ecs_field(it, pixio_text_t, 2);
-    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, 3);
-    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, 4);
-    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 5);
+    // pixio_entity_t *einfo = ecs_field(it, pixio_entity_t, 0);
+    pixio_transform_t *transform = ecs_field(it, pixio_transform_t, PIXIO_COMPONENT_TRANSFORM);
+    pixio_text_t *draw_text = ecs_field(it, pixio_text_t, PIXIO_COMPONENT_TEXT_RENDER);
+    pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, PIXIO_COMPONENT_CIRCLE_RENDER);
+    pixio_shape_rec_t *shape_rect = ecs_field(it, pixio_shape_rec_t, PIXIO_COMPONENT_RECTANGLE_RENDER);
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, PIXIO_COMPONENT_SPRITE_RENDER);
 
     for (int i = 0; i < it->count; i++)
     {
-        if (!einfo[i].enabled)
-            continue;
+        // if (!einfo[i].enabled)
+        //     continue;
 
         pixio_transform_t t = transform[i];
         pixio_vector2_t origin = transform_calculate_origin(t.origin, t.box.size.width, t.box.size.height);
@@ -264,7 +273,7 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
     ecs_add_pair(world, render_phases.PostDraw, EcsDependsOn, render_phases.Draw);
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(EcsOnUpdate))}),
-                       .query.terms = {{ecs_id(pixio_entity_t)}, {ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}, {ecs_id(pixio_sprite_t), .oper = EcsOptional}},
+                       .query.terms = {{ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}, {ecs_id(pixio_sprite_t), .oper = EcsOptional}},
                        .callback = pixio_calculate_bounding_box});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.PreDraw))}),
@@ -272,10 +281,11 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
                        .callback = pixio_render_pre_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.Draw))}),
-                       .query.terms = {{ecs_id(pixio_entity_t)}, {ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}, {ecs_id(pixio_sprite_t), .oper = EcsOptional}},
+                       .query.terms = {{ecs_id(pixio_transform_t)}, {ecs_id(pixio_text_t), .oper = EcsOptional}, {ecs_id(pixio_shape_circle_t), .oper = EcsOptional}, {ecs_id(pixio_shape_rec_t), .oper = EcsOptional}, {ecs_id(pixio_sprite_t), .oper = EcsOptional}},
                        .callback = pixio_render_draw});
 
     ecs_system(world, {.entity = ecs_entity(world, {.add = ecs_ids(ecs_dependson(render_phases.PostDraw))}),
                        .query.terms = {{ecs_id(pixio_render_t)}},
                        .callback = pixio_render_post_draw});
 }
+

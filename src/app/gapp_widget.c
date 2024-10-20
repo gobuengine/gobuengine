@@ -117,6 +117,7 @@ GtkWidget *gapp_widget_button_new_icon_with_label(const gchar *icon_name, const 
     {
         GtkWidget *hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
         gtk_button_set_child(GTK_BUTTON(button), hbox_parent);
+        gtk_widget_set_halign(hbox_parent, GTK_ALIGN_CENTER);
 
         if (icon_name != NULL)
         {

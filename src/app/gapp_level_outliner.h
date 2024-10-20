@@ -14,6 +14,8 @@ GappOutliner *gapp_outliner_new(void);
 
 void gapp_outliner_start_process(GappOutliner *outliner, ecs_world_t *world);
 
+void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, const char *name);
+
 G_END_DECLS
 
 #endif // GAPP_LEVEL_OUTLINER_H

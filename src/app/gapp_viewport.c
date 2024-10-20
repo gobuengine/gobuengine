@@ -91,14 +91,14 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
         self->initialized = true;
 
         pixi_init(width, height);
-        self->world = pixio_init();
+        self->world = pixio_world_init();
 
         g_signal_emit_by_name(self, "viewport-ready", width, height, 0);
 
-        self->root = pixio_entity_new(self->world, 0, "Root");
+        self->root = pixio_new(self->world, 0, "Root");
 
         // create a new entity and add it to the world
-        ecs_entity_t entity = pixio_entity_new(self->world, self->root, "TextExample");
+        ecs_entity_t entity = pixio_new(self->world, self->root, "TextExample");
         ecs_set(self->world, entity, pixio_text_t, {.text = "Hola mundo!, en este mundo", .fontSize = 20});
 
         pixio_transform_t *transform = ecs_get_mut(self->world, entity, pixio_transform_t);
@@ -107,7 +107,7 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
     }
 
     // // we can start by clearing the buffer
-    pixio_process(self->world, 0);
+    pixio_world_process(self->world, 0);
     glFlush();
 
     return TRUE;

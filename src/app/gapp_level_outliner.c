@@ -180,7 +180,7 @@ static OutlinerItem *outliner_item_new(ecs_world_t *world, ecs_entity_t entity)
     self->entity = entity;
     self->children = g_list_store_new(OUTLINER_TYPE_ITEM);
     self->root = NULL;
-    self->name = g_strdup(ecs_get_name(world, entity));
+    self->name = g_strdup(pixio_get_name(world, entity));
 
     g_signal_connect(self->children, "notify", G_CALLBACK(outliner_item_children_update), self);
 
@@ -302,10 +302,10 @@ static void fn_hooks_callback(ecs_iter_t *it)
             item->root = outliner->store;
 
             // Verificamos si la entidad tiene padre
-            if (ecs_has_id(world, e, ecs_pair(EcsChildOf, EcsWildcard)))
+            if (pixio_has_parent(world, e))
             {
                 // Obtenemos el padre
-                ecs_entity_t parent = ecs_get_target(world, e, EcsChildOf, 0);
+                ecs_entity_t parent = pixio_get_parent(world, e);
                 OutlinerItem *item_find = gapp_outliner_fn_find_item_by_entity(outliner->selection, parent);
                 if (item_find != NULL)
                 {
@@ -324,9 +324,6 @@ static void fn_hooks_callback(ecs_iter_t *it)
             OutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outliner->selection, e);
             if (item && g_list_store_find(item->root, item, &position))
                 g_list_store_remove(item->root, position);
-        }
-        else if (event == EcsOnSet)
-        {
         }
     }
 }
@@ -419,21 +416,48 @@ static void gapp_outliner_s_toolbar_remove_clicked(GtkWidget *widget, GappOutlin
             GtkTreeListRow *row = g_list_model_get_item(model, i);
             OutlinerItem *item = gtk_tree_list_row_get_item(row);
 
-            // Evitar la eliminación del elemento raíz
-            if (g_strcmp0(item->name, "Root") == 0)
+            if (g_strcmp0(item->name, "Root") != 0)
             {
-                continue;
+                ecs_delete(outliner->world, item->entity);
             }
 
-            // Eliminar la entidad del mundo
-            ecs_delete(outliner->world, item->entity);
-
             g_object_unref(row);
-            g_free(item);
+            g_object_unref(item);
         }
     }
 
     gapp_outliner_fn_selected_entity(outliner, ecs_lookup(outliner->world, "Root"), TRUE);
+}
+
+/**
+ * Maneja el evento de clic en el botón "Duplicar" de la barra de herramientas del Outliner.
+ * Esta función duplica los elementos seleccionados en el outliner, excluyendo el elemento raíz.
+ *
+ * @param widget El widget que generó el evento (no utilizado en esta función).
+ * @param outliner Puntero a la estructura GappOutliner que contiene el estado del Outliner.
+ */
+static void gapp_outliner_s_toolbar_duplicate_clicked(GtkWidget *widget, GappOutliner *outliner)
+{
+    GListModel *model = gtk_multi_selection_get_model(outliner->selection);
+    guint n = g_list_model_get_n_items(model);
+
+    for (gint i = n - 1; i >= 0; i--)
+    {
+        if (gtk_selection_model_is_selected(GTK_SELECTION_MODEL(outliner->selection), i))
+        {
+            GtkTreeListRow *row = g_list_model_get_item(model, i);
+            OutlinerItem *item = gtk_tree_list_row_get_item(row);
+
+            if (g_strcmp0(item->name, "Root") != 0)
+            {
+                ecs_entity_t eclone = pixio_clone(outliner->world, item->entity);
+                gapp_outliner_fn_selected_entity(outliner, eclone, TRUE);
+            }
+
+            g_object_unref(row);
+            g_object_unref(item);
+        }
+    }
 }
 
 /**
@@ -566,7 +590,7 @@ static void s_outliner_popover_entity_item_activated(GtkListView *self, guint po
     OutlinerItem *item_selected = gapp_outliner_fn_get_selected_item(outliner->selection);
     ecs_entity_t parent = item_selected != NULL ? item_selected->entity : ecs_lookup(outliner->world, "Root");
     // create entity
-    ecs_entity_t entity = pixio_entity_new(outliner->world, parent, popoverItem->name);
+    ecs_entity_t entity = pixio_new(outliner->world, parent, popoverItem->name);
     // add components
     if (strcmp(popoverItem->component, "entity.empty") != 0)
         ecs_add_id(outliner->world, entity, ecs_lookup(outliner->world, popoverItem->component));
@@ -687,6 +711,7 @@ static void gapp_outliner_ui_setup(GappOutliner *self)
         item = gapp_widget_button_new_icon_with_label("edit-copy-symbolic", NULL);
         gtk_widget_set_size_request(item, -1, 20);
         gtk_box_append(GTK_BOX(toolbar), item);
+        g_signal_connect(item, "clicked", G_CALLBACK(gapp_outliner_s_toolbar_duplicate_clicked), self);
 
         item = gapp_widget_button_new_icon_with_label("user-trash-symbolic", NULL);
         gtk_widget_set_size_request(item, -1, 20);
@@ -758,6 +783,12 @@ void gapp_outliner_start_process(GappOutliner *outliner, ecs_world_t *world)
     ecs_set_hooks(world, pixio_transform_t, {.on_add = fn_hooks_callback, .on_remove = fn_hooks_callback, .ctx = outliner});
 
     g_debug("Outliner process started and hooks set for pixio_transform_t");
+}
+
+void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, const char *name)
+{
+    OutlinerItem *item = gapp_outliner_get_item_by_entity(outliner->selection, entity);
+    item->name = g_strdup(name);
 }
 
 // --- END API ---

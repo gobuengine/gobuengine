@@ -205,11 +205,14 @@ GtkWidget *gapp_inspector_widgets_input_bool(ecs_meta_cursor_t cursor)
  * @param cursor El cursor de metadatos ECS para el campo u32.
  * @return GtkWidget* El widget GtkSpinButton creado.
  */
-GtkWidget *gapp_inspector_widgets_input_u32(ecs_meta_cursor_t cursor)
+GtkWidget *gapp_inspector_widgets_input_u32(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_u32_t *field = (ecs_u32_t *)ecs_meta_get_ptr(&cursor);
 
-    GtkWidget *number_spin = gtk_spin_button_new_with_range(0, UINT32_MAX, 1.0);
+    double min = member->range.max == 0.000000 && member->range.min == 0.000000 ? 0 : member->range.min;
+    double max = member->range.max == 0.000000 && member->range.min == 0.000000 ? UINT32_MAX : member->range.max;
+
+    GtkWidget *number_spin = gtk_spin_button_new_with_range(min, max, 1.0);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), (gdouble)*field);
@@ -228,11 +231,14 @@ GtkWidget *gapp_inspector_widgets_input_u32(ecs_meta_cursor_t cursor)
  * @param cursor El cursor de metadatos ECS para el campo f64.
  * @return GtkWidget* El widget GtkSpinButton creado.
  */
-GtkWidget *gapp_inspector_widgets_input_f64(ecs_meta_cursor_t cursor)
+GtkWidget *gapp_inspector_widgets_input_f64(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_f64_t *field = (ecs_f64_t *)ecs_meta_get_ptr(&cursor);
 
-    GtkWidget *number_spin = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
+    double min = member->range.max == 0.000000 && member->range.min == 0.000000 ? INTMAX_MIN : member->range.min;
+    double max = member->range.max == 0.000000 && member->range.min == 0.000000 ? INTMAX_MAX : member->range.max;
+
+    GtkWidget *number_spin = gtk_spin_button_new_with_range(min, max, 0.1);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);
@@ -254,11 +260,15 @@ GtkWidget *gapp_inspector_widgets_input_f64(ecs_meta_cursor_t cursor)
  * @param cursor ECS meta cursor pointing to an ecs_f32_t field.
  * @return A GtkWidget (GtkSpinButton) for inputting float values.
  */
-GtkWidget *gapp_inspector_widgets_input_f32(ecs_meta_cursor_t cursor)
+GtkWidget *gapp_inspector_widgets_input_f32(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_f32_t *field = (ecs_f32_t *)ecs_meta_get_ptr(&cursor);
+    ecs_entity_t field_type = ecs_meta_get_type(&cursor);
 
-    GtkWidget *number_spin = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
+    double min = member->range.max == 0.000000 && member->range.min == 0.000000 ? INTMAX_MIN : member->range.min;
+    double max = member->range.max == 0.000000 && member->range.min == 0.000000 ? INTMAX_MAX : member->range.max;
+
+    GtkWidget *number_spin = gtk_spin_button_new_with_range(min, max, 0.1);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);

@@ -39,8 +39,6 @@ static void gapp_inspector_init(GappInspector *self)
     gtk_widget_add_css_class(self->listbox, "inspector_list");
     gtk_list_box_set_selection_mode(self->listbox, GTK_SELECTION_NONE);
     gtk_box_append(GTK_BOX(self), self->listbox);
-
-
 }
 
 // ---------------------------
@@ -60,19 +58,20 @@ static GtkWidget *gapp_inspector_group_child_new(GtkWidget *size_group, const ch
         gtk_widget_set_halign(label, GTK_ALIGN_START);
         gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
         gtk_widget_set_hexpand(label, TRUE);
-        gtk_widget_set_size_request(label, 100, -1);
+        gtk_widget_set_size_request(label, 80, -1);
         gtk_widget_add_css_class(label, "title-4");
         gtk_box_append(box, label);
     }
 
     gtk_widget_set_hexpand(input, TRUE);
+    gtk_widget_set_size_request(input, 240, -1);
     gtk_box_append(box, input);
     gtk_size_group_add_widget(size_group, input);
 
     return box;
 }
 
-static GtkWidget *gapp_inspector_group_new(GtkWidget *list, const gchar *title_str)
+static GtkWidget *gapp_inspector_group_new(GtkWidget *list, const gchar *title_str, bool buttonRemove)
 {
     GtkWidget *expander = gtk_expander_new(NULL);
     gtk_expander_set_expanded(GTK_EXPANDER(expander), TRUE);
@@ -88,7 +87,7 @@ static GtkWidget *gapp_inspector_group_new(GtkWidget *list, const gchar *title_s
         gtk_widget_set_halign(label, GTK_ALIGN_START);
         gtk_box_append(GTK_BOX(title), label);
 
-        if (!(strcmp(title_str, "pixio_transform_t")==0 || strcmp(title_str, "pixio_entity_t")==0))
+        if (buttonRemove)
         {
             // GtkWidget *button_off = gtk_switch_new();
             // gtk_box_append(GTK_BOX(title), button_off);
@@ -120,6 +119,8 @@ static void gapp_inspector_component_add_props_widget(GtkWidget *content, ecs_wo
 {
     ecs_meta_cursor_t cursor = ecs_meta_cursor(world, component, ptr);
 
+    const EcsStruct *struct_member = ecs_get(world, component, EcsStruct);
+
     ecs_meta_push(&cursor);
     for (int i = 0; i < ECS_MEMBER_DESC_CACHE_SIZE; i++)
     {
@@ -131,7 +132,7 @@ static void gapp_inspector_component_add_props_widget(GtkWidget *content, ecs_wo
         struct WidgetCreator
         {
             ecs_entity_t type;
-            GtkWidget *(*create_widget)(ecs_meta_cursor_t);
+            GtkWidget *(*create_widget)(ecs_meta_cursor_t, ecs_member_t *);
         } WidgetCreator[] = {
             {ecs_id(ecs_string_t), gapp_inspector_widgets_input_string},
             {ecs_id(ecs_bool_t), gapp_inspector_widgets_input_bool},
@@ -150,12 +151,13 @@ static void gapp_inspector_component_add_props_widget(GtkWidget *content, ecs_wo
         };
 
         ecs_entity_t field_type = ecs_meta_get_type(&cursor);
+        ecs_member_t *member = ecs_vec_get_t(&struct_member->members, ecs_member_t, i);
 
-        for (size_t i = 0; i < G_N_ELEMENTS(WidgetCreator); i++)
+        for (size_t n = 0; n < G_N_ELEMENTS(WidgetCreator); n++)
         {
-            if (WidgetCreator[i].type == field_type && WidgetCreator[i].create_widget != NULL)
+            if (WidgetCreator[n].type == field_type && WidgetCreator[n].create_widget != NULL)
             {
-                input = WidgetCreator[i].create_widget(cursor);
+                input = WidgetCreator[n].create_widget(cursor, member);
                 break;
             }
         }
@@ -172,6 +174,67 @@ static void gapp_inspector_component_add_props_widget(GtkWidget *content, ecs_wo
     ecs_meta_pop(&cursor);
 }
 
+// -- -- -- -- -- --
+static void gapp_inspector_entity_enabled_toggled(GtkWidget *widget, GappInspector *self)
+{
+    pixio_entity *pentity = g_object_get_data(G_OBJECT(widget), "entity");
+
+    gboolean enabled = gtk_check_button_get_active(GTK_CHECK_BUTTON(widget));
+    pixio_set_enabled(pentity->world, pentity->entity, enabled);
+
+    gapp_inspector_set_entity(self, pentity->world, pentity->entity);
+}
+
+static void gapp_inspector_entity_name_changed(GtkEditable *widget, GappInspector *self)
+{
+    pixio_entity *pentity = g_object_get_data(G_OBJECT(widget), "entity");
+
+    const gchar *name = gtk_editable_get_text(widget);
+    pixio_set_name(pentity->world, pentity->entity, name);
+
+    // gapp_outliner_set_name_entity(self->outliner, pentity->entity, name);
+}
+
+static void gapp_inspector_component_default(GappInspector *self, ecs_world_t *world, ecs_entity_t entity)
+{
+    GtkWidget *size_group = self->size_group;
+
+    pixio_entity *pentity = pixio_entity_new(world, entity);
+
+    const char *name = pixio_get_name(world, entity);
+    bool enabled = pixio_get_enabled(world, entity);
+
+    GtkWidget *expander = gapp_inspector_group_new(self->listbox, "entity", FALSE);
+
+    // enabled input
+    GtkWidget *entity_enabled = gtk_check_button_new();
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(entity_enabled), enabled);
+    gtk_widget_set_valign(entity_enabled, GTK_ALIGN_CENTER);
+    gtk_box_append(GTK_BOX(expander), gapp_inspector_group_child_new(size_group, "enabled", entity_enabled, GTK_ORIENTATION_HORIZONTAL));
+    g_object_set_data(G_OBJECT(entity_enabled), "entity", pentity);
+    g_signal_connect(entity_enabled, "toggled", G_CALLBACK(gapp_inspector_entity_enabled_toggled), self);
+
+    // name input
+    GtkWidget *entity_name = gtk_entry_new();
+    gtk_editable_set_text(GTK_EDITABLE(entity_name), name);
+    gtk_widget_set_valign(entity_name, GTK_ALIGN_CENTER);
+    gtk_widget_set_sensitive(entity_name, !(pixio_get_root(world) == entity));
+    gtk_box_append(GTK_BOX(expander), gapp_inspector_group_child_new(size_group, "name", entity_name, GTK_ORIENTATION_HORIZONTAL));
+    g_object_set_data(G_OBJECT(entity_name), "entity", pentity);
+    g_signal_connect(entity_name, "changed", G_CALLBACK(gapp_inspector_entity_name_changed), self);
+
+    // tags input
+    // GtkWidget *entity_tags = gtk_entry_new();
+    // gtk_widget_set_valign(entity_tags, GTK_ALIGN_CENTER);
+    // gtk_box_append(GTK_BOX(expander), gapp_inspector_group_child_new(size_group, "tags", entity_tags, GTK_ORIENTATION_HORIZONTAL));
+
+    // button add components
+    GtkWidget *button = gapp_widget_button_new_icon_with_label("list-add-symbolic", "Add component");
+    gtk_widget_set_tooltip_text(button, "Add component");
+    gtk_button_set_has_frame(GTK_BUTTON(button), TRUE);
+    gtk_box_append(GTK_BOX(expander), button);
+}
+
 // - - - - - - - - - - - - - -
 // MARK:API
 // - - - - - - - - - - - - - -
@@ -181,27 +244,57 @@ GappInspector *gapp_inspector_new(void)
     return g_object_new(GAPP_TYPE_INSPECTOR, "orientation", GTK_ORIENTATION_VERTICAL, "spacing", 0, NULL);
 }
 
+/**
+ * gapp_inspector_set_entity:
+ * @self: (transfer none): El #GappInspector que se va a actualizar.
+ * @world: (transfer none): El mundo ECS que contiene la entidad.
+ * @entity: La entidad cuyos componentes se van a mostrar.
+ *
+ * Actualiza el GappInspector para mostrar los componentes de la entidad especificada.
+ *
+ * Esta función realiza las siguientes operaciones:
+ * - Limpia la vista actual del inspector.
+ * - Crea un nuevo grupo de tamaño horizontal.
+ * - Agrega el componente por defecto.
+ * - Para cada componente de la entidad:
+ *   - Crea un widget expandible.
+ *   - Agrega los widgets de propiedades del componente.
+ *
+ * Los componentes 'pixio_transform_t' y 'pixio_entity_t' se tratan como no removibles.
+ *
+ * Si la entidad no está habilitada o no tiene componentes, la función retorna sin hacer cambios.
+ *
+ * Since: 1.0
+ */
 void gapp_inspector_set_entity(GappInspector *self, ecs_world_t *world, ecs_entity_t entity)
 {
-    const ecs_type_t *type = ecs_get_type(world, entity);
-
     gtk_list_box_remove_all(self->listbox);
     self->size_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+
+    // Component fake default
+    gapp_inspector_component_default(self, world, entity);
+
+    if (!pixio_get_enabled(world, entity))
+        return;
+
+    const ecs_type_t *type = ecs_get_type(world, entity);
 
     // TODO: add widget based on type
     for (uint32_t i = 0; i < type->count; i++)
     {
         ecs_id_t id = type->array[i];
-        ecs_entity_t component = ecs_pair_second(world, id);
-        const void *component_ptr = ecs_get_id(world, entity, component);
+        ecs_entity_t e_component = ecs_pair_second(world, id);
+        const void *component_ptr = ecs_get_id(world, entity, e_component);
         if (!component_ptr)
             continue;
 
-        const char *component_name = ecs_get_name(world, component);
-        {
-            GtkWidget *expander = gapp_inspector_group_new(self->listbox, component_name);
-            g_object_set_data(G_OBJECT(expander), "size-group", self->size_group);
-            gapp_inspector_component_add_props_widget(expander, world, component_ptr, component);
-        }
+        const char *component_name = ecs_get_name(world, e_component);
+
+        gboolean is_removable = (g_strcmp0(component_name, "pixio_transform_t") != 0 &&
+                                 g_strcmp0(component_name, "pixio_entity_t") != 0);
+
+        GtkWidget *expander = gapp_inspector_group_new(self->listbox, component_name, is_removable);
+        g_object_set_data(G_OBJECT(expander), "size-group", self->size_group);
+        gapp_inspector_component_add_props_widget(expander, world, component_ptr, e_component);
     }
 }
