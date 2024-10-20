@@ -187,6 +187,34 @@ static OutlinerItem *outliner_item_new(ecs_world_t *world, ecs_entity_t entity)
     return self;
 }
 
+/**
+ * outliner_item_set_name:
+ * @self: (transfer none): El #OutlinerItem cuyo nombre se va a cambiar.
+ * @name: (transfer none): El nuevo nombre para el ítem.
+ *
+ * Establece un nuevo nombre para un ítem del esquema.
+ *
+ * Esta función realiza las siguientes operaciones:
+ * - Verifica que @self sea un #OutlinerItem válido.
+ * - Libera el nombre anterior del ítem.
+ * - Asigna una nueva copia del nombre proporcionado al ítem.
+ *
+ * Si @self no es un #OutlinerItem válido, la función retorna inmediatamente
+ * sin realizar ninguna acción.
+ *
+ * Nota: Esta función crea una copia del @name proporcionado. El llamador
+ * mantiene la propiedad de la cadena original y es responsable de liberarla
+ * si es necesario.
+ *
+ * Since: 1.0
+ */
+static void outliner_item_set_name(OutlinerItem *self, const gchar *name)
+{
+    g_return_if_fail(OUTLINER_IS_ITEM(self));
+    g_free(self->name);
+    self->name = g_strdup(name);
+}
+
 // - - - - - - - - - -
 // END DEFINE TYPE
 // - - - - - - - - - -
@@ -196,9 +224,9 @@ struct _GappOutliner
 {
     GtkWidget parent;
 
-    GtkWidget *colview;
     GtkTreeListModel *tree_model;
     GtkSingleSelection *selection;
+    GtkWidget *list_view;
 
     GListStore *store;
     ecs_world_t *world;
@@ -282,53 +310,6 @@ static OutlinerItem *gapp_outliner_fn_get_selected_item(GtkSingleSelection *sele
 }
 
 /**
- * Función de callback para los hooks de ECS para manejar eventos de adición y eliminación de entidades.
- *
- * @param it Puntero al iterador ECS que contiene la información del evento.
- */
-static void fn_hooks_callback(ecs_iter_t *it)
-{
-    ecs_world_t *world = it->world;
-    ecs_entity_t event = it->event;
-    GappOutliner *outliner = it->ctx;
-
-    for (int i = 0; i < it->count; i++)
-    {
-        ecs_entity_t e = it->entities[i];
-
-        if (event == EcsOnAdd)
-        {
-            OutlinerItem *item = outliner_item_new(world, e);
-            item->root = outliner->store;
-
-            // Verificamos si la entidad tiene padre
-            if (pixio_has_parent(world, e))
-            {
-                // Obtenemos el padre
-                ecs_entity_t parent = pixio_get_parent(world, e);
-                OutlinerItem *item_find = gapp_outliner_fn_find_item_by_entity(outliner->selection, parent);
-                if (item_find != NULL)
-                {
-                    item->root = item_find->children;
-                    g_list_store_append(item_find->children, item);
-                    continue;
-                }
-            }
-
-            // La entidad no tiene padre, se agrega al almacén raíz
-            g_list_store_append(outliner->store, item);
-        }
-        else if (event == EcsOnRemove)
-        {
-            guint position;
-            OutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outliner->selection, e);
-            if (item && g_list_store_find(item->root, item, &position))
-                g_list_store_remove(item->root, position);
-        }
-    }
-}
-
-/**
  * Enfoca y selecciona una entidad específica en el outliner.
  *
  * Esta función busca la entidad especificada en el modelo del outliner,
@@ -389,6 +370,69 @@ static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_
 }
 
 // MARK: --- SIGNAL ---
+
+/**
+ * Función de callback para los hooks de ECS para manejar eventos de adición y eliminación de entidades.
+ *
+ * @param it Puntero al iterador ECS que contiene la información del evento.
+ */
+static void gapp_outliner_s_hooks_callback(ecs_iter_t *it)
+{
+    ecs_world_t *world = it->world;
+    ecs_entity_t event = it->event;
+    GappOutliner *outliner = it->ctx;
+
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t e = it->entities[i];
+
+        if (event == EcsOnAdd)
+        {
+            OutlinerItem *item = outliner_item_new(world, e);
+            item->root = outliner->store;
+
+            // Verificamos si la entidad tiene padre
+            if (pixio_has_parent(world, e))
+            {
+                // Obtenemos el padre
+                ecs_entity_t parent = pixio_get_parent(world, e);
+                OutlinerItem *item_find = gapp_outliner_fn_find_item_by_entity(outliner->selection, parent);
+                if (item_find != NULL)
+                {
+                    item->root = item_find->children;
+                    g_list_store_append(item_find->children, item);
+                    continue;
+                }
+            }
+
+            // La entidad no tiene padre, se agrega al almacén raíz
+            g_list_store_append(outliner->store, item);
+        }
+        else if (event == EcsOnRemove)
+        {
+            guint position;
+            OutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outliner->selection, e);
+            if (item && g_list_store_find(item->root, item, &position))
+                g_list_store_remove(item->root, position);
+        }
+    }
+}
+
+/**
+ * gapp_outliner_s_toolbar_add_clicked:
+ * @widget: (transfer none): El widget que activó la señal de clic.
+ * @popover: (transfer none): El #GtkPopover que se mostrará.
+ *
+ * Maneja el evento de clic en el botón "Agregar" de la barra de herramientas del esquema.
+ *
+ * Esta función se activa cuando el usuario hace clic en el botón "Agregar" en la
+ * barra de herramientas del esquema. Su única acción es mostrar un popover que
+ * presumiblemente contiene opciones para agregar nuevos elementos al esquema.
+ *
+ * Nota: Esta función asume que @popover es un widget válido de tipo GtkPopover.
+ *
+ * Since: 1.0
+ */
 static void gapp_outliner_s_toolbar_add_clicked(GtkWidget *widget, GtkWidget *popover)
 {
     gtk_popover_popup(GTK_POPOVER(popover));
@@ -588,7 +632,7 @@ static void s_outliner_popover_entity_item_activated(GtkListView *self, guint po
 
     // create a new entity and add it to the world
     OutlinerItem *item_selected = gapp_outliner_fn_get_selected_item(outliner->selection);
-    ecs_entity_t parent = item_selected != NULL ? item_selected->entity : ecs_lookup(outliner->world, "Root");
+    ecs_entity_t parent = item_selected != NULL ? item_selected->entity : pixio_get_root(outliner->world);
     // create entity
     ecs_entity_t entity = pixio_new(outliner->world, parent, popoverItem->name);
     // add components
@@ -742,9 +786,9 @@ static void gapp_outliner_ui_setup(GappOutliner *self)
             g_signal_connect(factory, "setup", G_CALLBACK(column_factory_s_setup_name), self);
             g_signal_connect(factory, "bind", G_CALLBACK(column_factory_s_bind_name), self);
 
-            GtkWidget *list_view = gtk_list_view_new(self->selection, factory);
+            self->list_view = gtk_list_view_new(self->selection, factory);
             // gtk_list_view_set_single_click_activate(GTK_LIST_VIEW(list_view), TRUE);
-            gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), list_view);
+            gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), self->list_view);
 
             g_signal_connect(self->selection, "selection-changed", G_CALLBACK(gapp_outliner_s_list_view_activated), self);
         }
@@ -780,15 +824,44 @@ void gapp_outliner_start_process(GappOutliner *outliner, ecs_world_t *world)
     outliner->world = world;
 
     // Configura los hooks para el componente pixio_transform_t
-    ecs_set_hooks(world, pixio_transform_t, {.on_add = fn_hooks_callback, .on_remove = fn_hooks_callback, .ctx = outliner});
+    ecs_set_hooks(world, pixio_transform_t, {.on_add = gapp_outliner_s_hooks_callback, .on_remove = gapp_outliner_s_hooks_callback, .ctx = outliner});
 
     g_debug("Outliner process started and hooks set for pixio_transform_t");
 }
 
+/**
+ * gapp_outliner_set_name_entity:
+ * @outliner: (transfer none): El #GappOutliner que contiene la entidad.
+ * @entity: La entidad cuyo nombre se va a cambiar.
+ * @name: (transfer none): El nuevo nombre para la entidad.
+ *
+ * Establece un nuevo nombre para una entidad específica en el esquema y actualiza la interfaz de usuario.
+ *
+ * Esta función realiza las siguientes operaciones:
+ * - Busca el ítem correspondiente a la entidad en la selección del esquema.
+ * - Actualiza el nombre del ítem utilizando la función outliner_item_set_name().
+ * - Actualiza la etiqueta en la interfaz de usuario para reflejar el nuevo nombre.
+ *
+ * Nota: El nuevo nombre se copia internamente, por lo que el llamador mantiene
+ * la propiedad de la cadena original.
+ *
+ * Advertencia: Esta función asume que la entidad existe en el esquema y que
+ * la estructura del widget es la esperada. Si la entidad no se encuentra o
+ * la estructura del widget ha cambiado, el comportamiento puede ser indefinido.
+ *
+ * Since: 1.0
+ */
 void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, const char *name)
 {
-    OutlinerItem *item = gapp_outliner_get_item_by_entity(outliner->selection, entity);
-    item->name = g_strdup(name);
+    // Buscar el ítem correspondiente a la entidad
+    OutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outliner->selection, entity);
+
+    // Actualizar el nombre del ítem
+    outliner_item_set_name(item, name);
+
+    // Actualizar la etiqueta en la interfaz de usuario
+    GtkWidget *label = gtk_widget_get_last_child(gtk_tree_expander_get_child(item->expander));
+    gtk_label_set_label(GTK_LABEL(label), item->name);
 }
 
 // --- END API ---

@@ -2,6 +2,8 @@
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_inspector_widgets.h"
+#include "gapp_level_editor.h"
+#include "gapp_level_outliner.h"
 
 #include "pixio/pixio_type.h"
 
@@ -185,14 +187,51 @@ static void gapp_inspector_entity_enabled_toggled(GtkWidget *widget, GappInspect
     gapp_inspector_set_entity(self, pentity->world, pentity->entity);
 }
 
+/**
+ * gapp_inspector_entity_name_changed:
+ * @widget: (transfer none): El #GtkEditable que emitió la señal de cambio.
+ * @self: (transfer none): El #GappInspector asociado.
+ *
+ * Maneja el cambio de nombre de una entidad en el inspector.
+ *
+ * Esta función se activa cuando el usuario modifica el nombre de una entidad
+ * en el widget editable del inspector. Realiza las siguientes operaciones:
+ *
+ * 1. Obtiene la entidad asociada al widget editable.
+ * 2. Obtiene el nuevo nombre del widget editable.
+ * 3. Actualiza el nombre de la entidad en el mundo del juego.
+ * 4. Actualiza el nombre de la entidad en el esquema (outliner) de la interfaz.
+ *
+ * Nota: Esta función asume que el widget editable tiene asociada una entidad
+ * como dato de usuario con la clave "entity".
+ *
+ * Advertencia: Esta función depende de la estructura jerárquica de los widgets
+ * para encontrar el editor de niveles y el esquema. Si esta estructura cambia,
+ * la función podría fallar.
+ *
+ * Since: 1.0
+ */
 static void gapp_inspector_entity_name_changed(GtkEditable *widget, GappInspector *self)
 {
+    // Borramos la class error del input
+    gtk_widget_remove_css_class(GTK_WIDGET(widget), "error");
+
+    // Obtener la entidad asociada al widget
     pixio_entity *pentity = g_object_get_data(G_OBJECT(widget), "entity");
 
+    // Obtener el nuevo nombre del widget editable
     const gchar *name = gtk_editable_get_text(widget);
-    pixio_set_name(pentity->world, pentity->entity, name);
 
-    // gapp_outliner_set_name_entity(self->outliner, pentity->entity, name);
+    // Actualizar el nombre de la entidad en el mundo del juego
+    bool success = pixio_set_name(pentity->world, pentity->entity, name);
+    if (success)
+    {
+        GtkWidget *level_editor = gtk_widget_get_ancestor(GTK_WIDGET(self), GOBU_TYPE_LEVEL_EDITOR);
+        GtkWidget *outliner = gobu_level_editor_get_outliner(level_editor);
+        gapp_outliner_set_name_entity(outliner, pentity->entity, name);
+    }
+    else
+        gtk_widget_add_css_class(GTK_WIDGET(widget), "error");
 }
 
 static void gapp_inspector_component_default(GappInspector *self, ecs_world_t *world, ecs_entity_t entity)

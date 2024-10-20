@@ -24,13 +24,15 @@ ecs_entity_t pixio_new(ecs_world_t *world, ecs_entity_t parent, const char *name
 
 ecs_entity_t pixio_get_root(ecs_world_t *world);
 
+ecs_entity_t pixio_find_by_name(ecs_world_t *world, const char *name);
+
 void pixio_set_parent(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t parent);
 ecs_entity_t pixio_get_parent(ecs_world_t *world, ecs_entity_t entity);
 bool pixio_has_parent(ecs_world_t *world, ecs_entity_t entity);
 
 ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity);
 
-void pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name);
+bool pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name);
 const char *pixio_get_name(ecs_world_t *world, ecs_entity_t entity);
 
 void pixio_set_enabled(ecs_world_t *world, ecs_entity_t entity, bool enabled);

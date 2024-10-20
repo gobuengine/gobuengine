@@ -77,7 +77,8 @@
         "gapp_inspector_widgets.h": "c",
         "compare": "c",
         "cstddef": "c",
-        "limits": "c"
+        "limits": "c",
+        "gapp_level_inspector.h": "c"
     },
     "mesonbuild.configureOnOpen": false
 }

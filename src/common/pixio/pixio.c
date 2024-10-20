@@ -99,10 +99,15 @@ ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity)
     return clone;
 }
 
-void pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name)
+bool pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name)
 {
-    if (pixio_get_root(world) != entity)
-        ecs_set_name(world, entity, name);
+    if (pixio_find_by_name(world, name) == 0)
+    {
+        if (pixio_get_root(world) != entity)
+            return ecs_set_name(world, entity, name) == entity;
+    }
+
+    return FALSE;
 }
 
 // Retrieves the name of a given entity from the ECS world.
@@ -110,6 +115,11 @@ void pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name)
 const char *pixio_get_name(ecs_world_t *world, ecs_entity_t entity)
 {
     return ecs_get_name(world, entity);
+}
+
+ecs_entity_t pixio_find_by_name(ecs_world_t *world, const char *name)
+{
+    return ecs_lookup_path_w_sep(world, pixio_get_root(world), name, ".", ".", true);
 }
 
 void pixio_set_enabled(ecs_world_t *world, ecs_entity_t entity, bool enabled)

@@ -13,11 +13,13 @@ struct _GappViewport
     ecs_world_t *world;
     ecs_entity_t root;
     gboolean initialized;
+    gint64 first_frame_time;
+    guint tick;
 };
 
 G_DEFINE_TYPE(GappViewport, gapp_viewport, GTK_TYPE_GL_AREA)
 
-static gboolean gtk_ray_ticka(GtkWidget *self, GdkFrameClock *frame_clock, gpointer user_data);
+static gboolean gtk_ray_ticka(GappViewport *self, GdkFrameClock *frame_clock, gpointer user_data);
 static void gapp_s_resize(GtkWidget *widget, gint width, gint height);
 static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewport *self);
 static void gapp_s_realize(GtkWidget *widget);
@@ -65,9 +67,51 @@ static void gapp_viewport_init(GappViewport *self)
     gtk_widget_add_tick_callback(GTK_WIDGET(self), gtk_ray_ticka, self, NULL);
 }
 
-static gboolean gtk_ray_ticka(GtkWidget *self, GdkFrameClock *frame_clock, gpointer user_data)
+/**
+ * gtk_ray_ticka:
+ * @self: (transfer none): El #GtkWidget que se va a redibujar.
+ * @frame_clock: (transfer none): El #GdkFrameClock que proporciona la señal de tick.
+ * @user_data: (transfer none): Datos adicionales pasados a la función (no utilizado).
+ *
+ * Función de callback para el tick del reloj de cuadros.
+ *
+ * Esta función se llama en cada tick del reloj de cuadros y solicita
+ * un redibujado del widget. Se utiliza para actualizar continuamente
+ * la visualización del widget, lo que es útil para animaciones o
+ * contenido dinámico.
+ *
+ * Returns: Siempre devuelve %G_SOURCE_CONTINUE para mantener el callback activo.
+ *
+ * Since: 1.0
+ */
+static gboolean gtk_ray_ticka(GappViewport *self, GdkFrameClock *frame_clock, gpointer user_data)
 {
+    GdkFrameTimings *prev_timings;
+    gint64 prev_frame_time, frame_time, frame;
+    gint64 history_start, history_len;
+
+    frame = gdk_frame_clock_get_frame_counter(frame_clock);
+    frame_time = gdk_frame_clock_get_frame_time(frame_clock);
+
+    if (self->first_frame_time == 0)
+    {
+        self->first_frame_time = frame_time;
+        return G_SOURCE_CONTINUE;
+    }
+
     gtk_widget_queue_draw(self);
+
+    history_start = gdk_frame_clock_get_history_start(frame_clock);
+    if (frame % 60 == 0)
+    {
+        history_len = frame - history_start;
+        if (history_len > 0)
+        {
+            prev_timings = gdk_frame_clock_get_timings(frame_clock, frame - history_len);
+            prev_frame_time = gdk_frame_timings_get_frame_time(prev_timings);
+        }
+    }
+
     return G_SOURCE_CONTINUE;
 }
 
@@ -96,14 +140,6 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
         g_signal_emit_by_name(self, "viewport-ready", width, height, 0);
 
         self->root = pixio_new(self->world, 0, "Root");
-
-        // create a new entity and add it to the world
-        ecs_entity_t entity = pixio_new(self->world, self->root, "TextExample");
-        ecs_set(self->world, entity, pixio_text_t, {.text = "Hola mundo!, en este mundo", .fontSize = 20});
-
-        pixio_transform_t *transform = ecs_get_mut(self->world, entity, pixio_transform_t);
-        transform->position.x = 100;
-        transform->position.y = 100;
     }
 
     // // we can start by clearing the buffer
