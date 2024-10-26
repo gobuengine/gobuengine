@@ -11,6 +11,8 @@ struct _GobuLevelEditor
     GtkWidget *outliner;
     GtkWidget *viewport;
     GtkWidget *inspector;
+    ecs_world_t *world;
+    ecs_entity_t root;
 };
 
 static void gapp_level_viewport_s_ready(GtkWidget *viewport, int width, int height, GtkWidget *outliner);
@@ -43,6 +45,9 @@ static void gobu_level_editor_init(GobuLevelEditor *self)
 {
     g_return_if_fail(GOBU_IS_LEVEL_EDITOR(self));
 
+    self->world = pixio_world_init();
+    self->root = pixio_new_root(self->world);
+
     GtkWidget *paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
     gtk_paned_set_position(GTK_PANED(paned), 220);
     gtk_paned_set_resize_start_child(GTK_PANED(paned), FALSE);
@@ -68,6 +73,9 @@ static void gobu_level_editor_init(GobuLevelEditor *self)
             g_signal_connect(self->viewport, "viewport-ready", G_CALLBACK(gapp_level_viewport_s_ready), self->outliner);
         }
     }
+
+    // Configura los hooks para el componente pixio_transform_t
+    ecs_set_hooks(world, pixio_transform_t, {.on_add = gapp_outliner_s_hooks_callback, .on_remove = gapp_outliner_s_hooks_callback, .ctx = outliner});
 }
 
 // --- END UI ---
@@ -113,3 +121,50 @@ GtkWidget *gobu_level_editor_get_inspector(GobuLevelEditor *self)
 }
 
 // --- END API ---
+
+/**
+ * Función de callback para los hooks de ECS para manejar eventos de adición y eliminación de entidades.
+ *
+ * @param it Puntero al iterador ECS que contiene la información del evento.
+ */
+static void gapp_outliner_s_hooks_callback(ecs_iter_t *it)
+{
+    ecs_world_t *world = it->world;
+    ecs_entity_t event = it->event;
+    GappOutliner *outliner = it->ctx;
+
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t e = it->entities[i];
+
+        if (event == EcsOnAdd)
+        {
+            OutlinerItem *item = outliner_item_new(world, e);
+            item->root = gapp_outliner_get_store_root(outliner);
+
+            // Verificamos si la entidad tiene padre
+            if (pixio_has_parent(world, e))
+            {
+                // Obtenemos el padre
+                ecs_entity_t parent = pixio_get_parent(world, e);
+                OutlinerItem *item_find = gapp_outliner_fn_find_item_by_entity(outliner->selection, parent);
+                if (item_find != NULL)
+                {
+                    item->root = item_find->children;
+                    gapp_outliner_append_item_children(item_find->children, item);
+                    continue;
+                }
+            }
+
+            // La entidad no tiene padre, se agrega al almacén raíz
+            gapp_outliner_append_item_root(outliner, item);
+        }
+        else if (event == EcsOnRemove)
+        {
+            guint position;
+            OutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outliner->selection, e);
+            if (item && g_list_store_find(item->root, item, &position))
+                g_list_store_remove(item->root, position);
+        }
+    }
+}

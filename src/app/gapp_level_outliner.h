@@ -15,6 +15,10 @@ GappOutliner *gapp_outliner_new(void);
 void gapp_outliner_start_process(GappOutliner *outliner, ecs_world_t *world);
 
 void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, const char *name);
+void gapp_outliner_append_item_children(GappOutliner *outliner, OutlinerItem *item);
+
+void gapp_outliner_append_item_root(GappOutliner *outliner, OutlinerItem *item);
+GListStore *gapp_outliner_get_store(GappOutliner *outliner);
 
 G_END_DECLS
 

@@ -4,6 +4,8 @@
 #include "gapp_level_editor.h"
 #include "gapp_level_inspector.h"
 
+#include "types/type_outliner_item.h"
+
 #include "pixio/pixio.h"
 
 // MARK: OutlinerPopoverItem
@@ -103,116 +105,6 @@ static OutlinerPopoverItem *outliner_popover_item_new(const gchar *icon, const g
     self->component = g_strdup(component);
 
     return self;
-}
-
-// - - - - - - - - - -
-// END DEFINE TYPE
-// - - - - - - - - - -
-
-// MARK: OutlinerItem
-// - - - - - - - - - -
-// BEGIN DEFINE TYPE
-// - - - - - - - - - -
-
-typedef struct _OutlinerItem
-{
-    GObject parent;
-
-    ecs_entity_t entity;
-    gchar *name;
-    GListStore *children; // OutlinerItem
-    GListStore *root;     // OutlinerItem
-    GtkWidget *expander;  // GtkExpander
-} OutlinerItem;
-
-#define OUTLINER_TYPE_ITEM (outliner_item_get_type())
-G_DECLARE_FINAL_TYPE(OutlinerItem, outliner_item, OUTLINER, ITEM, GObject)
-G_DEFINE_TYPE(OutlinerItem, outliner_item, G_TYPE_OBJECT)
-
-static void outliner_item_finalize(GObject *object)
-{
-    OutlinerItem *self = OUTLINER_ITEM(object);
-}
-
-static void outliner_item_class_init(OutlinerItemClass *klass)
-{
-    GObjectClass *object_class = G_OBJECT_CLASS(klass);
-}
-
-static void outliner_item_init(OutlinerItem *self)
-{
-}
-
-/**
- * @brief Actualiza la visualización de un ítem del esquema basado en sus hijos.
- *
- * Esta función se llama cuando cambia el número de hijos de un ítem del esquema.
- * Actualiza la visibilidad del expansor del árbol basándose en si el elemento
- * tiene hijos o no. No hace nada para el elemento raíz.
- *
- * @param store El GListStore que contiene los hijos del ítem.
- * @param pspec El GParamSpec del parámetro que ha cambiado (no utilizado).
- * @param user_data Puntero al OutlinerItem que se está actualizando.
- */
-static void outliner_item_children_update(GListStore *store, GParamSpec *pspec, gpointer user_data)
-{
-    g_return_if_fail(G_IS_LIST_STORE(store));
-    g_return_if_fail(OUTLINER_IS_ITEM(user_data));
-
-    OutlinerItem *self = OUTLINER_ITEM(user_data);
-
-    // No hacemos nada para el elemento raíz
-    if (g_strcmp0(self->name, "Root") == 0)
-        return;
-
-    // Mostrar u ocultar el expansor basado en si el elemento tiene hijos
-    gboolean has_children = (g_list_model_get_n_items(G_LIST_MODEL(store)) > 0);
-    gtk_tree_expander_set_hide_expander(GTK_TREE_EXPANDER(self->expander), !has_children);
-
-    // Opcionalmente, actualizar cualquier otra propiedad visual del ítem
-    // Por ejemplo, podrías cambiar un icono o un estilo
-    // gtk_widget_set_css_classes(GTK_WIDGET(self->row), has_children ? "parent-item" : "leaf-item");
-}
-
-static OutlinerItem *outliner_item_new(ecs_world_t *world, ecs_entity_t entity)
-{
-    OutlinerItem *self = g_object_new(OUTLINER_TYPE_ITEM, NULL);
-    self->entity = entity;
-    self->children = g_list_store_new(OUTLINER_TYPE_ITEM);
-    self->root = NULL;
-    self->name = g_strdup(pixio_get_name(world, entity));
-
-    g_signal_connect(self->children, "notify", G_CALLBACK(outliner_item_children_update), self);
-
-    return self;
-}
-
-/**
- * outliner_item_set_name:
- * @self: (transfer none): El #OutlinerItem cuyo nombre se va a cambiar.
- * @name: (transfer none): El nuevo nombre para el ítem.
- *
- * Establece un nuevo nombre para un ítem del esquema.
- *
- * Esta función realiza las siguientes operaciones:
- * - Verifica que @self sea un #OutlinerItem válido.
- * - Libera el nombre anterior del ítem.
- * - Asigna una nueva copia del nombre proporcionado al ítem.
- *
- * Si @self no es un #OutlinerItem válido, la función retorna inmediatamente
- * sin realizar ninguna acción.
- *
- * Nota: Esta función crea una copia del @name proporcionado. El llamador
- * mantiene la propiedad de la cadena original y es responsable de liberarla
- * si es necesario.
- *
- * Since: 1.0
- */
-static void outliner_item_set_name(OutlinerItem *self, const gchar *name)
-{
-    g_return_if_fail(OUTLINER_IS_ITEM(self));
-    g_free(self->name);
-    self->name = g_strdup(name);
 }
 
 // - - - - - - - - - -
@@ -372,53 +264,6 @@ static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_
 // MARK: --- SIGNAL ---
 
 /**
- * Función de callback para los hooks de ECS para manejar eventos de adición y eliminación de entidades.
- *
- * @param it Puntero al iterador ECS que contiene la información del evento.
- */
-static void gapp_outliner_s_hooks_callback(ecs_iter_t *it)
-{
-    ecs_world_t *world = it->world;
-    ecs_entity_t event = it->event;
-    GappOutliner *outliner = it->ctx;
-
-    for (int i = 0; i < it->count; i++)
-    {
-        ecs_entity_t e = it->entities[i];
-
-        if (event == EcsOnAdd)
-        {
-            OutlinerItem *item = outliner_item_new(world, e);
-            item->root = outliner->store;
-
-            // Verificamos si la entidad tiene padre
-            if (pixio_has_parent(world, e))
-            {
-                // Obtenemos el padre
-                ecs_entity_t parent = pixio_get_parent(world, e);
-                OutlinerItem *item_find = gapp_outliner_fn_find_item_by_entity(outliner->selection, parent);
-                if (item_find != NULL)
-                {
-                    item->root = item_find->children;
-                    g_list_store_append(item_find->children, item);
-                    continue;
-                }
-            }
-
-            // La entidad no tiene padre, se agrega al almacén raíz
-            g_list_store_append(outliner->store, item);
-        }
-        else if (event == EcsOnRemove)
-        {
-            guint position;
-            OutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outliner->selection, e);
-            if (item && g_list_store_find(item->root, item, &position))
-                g_list_store_remove(item->root, position);
-        }
-    }
-}
-
-/**
  * gapp_outliner_s_toolbar_add_clicked:
  * @widget: (transfer none): El widget que activó la señal de clic.
  * @popover: (transfer none): El #GtkPopover que se mostrará.
@@ -494,6 +339,7 @@ static void gapp_outliner_s_toolbar_duplicate_clicked(GtkWidget *widget, GappOut
 
             if (g_strcmp0(item->name, "Root") != 0)
             {
+                printf("A: %s\n", pixio_get_name(outliner->world, item->entity));
                 ecs_entity_t eclone = pixio_clone(outliner->world, item->entity);
                 gapp_outliner_fn_selected_entity(outliner, eclone, TRUE);
             }
@@ -824,7 +670,7 @@ void gapp_outliner_start_process(GappOutliner *outliner, ecs_world_t *world)
     outliner->world = world;
 
     // Configura los hooks para el componente pixio_transform_t
-    ecs_set_hooks(world, pixio_transform_t, {.on_add = gapp_outliner_s_hooks_callback, .on_remove = gapp_outliner_s_hooks_callback, .ctx = outliner});
+    // ecs_set_hooks(world, pixio_transform_t, {.on_add = gapp_outliner_s_hooks_callback, .on_remove = gapp_outliner_s_hooks_callback, .ctx = outliner});
 
     g_debug("Outliner process started and hooks set for pixio_transform_t");
 }
@@ -862,6 +708,21 @@ void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, 
     // Actualizar la etiqueta en la interfaz de usuario
     GtkWidget *label = gtk_widget_get_last_child(gtk_tree_expander_get_child(item->expander));
     gtk_label_set_label(GTK_LABEL(label), item->name);
+}
+
+void gapp_outliner_append_item_root(GappOutliner *outliner, OutlinerItem *item)
+{
+    g_list_store_append(outliner->store, item);
+}
+
+GListStore *gapp_outliner_get_store(GappOutliner *outliner)
+{
+    return outliner->store;
+}
+
+void gapp_outliner_append_item_children(GappOutliner *outliner, OutlinerItem *item)
+{
+    g_list_store_append(outliner->store, item);
 }
 
 // --- END API ---

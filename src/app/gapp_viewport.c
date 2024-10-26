@@ -32,6 +32,10 @@ static void gapp_viewport_class_init(GappViewportClass *klass)
     g_signal_new("viewport-ready", G_TYPE_FROM_CLASS(klass),
                  G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
                  0, NULL, NULL, NULL, G_TYPE_NONE, 2, G_TYPE_INT, G_TYPE_INT);
+
+    g_signal_new("viewport-render", G_TYPE_FROM_CLASS(klass),
+                 G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
+                 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
 }
 
 static void gapp_viewport_init(GappViewport *self)
@@ -135,15 +139,13 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
         self->initialized = true;
 
         pixi_init(width, height);
-        self->world = pixio_world_init();
 
         g_signal_emit_by_name(self, "viewport-ready", width, height, 0);
-
-        self->root = pixio_new(self->world, 0, "Root");
     }
 
     // // we can start by clearing the buffer
-    pixio_world_process(self->world, 0);
+    // pixio_world_process(self->world, 0);
+    g_signal_emit_by_name(self, "viewport-render", 0);
     glFlush();
 
     return TRUE;
