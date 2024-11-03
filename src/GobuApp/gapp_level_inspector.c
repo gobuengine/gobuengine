@@ -147,7 +147,7 @@ static void gapp_inspector_component_add_props_widget(GtkWidget *content, ecs_wo
             {ecs_id(pixio_resource_font_t), gapp_inspector_widgets_input_font},
             {ecs_id(pixio_texture_filter_t), gapp_inspector_widgets_input_enum},
             {ecs_id(pixio_texture_flip_t), gapp_inspector_widgets_input_enum},
-            {ecs_id(pixio_transform_origin_t), gapp_inspector_widgets_input_enum},
+            {ecs_id(pixio_origin_t), gapp_inspector_widgets_input_enum},
             {0, NULL} // Marca de fin
             // Agregar más tipos según sea necesario
         };

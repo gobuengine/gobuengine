@@ -1,4 +1,4 @@
-#include "type_toutliner_item.h"
+#include "type_outliner_item.h"
 
 typedef struct _TOutlinerItem
 {
@@ -35,7 +35,7 @@ static void toutliner_item_children_update(GListStore *store, GParamSpec *pspec,
     TOutlinerItem *self = OUTLINER_ITEM(user_data);
 
     // No hacemos nada para el elemento raíz
-    if (g_strcmp0(self->name, "Root") == 0)
+    if (g_strcmp0(self->name, GAPP_ROOT_STR) == 0)
         return;
 
     // Mostrar u ocultar el expansor basado en si el elemento tiene hijos
@@ -53,7 +53,7 @@ TOutlinerItem *toutliner_item_new(ecs_world_t *world, ecs_entity_t entity)
 
     self->entity = entity;
     self->name = g_strdup(pixio_get_name(world, entity));
-    self->children = g_list_store_new(OUTLINER_TYPE_ITEM);
+    self->children = g_list_store_new(TOUTLINER_TYPE_ITEM);
     self->root = NULL;
 
     g_signal_connect(self->children, "notify", G_CALLBACK(toutliner_item_children_update), self);
@@ -86,7 +86,7 @@ ecs_entity_t toutliner_item_get_entity(TOutlinerItem *self)
     return self->entity;
 }
 
-TOutlinerItem *toutliner_item_get_root(TOutlinerItem *self)
+GListStore *toutliner_item_get_root(TOutlinerItem *self)
 {
     g_return_val_if_fail(OUTLINER_IS_ITEM(self), NULL);
     return self->root;
@@ -94,7 +94,6 @@ TOutlinerItem *toutliner_item_get_root(TOutlinerItem *self)
 
 void toutliner_item_set_root(TOutlinerItem *self, GListStore *root)
 {
-    g_return_if_fail(OUTLINER_IS_ITEM(self) && OUTLINER_IS_ITEM(root) || root == NULL);
     self->root = root;
 }
 

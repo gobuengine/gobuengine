@@ -11,8 +11,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(GappViewport, gapp_viewport, GAPP, VIEWPORT, GtkGLArea)
 
 GappViewport *gapp_viewport_new(void);
-ecs_world_t *gapp_viewport_get_world(const GappViewport *self);
-ecs_entity_t gapp_viewport_get_root(const GappViewport *self);
+
+void gapp_viewport_set_custom_render(GappViewport *self, gboolean customRender);
 
 G_END_DECLS
 

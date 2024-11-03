@@ -1,6 +1,6 @@
-// gapp_itype_enum.h
-#ifndef GAPP_ITYPE_ENUM_H
-#define GAPP_ITYPE_ENUM_H
+// type_enum.h
+#ifndef TYPE_ENUM_H
+#define TYPE_ENUM_H
 
 #include "../config.h"
 
@@ -17,5 +17,5 @@ int object_ienum_get_value(ObjectIEnum *self);
 
 G_END_DECLS
 
-#endif // GAPP_ITYPE_ENUM_H
+#endif // TYPE_ENUM_H
 

@@ -1,5 +1,7 @@
+
 #define PIXI_RLGL_API
 #include "pixio_render.h"
+
 #include "pixio_type.h"
 #include "pixio_base.h"
 
@@ -25,7 +27,7 @@ static pixio_render_phases_t render_phases;
  * @param height La altura del objeto.
  * @return pixio_vector2_t El punto de origen calculado.
  */
-static pixio_vector2_t transform_calculate_origin(pixio_transform_origin_t alignment, float width, float height)
+static pixio_vector2_t transform_calculate_origin(pixio_origin_t alignment, float width, float height)
 {
     pixio_vector2_t origin = {0.0f, 0.0f};
 
@@ -88,9 +90,6 @@ static void pixio_calculate_bounding_box(ecs_iter_t *it)
 
     for (int i = 0; i < it->count; i++)
     {
-        // if (!einfo[i].enabled)
-        //     continue;
-
         pixio_vector2_t size = {0, 0};
         float padding = 0.0f;
 
@@ -164,10 +163,7 @@ static void pixio_render_pre_draw(ecs_iter_t *it)
 static void pixio_render_draw(ecs_iter_t *it)
 {
     const pixio_render_t *render = ecs_singleton_get(it->world, pixio_render_t);
-    if (!render)
-        return;
 
-    // pixio_entity_t *einfo = ecs_field(it, pixio_entity_t, 0);
     pixio_transform_t *transform = ecs_field(it, pixio_transform_t, PIXIO_COMPONENT_TRANSFORM);
     pixio_text_t *draw_text = ecs_field(it, pixio_text_t, PIXIO_COMPONENT_TEXT_RENDER);
     pixio_shape_circle_t *shape_circle = ecs_field(it, pixio_shape_circle_t, PIXIO_COMPONENT_CIRCLE_RENDER);
@@ -176,9 +172,6 @@ static void pixio_render_draw(ecs_iter_t *it)
 
     for (int i = 0; i < it->count; i++)
     {
-        // if (!einfo[i].enabled)
-        //     continue;
-
         pixio_transform_t t = transform[i];
         pixio_vector2_t origin = transform_calculate_origin(t.origin, t.box.size.width, t.box.size.height);
 
@@ -253,6 +246,7 @@ static void pixio_render_post_draw(ecs_iter_t *it)
  *
  * @param world Puntero al mundo ECS donde se importará el módulo de renderizado
  */
+
 void pixio_rendering_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, pixio_rendering_module);
@@ -288,4 +282,3 @@ void pixio_rendering_moduleImport(ecs_world_t *world)
                        .query.terms = {{ecs_id(pixio_render_t)}},
                        .callback = pixio_render_post_draw});
 }
-

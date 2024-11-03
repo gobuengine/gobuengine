@@ -1,4 +1,4 @@
-#include "types/type_toutliner_popover_item.h"
+#include "type_outliner_popover_item.h"
 
 enum
 {
@@ -22,7 +22,7 @@ G_DEFINE_TYPE(TOutlinerPopoverItem, toutliner_popover_item, G_TYPE_OBJECT)
 
 static void toutliner_popover_item_finalize(GObject *object)
 {
-    TOutlinerPopoverItem *self = OUTLINER_POPOVER_ITEM(object);
+    TOutlinerPopoverItem *self = TOUTLINER_POPOVER_ITEM(object);
 
     g_free(self->name);
     g_free(self->icon);
@@ -32,7 +32,7 @@ static void toutliner_popover_item_finalize(GObject *object)
 
 static void toutliner_popover_item_set_property(GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
-    TOutlinerPopoverItem *self = OUTLINER_POPOVER_ITEM(object);
+    TOutlinerPopoverItem *self = TOUTLINER_POPOVER_ITEM(object);
 
     switch (property_id)
     {
@@ -49,7 +49,7 @@ static void toutliner_popover_item_set_property(GObject *object, guint property_
 
 static void toutliner_popover_item_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
-    TOutlinerPopoverItem *self = OUTLINER_POPOVER_ITEM(object);
+    TOutlinerPopoverItem *self = TOUTLINER_POPOVER_ITEM(object);
 
     switch (property_id)
     {
@@ -80,6 +80,11 @@ static void toutliner_popover_item_init(TOutlinerPopoverItem *self)
 {
 }
 
+GListStore *toutliner_popover_new(void)
+{
+    return g_list_store_new(TOUTLINER_TYPE_POPOVER_ITEM);
+}
+
 TOutlinerPopoverItem *toutliner_popover_item_new(const gchar *icon, const gchar *name, const gchar *tooltip, const gchar *component)
 {
     TOutlinerPopoverItem *self = g_object_new(TOUTLINER_TYPE_POPOVER_ITEM, NULL);
@@ -104,10 +109,10 @@ const gchar *toutliner_popover_item_get_name(TOutlinerPopoverItem *self)
     return self->name;
 }
 
-GtkWidget *toutliner_popover_item_get_icon(TOutlinerPopoverItem *self)
+const gchar *toutliner_popover_item_get_icon_name(TOutlinerPopoverItem *self)
 {
     g_return_val_if_fail(TOUTLINER_IS_POPOVER_ITEM(self), NULL);
-    return self->icon; 
+    return self->icon;
 }
 
 const gchar *toutliner_popover_item_get_tooltip(TOutlinerPopoverItem *self)
@@ -121,4 +126,3 @@ const gchar *toutliner_popover_item_get_component(TOutlinerPopoverItem *self)
     g_return_val_if_fail(TOUTLINER_IS_POPOVER_ITEM(self), NULL);
     return self->component;
 }
-

@@ -14,7 +14,8 @@ struct _GappViewport
     ecs_entity_t root;
     gboolean initialized;
     gint64 first_frame_time;
-    guint tick;
+    gdouble deltaTime;
+    gboolean customRender;
 };
 
 G_DEFINE_TYPE(GappViewport, gapp_viewport, GTK_TYPE_GL_AREA)
@@ -35,7 +36,7 @@ static void gapp_viewport_class_init(GappViewportClass *klass)
 
     g_signal_new("viewport-render", G_TYPE_FROM_CLASS(klass),
                  G_SIGNAL_RUN_LAST | G_SIGNAL_NO_RECURSE | G_SIGNAL_NO_HOOKS,
-                 0, NULL, NULL, NULL, G_TYPE_NONE, 0);
+                 0, NULL, NULL, NULL, G_TYPE_NONE, 1, G_TYPE_DOUBLE);
 }
 
 static void gapp_viewport_init(GappViewport *self)
@@ -103,6 +104,8 @@ static gboolean gtk_ray_ticka(GappViewport *self, GdkFrameClock *frame_clock, gp
         return G_SOURCE_CONTINUE;
     }
 
+    self->deltaTime = (frame_time - self->first_frame_time) / 1000000.0;
+
     gtk_widget_queue_draw(self);
 
     history_start = gdk_frame_clock_get_history_start(frame_clock);
@@ -143,9 +146,14 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
         g_signal_emit_by_name(self, "viewport-ready", width, height, 0);
     }
 
-    // // we can start by clearing the buffer
-    // pixio_world_process(self->world, 0);
-    g_signal_emit_by_name(self, "viewport-render", 0);
+    if (!self->customRender)
+        pixi_render_begin();
+
+    g_signal_emit_by_name(self, "viewport-render", self->deltaTime, 0);
+
+    if (!self->customRender)
+        pixi_render_end();
+        
     glFlush();
 
     return TRUE;
@@ -176,24 +184,10 @@ GappViewport *gapp_viewport_new(void)
     return g_object_new(GAPP_TYPE_VIEWPORT, NULL);
 }
 
-/**
- * Obtiene el mundo ECS asociado con el viewport.
- *
- * @param self Puntero al GappViewport del cual se quiere obtener el mundo.
- * @return Puntero al ecs_world_t asociado con el viewport.
- */
-ecs_world_t *gapp_viewport_get_world(const GappViewport *self)
+void gapp_viewport_set_custom_render(GappViewport *self, gboolean customRender)
 {
-    if (self == NULL)
-    {
-        return NULL;
-    }
-    return self->world;
-}
-
-ecs_entity_t gapp_viewport_get_root(const GappViewport *self)
-{
-    return self->root;
+    g_return_if_fail(GAPP_IS_VIEWPORT(self));
+    self->customRender = customRender;
 }
 
 // -- END API PUBLIC

@@ -7,6 +7,8 @@ ecs_world_t *pixio_world_init(void)
     ecs_world_t *ecs = ecs_init();
 
     ECS_IMPORT(ecs, pixio_rendering_module);
+
+    // render
     ecs_singleton_set(ecs, pixio_render_t, {.viewport = {800, 600}, .clear_color = WHITE, .viewport_lineColor = SKYBLUE, .grid_size = 64, .grid_enabled = true});
 
     return ecs;
@@ -76,11 +78,14 @@ bool pixio_has_parent(ecs_world_t *world, ecs_entity_t entity)
     return ecs_has_id(world, entity, ecs_pair(EcsChildOf, EcsWildcard));
 }
 
+void pixio_delete(ecs_world_t *world, ecs_entity_t entity)
+{
+    ecs_delete(world, entity);
+}
+
 ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity)
 {
-    printf("AA1\n");
     ecs_entity_t clone = ecs_clone(world, 0, entity, TRUE);
-    printf("AA2\n");
 
     ecs_iter_t it = ecs_children(world, entity);
     while (ecs_children_next(&it))
@@ -133,4 +138,9 @@ void pixio_set_enabled(ecs_world_t *world, ecs_entity_t entity, bool enabled)
 bool pixio_get_enabled(ecs_world_t *world, ecs_entity_t entity)
 {
     return ecs_has_id(world, entity, EcsDisabled) == 0;
+}
+
+void pixio_set_component_by_name(ecs_world_t *world, ecs_entity_t entity, const char *component)
+{
+    ecs_add_id(world, entity, ecs_lookup(world, component));
 }

@@ -1,7 +1,7 @@
 #include "pixio_type.h"
 
 ECS_COMPONENT_DECLARE(pixio_entity_t);
-ECS_COMPONENT_DECLARE(pixio_transform_origin_t);
+ECS_COMPONENT_DECLARE(pixio_origin_t);
 ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
 ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
 ECS_COMPONENT_DECLARE(pixio_color_t);
@@ -24,7 +24,7 @@ void pixio_type_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, pixio_type_module);
     ECS_COMPONENT_DEFINE(world, pixio_entity_t);
-    ECS_COMPONENT_DEFINE(world, pixio_transform_origin_t);
+    ECS_COMPONENT_DEFINE(world, pixio_origin_t);
     ECS_COMPONENT_DEFINE(world, pixio_texture_filter_t);
     ECS_COMPONENT_DEFINE(world, pixio_texture_flip_t);
     ECS_COMPONENT_DEFINE(world, pixio_color_t);
@@ -44,7 +44,7 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ECS_COMPONENT_DEFINE(world, pixio_shape_rec_t);
 
     ecs_enum(world, {
-        .entity = ecs_id(pixio_transform_origin_t),
+        .entity = ecs_id(pixio_origin_t),
         .constants = {
             {.name = "TopLeft", .value = PIXIO_TOP_LEFT},
             {.name = "TopCenter", .value = PIXIO_TOP_CENTER},
@@ -155,7 +155,7 @@ void pixio_type_moduleImport(ecs_world_t *world)
             {.name = "position", .type = ecs_id(pixio_vector2_t)},
             {.name = "scale", .type = ecs_id(pixio_vector2_t)},
             {.name = "rotation", .type = ecs_id(ecs_f32_t)},
-            {.name = "origin", .type = ecs_id(pixio_transform_origin_t)},
+            {.name = "origin", .type = ecs_id(pixio_origin_t)},
         },
     });
 

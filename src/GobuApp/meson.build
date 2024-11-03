@@ -18,8 +18,9 @@ deps += declare_dependency(link_with: libgobu_gbase)
 # Fuentes
 
 sources = [
-  'types/gapp_itype_enum.c',
+  'types/type_enum.c',
   'types/type_outliner_item.c',
+  'types/type_outliner_popover_item.c',
   'gapp_asprite.c',
   'gapp_console.c',
   'gapp_inspector_widgets.c',
@@ -40,8 +41,9 @@ sources = [
 # Headers
 
 headers = [
-  'types/gapp_itype_enum.h',
+  'types/type_enum.h',
   'types/type_outliner_item.h',
+  'types/type_outliner_popover_item.h',
   'config.h',
   'gapp_asprite.h',
   'gapp_console.h',

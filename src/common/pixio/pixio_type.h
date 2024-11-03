@@ -19,7 +19,7 @@ extern "C"
     typedef pixio_resource_t pixio_resource_texture_t;
     typedef pixio_resource_t pixio_script_t;
 
-    typedef enum _pixio_transform_origin_t
+    typedef enum _pixio_origin_t
     {
         PIXIO_TOP_LEFT,      // Esquina superior izquierda
         PIXIO_TOP_CENTER,    // Centro superior
@@ -30,7 +30,7 @@ extern "C"
         PIXIO_BOTTOM_LEFT,   // Esquina inferior izquierda
         PIXIO_BOTTOM_CENTER, // Centro inferior
         PIXIO_BOTTOM_RIGHT   // Esquina inferior derecha
-    } pixio_transform_origin_t;
+    } pixio_origin_t;
 
     typedef enum _pixio_texture_flip_t
     {
@@ -64,7 +64,7 @@ extern "C"
         pixio_vector2_t position;
         pixio_vector2_t scale;
         ecs_f32_t rotation;
-        pixio_transform_origin_t origin;
+        pixio_origin_t origin;
         pixio_boundingbox_t box;
     } pixio_transform_t;
 
@@ -111,7 +111,7 @@ extern "C"
 
     extern ECS_COMPONENT_DECLARE(pixio_size_t);
     extern ECS_COMPONENT_DECLARE(pixio_entity_t);
-    extern ECS_COMPONENT_DECLARE(pixio_transform_origin_t);
+    extern ECS_COMPONENT_DECLARE(pixio_origin_t);
     extern ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
     extern ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
     extern ECS_COMPONENT_DECLARE(pixio_color_t);

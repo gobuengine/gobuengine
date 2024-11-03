@@ -9,7 +9,7 @@
 #define CONFIG_H
 
 #define APPLICATION_ID "com.gobuengine.app"
-#define GOBU_VERSION_STR "GobuEngine "
+#define GOBU_VERSION_STR "Gobu2D "
 
 #define GOBU_FILE_PROJECTS_NAME "projects.bin"
 #define GOBU_PROJECT_CONTENT "Content"
@@ -17,6 +17,8 @@
 #define GAPP_SCRIPT_LENGUAGE "c"
 
 #define GAPP_GAME_FILE_PROJECT "game.gobuproject"
+
+#define GAPP_ROOT_STR "Root"
 
 #endif // CONFIG_H
 

@@ -87,7 +87,7 @@ static void observe_set_sprite_default(ecs_iter_t *it)
 void pixio_base_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, pixio_base_module);
-    ECS_IMPORT(world, pixio_type_module);
+    // ECS_IMPORT(world, pixio_type_module);
 
     ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_text_t)}}},
                          .events = {EcsOnAdd, EcsOnSet},

@@ -1,2 +1,2 @@
 subdir('common')
-subdir('app')
+subdir('GobuApp')

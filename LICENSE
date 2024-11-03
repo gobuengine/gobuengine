@@ -1,3 +1,16 @@
+# LICENCIA
+
+This project is licensed under the terms of two licenses:
+
+- The `GobuApp` application is available under the terms of the GNU General Public License version 3 or later (GPLv3+).
+- The `GobuPlatform` platform is available under the MIT license.
+
+## GPLv3+ (para `GobuApp`)
+
+COPYING
+
+## MIT (para `GobuPlatform`)
+
 MIT License
 
 Copyright (c) 2023 gobuengine

@@ -1,5 +1,5 @@
 
-#include "gapp_itype_enum.h"
+#include "type_enum.h"
 
 typedef struct _ObjectIEnum
 {

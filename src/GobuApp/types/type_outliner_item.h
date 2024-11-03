@@ -1,6 +1,6 @@
-// gapp_itype_enum.h
-#ifndef GAPP_OUTLINER_ITEM_H
-#define GAPP_OUTLINER_ITEM_H
+// type_outliner_item.h
+#ifndef TYPE_OUTLINER_ITEM_H
+#define TYPE_OUTLINER_ITEM_H
 
 #include "../config.h"
 #include "pixio/pixio.h"
@@ -28,5 +28,5 @@ GtkWidget *toutliner_item_get_expander(TOutlinerItem *self);
 
 G_END_DECLS
 
-#endif // GAPP_OUTLINER_ITEM_H
+#endif // TYPE_OUTLINER_ITEM_H
 

@@ -1,6 +1,6 @@
 #include "gapp_inspector_widgets.h"
 #include "gapp_common.h"
-#include "types/gapp_itype_enum.h"
+#include "types/type_enum.h"
 
 /**
  * @brief Convierte un color de pixio_color_t a GdkRGBA.
