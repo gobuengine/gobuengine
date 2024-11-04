@@ -8,6 +8,8 @@
 #include "types/type_outliner_item.h"
 #include "pixio/pixio.h"
 
+#include "gapp.h"
+
 struct _GobuLevelEditor
 {
     GtkBox parent_instance;
@@ -79,14 +81,10 @@ static void gobu_level_editor_init(GobuLevelEditor *self)
         }
     }
 
-    // iniciamos el world ecs
-    self->world = pixio_world_init();
-    self->root = pixio_get_root(self->world);
-
     // Configura los hooks para el componente pixio_transform_t
-    ecs_set_hooks(self->world, pixio_transform_t, {.on_add = gapp_s_hooks_callback, .on_remove = gapp_s_hooks_callback, .ctx = self});
+    ecs_set_hooks(GAPP_ECS_WORLD, pixio_transform_t, {.on_add = gapp_s_hooks_callback, .on_remove = gapp_s_hooks_callback, .ctx = self});
 
-    pixio_new_root(self->world);
+    self->root = pixio_new_root(GAPP_ECS_WORLD);
 }
 
 // --- END UI ---
@@ -98,7 +96,7 @@ static void gapp_level_viewport_s_ready(GtkWidget *viewport, int width, int heig
 static void gapp_level_viewport_s_render(GtkWidget *viewport, gdouble delta, GobuLevelEditor *self)
 {
     float deltaTime = (float)delta;
-    pixio_world_process(self->world, deltaTime);
+    pixio_world_process(GAPP_ECS_WORLD, deltaTime);
 }
 
 // --- BEGIN API ---
@@ -155,8 +153,8 @@ static void gapp_s_hooks_callback(ecs_iter_t *it)
 
         if (event == EcsOnAdd)
         {
-            TOutlinerItem *item = toutliner_item_new(world, entity);
-            toutliner_item_set_root(item, gapp_outliner_get_store(levelEditor->outliner));
+            TOutlinerItem *oitem = toutliner_item_new(world, entity);
+            toutliner_item_set_root(oitem, gapp_outliner_get_store(levelEditor->outliner));
 
             // Verificamos si la entidad tiene padre
             if (pixio_has_parent(world, entity))
@@ -166,23 +164,22 @@ static void gapp_s_hooks_callback(ecs_iter_t *it)
                 TOutlinerItem *item_find = gapp_outliner_fn_find_item_by_entity(outlinerSelect, parent);
                 if (item_find != NULL)
                 {
-                    GListStore *children = toutliner_item_get_children(item_find);
-
-                    toutliner_item_set_root(item, children);
-                    gapp_outliner_append_item_children(children, item);
+                    toutliner_item_set_root(oitem, toutliner_item_get_children(item_find));
+                    g_list_store_append(toutliner_item_get_children(item_find), oitem);
                     continue;
                 }
             }
 
             // La entidad no tiene padre, se agrega al almacén raíz
-            gapp_outliner_append_item_root(levelEditor->outliner, item);
+            g_list_store_append(gapp_outliner_get_store(levelEditor->outliner), oitem);
         }
         else if (event == EcsOnRemove)
         {
             guint position;
-            TOutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outlinerSelect, entity);
-            if (item && g_list_store_find(toutliner_item_get_root(item), item, &position))
-                g_list_store_remove(toutliner_item_get_root(item), position);
+            TOutlinerItem *oitem = gapp_outliner_fn_find_item_by_entity(outlinerSelect, entity);
+
+            if (oitem && g_list_store_find(toutliner_item_get_root(oitem), oitem, &position))
+                g_list_store_remove(toutliner_item_get_root(oitem), position);
         }
     }
 }

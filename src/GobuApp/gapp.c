@@ -27,6 +27,8 @@ struct _GappMain
     GtkWidget *config;
     GtkWidget *window;
     GtkWidget *title_window;
+    // ecs unique world to proyect: test fase 1
+    ecs_world_t *world;
 };
 
 G_DEFINE_TYPE(GappMain, gapp_main, GTK_TYPE_APPLICATION)
@@ -45,6 +47,7 @@ static void gapp_main_class_init(GappMainClass *klass)
 static void gapp_main_init(GappMain *self)
 {
     self->config = gapp_project_config_new();
+    self->world = pixio_world_init();
 }
 
 // -----------------
@@ -98,7 +101,10 @@ static void gapp_main_activate(GappMain *app)
         gtk_paned_set_start_child(GTK_PANED(hpaned), app->vnotebook);
         {
             app->browser = gapp_browser_new();
-            gapp_append_left_panel(app, "edit-copy", app->browser);
+            gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_BROWSER, app->browser);
+            gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_ROOMS, gtk_label_new("Rooms"));
+            gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_ACTOR, gtk_label_new("Actors"));
+            gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_TILE, gtk_label_new("TileEditor"));
         }
 
         app->dnotebook = gtk_notebook_new();
@@ -259,6 +265,11 @@ GObject *gapp_get_config_instance(void)
     return gappMain->config;
 }
 
+ecs_world_t *gapp_get_world_instance(void)
+{
+    return gappMain->world;
+}
+
 /**
  * Inicializa un proyecto en el editor.
  *
@@ -271,7 +282,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
     g_return_if_fail(path != NULL && *path != '\0');
 
     // Crear una escena inicial
-    gapp_append_right_panel(self, "main~", gobu_level_editor_new(), TRUE);
+    gapp_append_right_panel(self, "Viewport", gobu_level_editor_new(), FALSE);
 
     // Cerrar la página de proyectos
     gtk_notebook_remove_page(GTK_NOTEBOOK(self->dnotebook), 0);

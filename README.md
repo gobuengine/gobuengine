@@ -1,4 +1,4 @@
-# Gobu Engine
+# Gobu2D
 
 <p align="center">
   <a href="https://gobuengine.org">

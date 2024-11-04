@@ -9,6 +9,8 @@
 
 #include "pixio/pixio.h"
 
+#include "gapp.h"
+
 // MARK: ClassGappOutliner
 struct _GappOutliner
 {
@@ -50,7 +52,7 @@ static void gapp_outliner_init(GappOutliner *self)
  */
 static GListModel *gapp_outliner_fn_create_list_model_entity_children(GObject *item, GappOutliner *outliner)
 {
-    TOutlinerItem *oitem = OUTLINER_ITEM(item);
+    TOutlinerItem *oitem = TOUTLINER_ITEM(item);
 
     GListStore *children = toutliner_item_get_children(oitem);
     GtkWidget *expander = toutliner_item_get_expander(oitem);
@@ -75,11 +77,12 @@ TOutlinerItem *gapp_outliner_fn_find_item_by_entity(GtkSingleSelection *selectio
     for (guint i = 0; i < n; i++)
     {
         GtkTreeListRow *row = g_list_model_get_item(model, i);
-        TOutlinerItem *item = gtk_tree_list_row_get_item(row);
+        TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
+
         g_object_unref(row);
-        if (toutliner_item_get_entity(item) == entity)
+        if (toutliner_item_get_entity(oitem) == entity)
         {
-            return item;
+            return oitem;
         }
     }
 
@@ -124,9 +127,9 @@ static gboolean gapp_outliner_fn_focus_entity(GappOutliner *outliner, ecs_entity
     for (guint i = 0; i < n_items; i++)
     {
         GtkTreeListRow *row = g_list_model_get_item(model, i);
-        TOutlinerItem *item = gtk_tree_list_row_get_item(row);
+        TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
 
-        if (toutliner_item_get_entity(item) == entity)
+        if (toutliner_item_get_entity(oitem) == entity)
         {
             gtk_selection_model_select_item(selection_model, i, TRUE);
             g_object_unref(row);
@@ -159,7 +162,7 @@ static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_
 
     GtkWidget *level_editor = gtk_widget_get_ancestor(GTK_WIDGET(outliner), GOBU_TYPE_LEVEL_EDITOR);
     GtkWidget *inspector = gobu_level_editor_get_inspector(level_editor);
-    gapp_inspector_set_entity(inspector, outliner->world, entity);
+    gapp_inspector_set_entity(inspector, GAPP_ECS_WORLD, entity);
 }
 
 // MARK: --- SIGNAL ---
@@ -206,21 +209,21 @@ static void gapp_outliner_s_toolbar_remove_clicked(GtkWidget *widget, GappOutlin
         if (gtk_selection_model_is_selected(GTK_SELECTION_MODEL(outliner->selection), i))
         {
             GtkTreeListRow *row = g_list_model_get_item(model, i);
-            TOutlinerItem *item = gtk_tree_list_row_get_item(row);
+            TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
 
-            if (g_strcmp0(toutliner_item_get_name(item), GAPP_ROOT_STR) != 0)
+            if (g_strcmp0(toutliner_item_get_name(oitem), GAPP_ROOT_STR) != 0)
             {
-                pixio_delete(outliner->world, toutliner_item_get_entity(item));
+                pixio_delete(GAPP_ECS_WORLD, toutliner_item_get_entity(oitem));
                 isRemove = TRUE;
             }
 
             g_object_unref(row);
-            g_object_unref(item);
+            g_object_unref(oitem);
         }
     }
 
     if (isRemove)
-        gapp_outliner_fn_selected_entity(outliner, ecs_lookup(outliner->world, GAPP_ROOT_STR), TRUE);
+        gapp_outliner_fn_selected_entity(outliner, ecs_lookup(GAPP_ECS_WORLD, GAPP_ROOT_STR), TRUE);
 }
 
 /**
@@ -240,16 +243,16 @@ static void gapp_outliner_s_toolbar_duplicate_clicked(GtkWidget *widget, GappOut
         if (gtk_selection_model_is_selected(GTK_SELECTION_MODEL(outliner->selection), i))
         {
             GtkTreeListRow *row = g_list_model_get_item(model, i);
-            TOutlinerItem *item = gtk_tree_list_row_get_item(row);
+            TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
 
-            if (g_strcmp0(toutliner_item_get_name(item), GAPP_ROOT_STR) != 0)
+            if (g_strcmp0(toutliner_item_get_name(oitem), GAPP_ROOT_STR) != 0)
             {
-                ecs_entity_t eclone = pixio_clone(outliner->world, toutliner_item_get_entity(item));
+                ecs_entity_t eclone = pixio_clone(GAPP_ECS_WORLD, toutliner_item_get_entity(oitem));
                 gapp_outliner_fn_selected_entity(outliner, eclone, TRUE);
             }
 
             g_object_unref(row);
-            g_object_unref(item);
+            g_object_unref(oitem);
         }
     }
 }
@@ -279,9 +282,9 @@ static void gapp_outliner_s_list_view_activated(GtkMultiSelection *selection, gu
         if (gtk_selection_model_is_selected(selection_model, i))
         {
             GtkTreeListRow *row = g_list_model_get_item(model, i);
-            TOutlinerItem *item = gtk_tree_list_row_get_item(row);
+            TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
 
-            gapp_outliner_fn_selected_entity(outliner, toutliner_item_get_entity(item), TRUE);
+            gapp_outliner_fn_selected_entity(outliner, toutliner_item_get_entity(oitem), TRUE);
 
             g_object_unref(row);
         }
@@ -344,14 +347,15 @@ static void column_factory_s_bind_name(GtkSignalListItemFactory *factory, GtkLis
     GtkTreeListRow *row_item = gtk_list_item_get_item(list_item);
     g_return_if_fail(GTK_IS_TREE_LIST_ROW(row_item));
 
-    TOutlinerItem *item = gtk_tree_list_row_get_item(row_item);
-    GtkWidget *expander = toutliner_item_get_expander(item);
+    TOutlinerItem *oitem = gtk_tree_list_row_get_item(row_item);
 
-    expander = gtk_list_item_get_child(list_item);
+    GtkWidget *expander = gtk_list_item_get_child(list_item);
+    toutliner_item_set_expander(oitem, expander);
+
     gtk_tree_expander_set_list_row(GTK_TREE_EXPANDER(expander), row_item);
 
     // Root expander is always expanded
-    if (g_strcmp0(toutliner_item_get_name(item), GAPP_ROOT_STR) == 0)
+    if (g_strcmp0(toutliner_item_get_name(oitem), GAPP_ROOT_STR) == 0)
     {
         gtk_tree_expander_set_hide_expander(GTK_TREE_EXPANDER(expander), TRUE);
         gtk_tree_list_row_set_expanded(row_item, TRUE);
@@ -362,9 +366,9 @@ static void column_factory_s_bind_name(GtkSignalListItemFactory *factory, GtkLis
     GtkWidget *label = gtk_widget_get_last_child(box);
 
     gtk_image_set_from_icon_name(GTK_IMAGE(icon), "edit-select-all-symbolic");
-    gtk_label_set_label(GTK_LABEL(label), toutliner_item_get_name(item));
+    gtk_label_set_label(GTK_LABEL(label), toutliner_item_get_name(oitem));
 
-    g_object_unref(item);
+    g_object_unref(oitem);
 }
 
 /**
@@ -443,12 +447,12 @@ static void s_outliner_popover_entity_item_activated(GtkListView *self, guint po
     GappOutliner *outliner = g_object_get_data(G_OBJECT(popover), "outliner");
 
     TOutlinerItem *itemSelected = gapp_outliner_fn_get_selected_item(outliner->selection);
-    ecs_entity_t parent = itemSelected ? toutliner_item_get_entity(itemSelected) : pixio_get_root(outliner->world);
-    ecs_entity_t entity = pixio_new(outliner->world, parent, toutliner_popover_item_get_name(popoverItem));
+    ecs_entity_t parent = itemSelected ? toutliner_item_get_entity(itemSelected) : pixio_get_root(GAPP_ECS_WORLD);
+    ecs_entity_t entity = pixio_new(GAPP_ECS_WORLD, parent, toutliner_popover_item_get_name(popoverItem));
 
     const char *componentName = toutliner_popover_item_get_component(popoverItem);
     if (strcmp(componentName, "entity.empty") != 0)
-        pixio_set_component_by_name(outliner->world, entity, componentName);
+        pixio_set_component_by_name(GAPP_ECS_WORLD, entity, componentName);
 
     gapp_outliner_fn_focus_entity(outliner, entity);
     gtk_popover_popdown(GTK_POPOVER(popover));
@@ -646,29 +650,21 @@ GappOutliner *gapp_outliner_new(void)
 void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, const char *name)
 {
     // Buscar el ítem correspondiente a la entidad
-    TOutlinerItem *item = gapp_outliner_fn_find_item_by_entity(outliner->selection, entity);
+    TOutlinerItem *oitem = gapp_outliner_fn_find_item_by_entity(outliner->selection, entity);
+
+    GtkWidget *expander = toutliner_item_get_expander(oitem);
 
     // Actualizar el nombre del ítem
-    toutliner_item_set_name(item, name);
+    toutliner_item_set_name(oitem, name);
 
     // Actualizar la etiqueta en la interfaz de usuario
-    GtkWidget *label = gtk_widget_get_last_child(gtk_tree_expander_get_child(toutliner_item_get_expander(item)));
-    gtk_label_set_label(GTK_LABEL(label), toutliner_item_get_name(item));
-}
-
-void gapp_outliner_append_item_root(GappOutliner *outliner, TOutlinerItem *item)
-{
-    g_list_store_append(outliner->store, item);
+    GtkWidget *label = gtk_widget_get_last_child(gtk_tree_expander_get_child(expander));
+    gtk_label_set_label(GTK_LABEL(label), name);
 }
 
 GListStore *gapp_outliner_get_store(GappOutliner *outliner)
 {
     return outliner->store;
-}
-
-void gapp_outliner_append_item_children(GappOutliner *outliner, TOutlinerItem *item)
-{
-    g_list_store_append(outliner->store, item);
 }
 
 GtkSingleSelection *gapp_outliner_get_selection(GappOutliner *outliner)

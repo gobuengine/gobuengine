@@ -1,21 +1,21 @@
 #include "type_outliner_item.h"
 
-typedef struct _TOutlinerItem
+struct _TOutlinerItem
 {
-    GObject parent;
+    GObject parent_instance;
 
     ecs_entity_t entity;
     gchar *name;
     GListStore *children; // TOutlinerItem
     GListStore *root;     // TOutlinerItem
     GtkWidget *expander;  // GtkExpander
-} TOutlinerItem;
+};
 
 G_DEFINE_TYPE(TOutlinerItem, toutliner_item, G_TYPE_OBJECT)
 
 static void toutliner_item_finalize(GObject *object)
 {
-    TOutlinerItem *self = OUTLINER_ITEM(object);
+    TOutlinerItem *self = TOUTLINER_ITEM(object);
 }
 
 static void toutliner_item_class_init(TOutlinerItemClass *klass)
@@ -27,12 +27,12 @@ static void toutliner_item_init(TOutlinerItem *self)
 {
 }
 
-static void toutliner_item_children_update(GListStore *store, GParamSpec *pspec, gpointer user_data)
+static void notify_signal_toutliner_item(GListStore *store, GParamSpec *pspec, gpointer user_data)
 {
     g_return_if_fail(G_IS_LIST_STORE(store));
-    g_return_if_fail(OUTLINER_IS_ITEM(user_data));
+    g_return_if_fail(TOUTLINER_IS_ITEM(user_data));
 
-    TOutlinerItem *self = OUTLINER_ITEM(user_data);
+    TOutlinerItem *self = TOUTLINER_ITEM(user_data);
 
     // No hacemos nada para el elemento raíz
     if (g_strcmp0(self->name, GAPP_ROOT_STR) == 0)
@@ -55,41 +55,52 @@ TOutlinerItem *toutliner_item_new(ecs_world_t *world, ecs_entity_t entity)
     self->name = g_strdup(pixio_get_name(world, entity));
     self->children = g_list_store_new(TOUTLINER_TYPE_ITEM);
     self->root = NULL;
+    self->expander = NULL;
 
-    g_signal_connect(self->children, "notify", G_CALLBACK(toutliner_item_children_update), self);
+    g_signal_connect(self->children, "notify", G_CALLBACK(notify_signal_toutliner_item), self);
 
     return self;
 }
 
-void toutliner_item_set_name(TOutlinerItem *self, const gchar *name)
+void toutliner_item_set_entity(TOutlinerItem *self, ecs_entity_t entity)
 {
-    g_return_if_fail(OUTLINER_IS_ITEM(self));
-    g_free(self->name);
-    self->name = g_strdup(name);
-}
-
-const gchar *toutliner_item_get_name(TOutlinerItem *self)
-{
-    g_return_val_if_fail(OUTLINER_IS_ITEM(self), NULL);
-    return self->name;
-}
-
-GListStore *toutliner_item_get_children(TOutlinerItem *self)
-{
-    g_return_val_if_fail(OUTLINER_IS_ITEM(self), NULL);
-    return self->children;
+    self->entity = entity;
 }
 
 ecs_entity_t toutliner_item_get_entity(TOutlinerItem *self)
 {
-    g_return_val_if_fail(OUTLINER_IS_ITEM(self), 0);
     return self->entity;
 }
 
-GListStore *toutliner_item_get_root(TOutlinerItem *self)
+void toutliner_item_set_name(TOutlinerItem *self, const gchar *name)
 {
-    g_return_val_if_fail(OUTLINER_IS_ITEM(self), NULL);
-    return self->root;
+    g_free(self->name);
+    self->name = g_strdup(name);
+}
+
+gchar *toutliner_item_get_name(TOutlinerItem *self)
+{
+    return self->name;
+}
+
+void toutliner_item_set_expander(TOutlinerItem *self, GtkWidget *expander)
+{
+    self->expander = expander;
+}
+
+GtkWidget *toutliner_item_get_expander(TOutlinerItem *self)
+{
+    return self->expander;
+}
+
+void toutliner_item_set_children(TOutlinerItem *self, GListStore *children)
+{
+    self->children = children;
+}
+
+GListStore *toutliner_item_get_children(TOutlinerItem *self)
+{
+    return self->children;
 }
 
 void toutliner_item_set_root(TOutlinerItem *self, GListStore *root)
@@ -97,8 +108,7 @@ void toutliner_item_set_root(TOutlinerItem *self, GListStore *root)
     self->root = root;
 }
 
-GtkWidget *toutliner_item_get_expander(TOutlinerItem *self)
+GListStore *toutliner_item_get_root(TOutlinerItem *self)
 {
-    g_return_val_if_fail(OUTLINER_IS_ITEM(self), NULL);
-    return self->expander;
+    return self->root;
 }
