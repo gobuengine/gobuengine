@@ -28,7 +28,9 @@ ecs_entity_t pixio_find_by_name(ecs_world_t *world, const char *name);
 
 void pixio_set_parent(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t parent);
 ecs_entity_t pixio_get_parent(ecs_world_t *world, ecs_entity_t entity);
+
 bool pixio_has_parent(ecs_world_t *world, ecs_entity_t entity);
+bool pixio_is_alive(ecs_world_t *world, ecs_entity_t entity);
 
 void pixio_delete(ecs_world_t *world, ecs_entity_t entity);
 

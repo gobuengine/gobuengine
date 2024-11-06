@@ -162,10 +162,10 @@ static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
  */
 static void gapp_set_headerbar_button_sensitives(GappMain *self, gboolean sensitive)
 {
-    gtk_widget_set_sensitive(self->btn_s, sensitive);
-    gtk_widget_set_sensitive(self->btn_p, sensitive);
-    gtk_widget_set_sensitive(self->btn_b, sensitive);
-    gtk_widget_set_sensitive(self->btn_set, sensitive);
+    gtk_widget_set_visible(self->btn_s, sensitive);
+    gtk_widget_set_visible(self->btn_p, sensitive);
+    gtk_widget_set_visible(self->btn_b, sensitive);
+    gtk_widget_set_visible(self->btn_set, sensitive);
 }
 
 /**

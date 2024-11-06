@@ -5,7 +5,7 @@ typedef struct _ObjectIEnum
 {
     GObject parent;
     char *name;
-    int value;
+    uint8_t value;
 } ObjectIEnum;
 
 G_DEFINE_TYPE(ObjectIEnum, object_ienum, G_TYPE_OBJECT)
@@ -26,7 +26,7 @@ static void object_ienum_init(ObjectIEnum *self)
 {
 }
 
-ObjectIEnum *object_ienum_new(const gchar *name, int value)
+ObjectIEnum *object_ienum_new(const gchar *name, uint8_t value)
 {
     ObjectIEnum *self = g_object_new(OBJECT_TYPE_IENUM, NULL);
     self->name = g_strdup(name);
@@ -39,7 +39,7 @@ gchar *object_ienum_get_name(ObjectIEnum *self)
     return self->name;
 }
 
-int object_ienum_get_value(ObjectIEnum *self)
+uint8_t object_ienum_get_value(ObjectIEnum *self)
 {
     return self->value;
 }

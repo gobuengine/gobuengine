@@ -78,6 +78,11 @@ bool pixio_has_parent(ecs_world_t *world, ecs_entity_t entity)
     return ecs_has_id(world, entity, ecs_pair(EcsChildOf, EcsWildcard));
 }
 
+bool pixio_is_alive(ecs_world_t *world, ecs_entity_t entity)
+{
+    return ecs_is_alive(world, entity);
+}
+
 void pixio_delete(ecs_world_t *world, ecs_entity_t entity)
 {
     ecs_delete(world, entity);
@@ -86,6 +91,8 @@ void pixio_delete(ecs_world_t *world, ecs_entity_t entity)
 ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity)
 {
     ecs_entity_t clone = ecs_clone(world, 0, entity, TRUE);
+    // pixio_set_name(world, clone, pixio_get_name(world, entity));
+    pixio_set_parent(world, clone, pixio_get_parent(world, entity));
 
     ecs_iter_t it = ecs_children(world, entity);
     while (ecs_children_next(&it))
@@ -93,7 +100,7 @@ ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity)
         for (int i = 0; i < it.count; i++)
         {
             ecs_entity_t en1 = it.entities[i];
-            if (ecs_is_alive(world, en1))
+            if (pixio_is_alive(world, en1))
             {
                 ecs_entity_t child = pixio_clone(world, en1);
                 pixio_set_parent(world, child, clone);

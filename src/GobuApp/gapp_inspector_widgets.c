@@ -148,7 +148,7 @@ static void signal_input_vect2_y(GtkSpinButton *self, pixio_vector2_t *field)
 static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_ptr)
 {
     GObject *item = gtk_drop_down_get_selected_item(self);
-    *(int32_t *)field_ptr = object_ienum_get_value(item);
+    *(uint8_t *)field_ptr = object_ienum_get_value(item);
 }
 
 /**
@@ -362,11 +362,29 @@ static void _input_enum_factory_bind(GtkSignalListItemFactory *factory, GtkListI
     gtk_label_set_label(GTK_LABEL(label), object_ienum_get_name(ienum));
 }
 
+static gint object_ienum_compare_func(gconstpointer a, gconstpointer b, gpointer user_data)
+{
+    ObjectIEnum *ienum_a = (ObjectIEnum *)a;
+    ObjectIEnum *ienum_b = (ObjectIEnum *)b;
+
+    gint value_a = object_ienum_get_value(ienum_a);
+    gint value_b = object_ienum_get_value(ienum_b);
+
+    if (value_a < value_b)
+        return -1;
+    else if (value_a > value_b)
+        return 1;
+    else
+        return 0;
+}
+
 GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
 {
     void *field_ptr = ecs_meta_get_ptr(&cursor);
     ecs_entity_t field_type = ecs_meta_get_type(&cursor);
     const EcsEnum *enum_type = ecs_get(cursor.world, field_type, EcsEnum);
+
+    uint8_t position = (uint8_t)ecs_meta_get_int(&cursor);
 
     GListStore *store = g_list_store_new(OBJECT_TYPE_IENUM);
 
@@ -376,6 +394,7 @@ GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
         ecs_enum_constant_t *constant = ecs_map_ptr(&it);
         g_list_store_append(store, object_ienum_new(constant->name, constant->value));
     }
+    g_list_store_sort(store, object_ienum_compare_func, NULL);
 
     GtkListItemFactory *factory = gtk_signal_list_item_factory_new();
     g_signal_connect(factory, "setup", G_CALLBACK(_input_enum_factory_setup), NULL);
@@ -383,7 +402,7 @@ GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
 
     GtkWidget *select_option = gtk_drop_down_new(G_LIST_MODEL(store), NULL);
     gtk_drop_down_set_factory(GTK_DROP_DOWN(select_option), factory);
-    gtk_drop_down_set_selected(GTK_DROP_DOWN(select_option), ecs_meta_get_int(&cursor));
+    gtk_drop_down_set_selected(GTK_DROP_DOWN(select_option), position);
     g_signal_connect(select_option, "notify::selected", G_CALLBACK(signal_input_enum), field_ptr);
 
     return select_option;

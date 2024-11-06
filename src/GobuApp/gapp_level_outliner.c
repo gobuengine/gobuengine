@@ -651,7 +651,6 @@ void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, 
 {
     // Buscar el ítem correspondiente a la entidad
     TOutlinerItem *oitem = gapp_outliner_fn_find_item_by_entity(outliner->selection, entity);
-
     GtkWidget *expander = toutliner_item_get_expander(oitem);
 
     // Actualizar el nombre del ítem

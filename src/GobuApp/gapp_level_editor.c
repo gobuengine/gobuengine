@@ -95,6 +95,7 @@ static void gapp_level_viewport_s_ready(GtkWidget *viewport, int width, int heig
 
 static void gapp_level_viewport_s_render(GtkWidget *viewport, gdouble delta, GobuLevelEditor *self)
 {
+    // TODO: Mover al main 😒
     float deltaTime = (float)delta;
     pixio_world_process(GAPP_ECS_WORLD, deltaTime);
 }
@@ -154,24 +155,20 @@ static void gapp_s_hooks_callback(ecs_iter_t *it)
         if (event == EcsOnAdd)
         {
             TOutlinerItem *oitem = toutliner_item_new(world, entity);
-            toutliner_item_set_root(oitem, gapp_outliner_get_store(levelEditor->outliner));
+            GListStore *store = gapp_outliner_get_store(levelEditor->outliner);
 
-            // Verificamos si la entidad tiene padre
             if (pixio_has_parent(world, entity))
             {
-                // Obtenemos el padre
                 ecs_entity_t parent = pixio_get_parent(world, entity);
                 TOutlinerItem *item_find = gapp_outliner_fn_find_item_by_entity(outlinerSelect, parent);
                 if (item_find != NULL)
                 {
-                    toutliner_item_set_root(oitem, toutliner_item_get_children(item_find));
-                    g_list_store_append(toutliner_item_get_children(item_find), oitem);
-                    continue;
+                    store = toutliner_item_get_children(item_find);
                 }
             }
 
-            // La entidad no tiene padre, se agrega al almacén raíz
-            g_list_store_append(gapp_outliner_get_store(levelEditor->outliner), oitem);
+            toutliner_item_set_root(oitem, store);
+            g_list_store_append(store, oitem);
         }
         else if (event == EcsOnRemove)
         {
