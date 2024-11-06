@@ -61,9 +61,9 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ecs_enum(world, {
         .entity = ecs_id(pixio_texture_filter_t),
         .constants = {
-            {.name = "Trilinear", .value = TEXTURE_FILTER_TRILINEAR},
-            {.name = "Bilinear", .value = TEXTURE_FILTER_BILINEAR},
             {.name = "Point", .value = TEXTURE_FILTER_POINT},
+            {.name = "Bilinear", .value = TEXTURE_FILTER_BILINEAR},
+            {.name = "Trilinear", .value = TEXTURE_FILTER_TRILINEAR},
         },
     });
 

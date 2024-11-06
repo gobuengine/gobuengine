@@ -362,11 +362,8 @@ static void _input_enum_factory_bind(GtkSignalListItemFactory *factory, GtkListI
     gtk_label_set_label(GTK_LABEL(label), object_ienum_get_name(ienum));
 }
 
-static gint object_ienum_compare_func(gconstpointer a, gconstpointer b, gpointer user_data)
+static gint object_ienum_compare_func(ObjectIEnum *ienum_a, ObjectIEnum *ienum_b, gpointer user_data)
 {
-    ObjectIEnum *ienum_a = (ObjectIEnum *)a;
-    ObjectIEnum *ienum_b = (ObjectIEnum *)b;
-
     gint value_a = object_ienum_get_value(ienum_a);
     gint value_b = object_ienum_get_value(ienum_b);
 
@@ -392,7 +389,7 @@ GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
     while (ecs_map_next(&it))
     {
         ecs_enum_constant_t *constant = ecs_map_ptr(&it);
-        g_list_store_append(store, object_ienum_new(constant->name, constant->value));
+        g_list_store_append(store, object_ienum_new(constant->name, constant->value, 0));
     }
     g_list_store_sort(store, object_ienum_compare_func, NULL);
 
