@@ -20,7 +20,7 @@ struct _GappViewport
 
 G_DEFINE_TYPE(GappViewport, gapp_viewport, GTK_TYPE_GL_AREA)
 
-static gboolean gtk_ray_ticka(GappViewport *self, GdkFrameClock *frame_clock, gpointer user_data);
+static gboolean tick_cb_queue(GappViewport *self, GdkFrameClock *frame_clock, gpointer user_data);
 static void gapp_s_resize(GtkWidget *widget, gint width, gint height);
 static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewport *self);
 static void gapp_s_realize(GtkWidget *widget);
@@ -69,11 +69,11 @@ static void gapp_viewport_init(GappViewport *self)
     // g_signal_connect(gesture, "pressed", G_CALLBACK(signal_viewport_mouse_button_pressed), self);
     // g_signal_connect(gesture, "released", G_CALLBACK(signal_viewport_mouse_button_released), self);
 
-    gtk_widget_add_tick_callback(GTK_WIDGET(self), gtk_ray_ticka, self, NULL);
+    gtk_widget_add_tick_callback(GTK_WIDGET(self), tick_cb_queue, self, NULL);
 }
 
 /**
- * gtk_ray_ticka:
+ * tick_cb_queue:
  * @self: (transfer none): El #GtkWidget que se va a redibujar.
  * @frame_clock: (transfer none): El #GdkFrameClock que proporciona la señal de tick.
  * @user_data: (transfer none): Datos adicionales pasados a la función (no utilizado).
@@ -89,7 +89,7 @@ static void gapp_viewport_init(GappViewport *self)
  *
  * Since: 1.0
  */
-static gboolean gtk_ray_ticka(GappViewport *self, GdkFrameClock *frame_clock, gpointer user_data)
+static gboolean tick_cb_queue(GappViewport *self, GdkFrameClock *frame_clock, gpointer user_data)
 {
     GdkFrameTimings *prev_timings;
     gint64 prev_frame_time, frame_time, frame;
@@ -106,7 +106,6 @@ static gboolean gtk_ray_ticka(GappViewport *self, GdkFrameClock *frame_clock, gp
 
     self->deltaTime = (frame_time - self->first_frame_time) / 1000000.0;
 
-    gtk_widget_queue_draw(self);
 
     history_start = gdk_frame_clock_get_history_start(frame_clock);
     if (frame % 60 == 0)
@@ -118,6 +117,8 @@ static gboolean gtk_ray_ticka(GappViewport *self, GdkFrameClock *frame_clock, gp
             prev_frame_time = gdk_frame_timings_get_frame_time(prev_timings);
         }
     }
+    
+    gtk_widget_queue_draw(self);
 
     return G_SOURCE_CONTINUE;
 }
@@ -153,7 +154,7 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
 
     if (!self->customRender)
         pixi_render_end();
-        
+
     glFlush();
 
     return TRUE;

@@ -31,7 +31,16 @@
 
 #define BROWSER_FILE_COMPONENT  ".gcomponent"
 #define BROWSER_FILE_SCRIPT     ".lua"
-#define BROWSER_FILE_SCENE      ".gscene"   
+#define BROWSER_FILE_SCENE      ".gscene"
+#define BROWSER_FILE_TILEMAP    ".gtilemap"
+#define BROWSER_FILE_SPRITE     ".gsprite"
+#define BROWSER_FILE_PREFAB     ".gprefab"
+#define BROWSER_FILE_ANIMATION  ".ganimation"
+#define BROWSER_FILE_TILESET    ".gtileset"
+#define BROWSER_FILE_IMAGE      ".png"
+#define BROWSER_FILE_AUDIO      ".wav"
+#define BROWSER_FILE_FONT       ".ttf"
+#define BROWSER_FILE_SHADER     ".glsl"
 
 G_BEGIN_DECLS
 

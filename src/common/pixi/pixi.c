@@ -13,29 +13,28 @@
  */
 void pixi_draw_grid(int width, int height, int size)
 {
-    const Color GRID_COLOR = LIGHTGRAY;
-    const int TEXT_SIZE = 10;
-    const int TEXT_PADDING = 2;
+    const Color GRID_COLOR1 = (Color){66, 66, 66, 255};
+    const Color GRID_COLOR2 = (Color){57, 57, 57, 255};
+    const Color GRID_COLOR3 = (Color){50, 50, 50, 255};
+
+    for (int y = 0; y < height / size + 1; y++)
+    {
+        for (int x = 0; x < width / size + 1; x++)
+        {
+            DrawRectangle(x * size, y * size, size, size, (x + y) % 2 == 0 ? GRID_COLOR2 : GRID_COLOR1);
+        }
+    }
 
     // Dibujar líneas verticales
     for (int x = 0; x <= width; x += size)
     {
-        DrawLineV((Vector2){(float)x, 0}, (Vector2){(float)x, (float)height}, GRID_COLOR);
+        DrawLineV((Vector2){(float)x, 0}, (Vector2){(float)x, (float)height}, GRID_COLOR3);
     }
 
     // Dibujar líneas horizontales
     for (int y = 0; y <= height; y += size)
     {
-        DrawLineV((Vector2){0, (float)y}, (Vector2){(float)width, (float)y}, GRID_COLOR);
+        DrawLineV((Vector2){0, (float)y}, (Vector2){(float)width, (float)y}, GRID_COLOR3);
     }
 
-    // Dibujar coordenadas en cada celda
-    for (int x = 0; x < width; x += size)
-    {
-        for (int y = 0; y < height; y += size)
-        {
-            const char *text = TextFormat("[%i,%i]", x / size, y / size);
-            DrawText(text, x + TEXT_PADDING, y + TEXT_PADDING, TEXT_SIZE, GRID_COLOR);
-        }
-    }
 }

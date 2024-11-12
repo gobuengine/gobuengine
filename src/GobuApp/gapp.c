@@ -102,8 +102,6 @@ static void gapp_main_activate(GappMain *app)
         {
             app->browser = gapp_browser_new();
             gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_BROWSER, app->browser);
-            gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_ROOMS, gtk_label_new("Rooms"));
-            gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_ACTOR, gtk_label_new("Actors"));
             gapp_append_left_panel(app, GAPP_TOOLBAR_LEFT_ICON_TILE, gtk_label_new("TileEditor"));
         }
 
@@ -123,15 +121,6 @@ static void gapp_main_activate(GappMain *app)
 // MARK:SIGNAL
 // -----------------
 
-/**
- * Manejador de señal para abrir la configuración del proyecto.
- *
- * Esta función se activa cuando se solicita abrir la configuración del proyecto.
- * Crea una nueva ventana de configuración y la muestra.
- *
- * @param widget El widget que emitió la señal (no utilizado en esta función).
- * @param self Puntero a la estructura principal de la aplicación.
- */
 static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
 {
     g_return_if_fail(self != NULL);
@@ -150,16 +139,6 @@ static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
 // MARK: API
 // -----------------
 
-/**
- * Establece la sensibilidad de los botones de la barra de encabezado.
- *
- * Esta función cambia el estado de sensibilidad (activado/desactivado) de
- * varios botones en la barra de encabezado de la aplicación.
- *
- * @param self Puntero a la estructura principal de la aplicación.
- * @param sensitive Valor booleano que indica si los botones deben estar
- *                  sensibles (TRUE) o insensibles (FALSE).
- */
 static void gapp_set_headerbar_button_sensitives(GappMain *self, gboolean sensitive)
 {
     gtk_widget_set_visible(self->btn_s, sensitive);
@@ -168,25 +147,11 @@ static void gapp_set_headerbar_button_sensitives(GappMain *self, gboolean sensit
     gtk_widget_set_visible(self->btn_set, sensitive);
 }
 
-/**
- * Crea una nueva instancia de GappMain.
- *
- * Esta función crea y devuelve un nuevo objeto GappMain, que es la clase
- * principal de la aplicación. Configura el ID de la aplicación y las banderas.
- *
- * @return Un puntero a la nueva instancia de GappMain, o NULL si la creación falla.
- */
 static GappMain *gapp_new(void)
 {
     return g_object_new(GAPP_TYPE_MAIN, "application-id", APPLICATION_ID, "flags", G_APPLICATION_HANDLES_OPEN, NULL);
 }
 
-/**
- * Carga un archivo de configuración en un objeto GKeyFile.
- *
- * @param filename El nombre del archivo de configuración a cargar.
- * @return Un puntero al objeto GKeyFile cargado, o NULL si ocurrió un error.
- */
 static GKeyFile *gapp_config_load_from_file(const char *filename)
 {
     GKeyFile *keyfile = g_key_file_new();
@@ -207,14 +172,6 @@ static GKeyFile *gapp_config_load_from_file(const char *filename)
     return keyfile;
 }
 
-/**
- * Inicializa la configuración de la aplicación.
- *
- * Esta función carga el archivo de configuración, establece el tema
- * (oscuro o claro) y aplica los estilos CSS.
- *
- * @return TRUE si la inicialización fue exitosa, FALSE en caso contrario.
- */
 static bool gapp_config_init(void)
 {
     GKeyFile *keyfile = gapp_config_load_from_file("editor.config.ini");
@@ -238,28 +195,11 @@ static bool gapp_config_init(void)
     return TRUE;
 }
 
-/**
- * Obtiene la instancia del editor principal.
- *
- * Esta función devuelve un puntero a la instancia global del editor principal
- * de la aplicación. La instancia se devuelve como un GObject genérico.
- *
- * @return Un puntero GObject a la instancia del editor principal, o NULL si no está inicializada.
- */
 GObject *gapp_get_editor_instance(void)
 {
     return gappMain;
 }
 
-/**
- * Obtiene la instancia de configuración de la aplicación.
- *
- * Esta función devuelve un puntero a la instancia de configuración
- * asociada con la instancia principal de la aplicación (gappMain).
- * La instancia se devuelve como un GObject genérico.
- *
- * @return Un puntero GObject a la instancia de configuración, o NULL si no está disponible.
- */
 GObject *gapp_get_config_instance(void)
 {
     return gappMain->config;
@@ -270,19 +210,13 @@ ecs_world_t *gapp_get_world_instance(void)
     return gappMain->world;
 }
 
-/**
- * Inicializa un proyecto en el editor.
- *
- * @param self Puntero al objeto GappMain.
- * @param path Ruta del proyecto a inicializar.
- */
 void gapp_open_project(GappMain *self, const gchar *path)
 {
     g_return_if_fail(GAPP_IS_MAIN(self));
     g_return_if_fail(path != NULL && *path != '\0');
 
     // Crear una escena inicial
-    gapp_append_right_panel(self, "Viewport", gobu_level_editor_new(), FALSE);
+    gapp_append_right_panel(self, "Scene", gobu_level_editor_new(), FALSE);
 
     // Cerrar la página de proyectos
     gtk_notebook_remove_page(GTK_NOTEBOOK(self->dnotebook), 0);
@@ -302,14 +236,6 @@ void gapp_open_project(GappMain *self, const gchar *path)
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
 
-/**
- * Añade un nuevo panel al lado derecho del editor.
- *
- * @param self Puntero al objeto GappMain.
- * @param title Título del nuevo panel.
- * @param module Widget a añadir como contenido del panel.
- * @param is_button_close Indica si se debe mostrar un botón de cierre en la pestaña.
- */
 void gapp_append_right_panel(GappMain *self, const gchar *title, GtkWidget *module, gboolean is_button_close)
 {
     g_return_if_fail(GAPP_IS_MAIN(self));
@@ -324,13 +250,6 @@ void gapp_append_right_panel(GappMain *self, const gchar *title, GtkWidget *modu
                                      is_button_close);
 }
 
-/**
- * Añade un nuevo módulo al panel izquierdo de la aplicación.
- *
- * @param self Puntero a la estructura principal de la aplicación.
- * @param icon_name Nombre del icono a mostrar en la pestaña.
- * @param module Widget del módulo a añadir.
- */
 void gapp_append_left_panel(GappMain *self, const gchar *icon_name, GtkWidget *module)
 {
     g_return_if_fail(self != NULL && icon_name != NULL && module != NULL);

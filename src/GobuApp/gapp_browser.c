@@ -263,8 +263,6 @@ static gboolean gapp_browser_is_content_folder(GappBrowser *browser, const gchar
 
 static GdkContentProvider *gapp_browser_s_file_drag(GtkDragSource *source, double x, double y, GtkListItem *list_item)
 {
-    g_print("Drag began\n");
-
     GtkTreeListRow *row = gtk_list_item_get_item(list_item);
     GFileInfo *fileInfo = gtk_tree_list_row_get_item(row);
 

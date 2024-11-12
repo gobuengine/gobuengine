@@ -3,6 +3,7 @@
 #include "gapp_widget.h"
 #include "gapp_level_editor.h"
 #include "gapp_level_inspector.h"
+#include "gapp_browser.h"
 
 #include "types/type_outliner_item.h"
 #include "types/type_outliner_popover_item.h"
@@ -12,6 +13,7 @@
 #include "gapp.h"
 
 // MARK: ClassGappOutliner
+
 struct _GappOutliner
 {
     GtkWidget parent;
@@ -40,16 +42,6 @@ static void gapp_outliner_init(GappOutliner *self)
 
 // MARK: --- FUNCIONES PRIVADAS ---
 
-/**
- * @brief Crea un modelo de lista para los hijos de una entidad en el esquema.
- *
- * Esta función toma un ítem del esquema y devuelve un modelo de lista
- * que contiene sus hijos. Si el ítem no tiene hijos, la función devuelve NULL.
- *
- * @param item Un puntero GObject al ítem del esquema.
- * @param outliner Un puntero a la estructura GappOutliner (no utilizado en esta función).
- * @return GListModel* Un nuevo modelo de lista con los hijos del ítem, o NULL si no tiene hijos.
- */
 static GListModel *gapp_outliner_fn_create_list_model_entity_children(GObject *item, GappOutliner *outliner)
 {
     TOutlinerItem *oitem = TOUTLINER_ITEM(item);
@@ -63,13 +55,6 @@ static GListModel *gapp_outliner_fn_create_list_model_entity_children(GObject *i
     return G_LIST_MODEL(g_object_ref(children));
 }
 
-/**
- * Busca un TOutlinerItem por su entidad en un modelo de selección.
- *
- * @param selection Puntero al GtkSingleSelection que contiene los items.
- * @param entity La entidad ECS que se está buscando.
- * @return TOutlinerItem* El item encontrado, o NULL si no se encuentra.
- */
 TOutlinerItem *gapp_outliner_fn_find_item_by_entity(GtkSingleSelection *selection, ecs_entity_t entity)
 {
     GListModel *model = gtk_multi_selection_get_model(selection);
@@ -105,17 +90,6 @@ static TOutlinerItem *gapp_outliner_fn_get_selected_item(GtkSingleSelection *sel
     return NULL;
 }
 
-/**
- * Enfoca y selecciona una entidad específica en el outliner.
- *
- * Esta función busca la entidad especificada en el modelo del outliner,
- * la selecciona si la encuentra, y devuelve un valor booleano indicando
- * si la operación tuvo éxito.
- *
- * @param outliner El puntero al GappOutliner.
- * @param entity La entidad a enfocar y seleccionar.
- * @return gboolean TRUE si la entidad fue encontrada y seleccionada, FALSE en caso contrario.
- */
 static gboolean gapp_outliner_fn_focus_entity(GappOutliner *outliner, ecs_entity_t entity)
 {
     g_return_val_if_fail(outliner != NULL && entity != 0, FALSE);
@@ -141,16 +115,6 @@ static gboolean gapp_outliner_fn_focus_entity(GappOutliner *outliner, ecs_entity
     return FALSE;
 }
 
-/**
- * Maneja la selección de una entidad en el outliner.
- *
- * Esta función se encarga de actualizar la selección visual en el outliner
- * y actualizar el inspector con la entidad seleccionada.
- *
- * @param outliner El puntero al GappOutliner.
- * @param entity La entidad seleccionada.
- * @param selected Indica si la entidad está seleccionada (TRUE) o deseleccionada (FALSE).
- */
 static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_t entity, gboolean selected)
 {
     g_return_if_fail(outliner != NULL && entity != 0);
@@ -165,38 +129,26 @@ static void gapp_outliner_fn_selected_entity(GappOutliner *outliner, ecs_entity_
     gapp_inspector_set_entity(inspector, GAPP_ECS_WORLD, entity);
 }
 
+static ecs_entity_t gapp_outliner_fn_create_entity(GappOutliner *outliner, const gchar *name, const gchar *componentName)
+{
+    TOutlinerItem *itemSelected = gapp_outliner_fn_get_selected_item(outliner->selection);
+
+    ecs_entity_t parent = itemSelected ? toutliner_item_get_entity(itemSelected) : pixio_get_root(GAPP_ECS_WORLD);
+    ecs_entity_t entity = pixio_new(GAPP_ECS_WORLD, parent, name);
+
+    if (strcmp(componentName, "entity.empty") != 0 && strlen(componentName) > 0)
+        pixio_set_component_by_name(GAPP_ECS_WORLD, entity, componentName);
+
+    return entity;
+}
+
 // MARK: --- SIGNAL ---
 
-/**
- * gapp_outliner_s_toolbar_add_clicked:
- * @widget: (transfer none): El widget que activó la señal de clic.
- * @popover: (transfer none): El #GtkPopover que se mostrará.
- *
- * Maneja el evento de clic en el botón "Agregar" de la barra de herramientas del esquema.
- *
- * Esta función se activa cuando el usuario hace clic en el botón "Agregar" en la
- * barra de herramientas del esquema. Su única acción es mostrar un popover que
- * presumiblemente contiene opciones para agregar nuevos elementos al esquema.
- *
- * Nota: Esta función asume que @popover es un widget válido de tipo GtkPopover.
- *
- * Since: 1.0
- */
 static void gapp_outliner_s_toolbar_add_clicked(GtkWidget *widget, GtkWidget *popover)
 {
     gtk_popover_popup(GTK_POPOVER(popover));
 }
 
-/**
- * @brief Maneja el evento de clic en el botón de eliminación de la barra de herramientas del esquema.
- *
- * Esta función elimina los elementos seleccionados del esquema, excluyendo el elemento raíz.
- * Itera sobre los elementos seleccionados en orden inverso para evitar problemas de índice
- * durante la eliminación.
- *
- * @param widget El widget que activó el evento (no utilizado en esta función).
- * @param outliner Puntero a la estructura GappOutliner que contiene el estado del esquema.
- */
 static void gapp_outliner_s_toolbar_remove_clicked(GtkWidget *widget, GappOutliner *outliner)
 {
     gboolean isRemove = FALSE;
@@ -226,17 +178,11 @@ static void gapp_outliner_s_toolbar_remove_clicked(GtkWidget *widget, GappOutlin
         gapp_outliner_fn_selected_entity(outliner, ecs_lookup(GAPP_ECS_WORLD, GAPP_ROOT_STR), TRUE);
 }
 
-/**
- * Maneja el evento de clic en el botón "Duplicar" de la barra de herramientas del Outliner.
- * Esta función duplica los elementos seleccionados en el outliner, excluyendo el elemento raíz.
- *
- * @param widget El widget que generó el evento (no utilizado en esta función).
- * @param outliner Puntero a la estructura GappOutliner que contiene el estado del Outliner.
- */
 static void gapp_outliner_s_toolbar_duplicate_clicked(GtkWidget *widget, GappOutliner *outliner)
 {
     GListModel *model = gtk_multi_selection_get_model(outliner->selection);
     guint n = g_list_model_get_n_items(model);
+    ecs_world_t *world = (GAPP_ECS_WORLD);
 
     for (gint i = n - 1; i >= 0; i--)
     {
@@ -247,7 +193,7 @@ static void gapp_outliner_s_toolbar_duplicate_clicked(GtkWidget *widget, GappOut
 
             if (g_strcmp0(toutliner_item_get_name(oitem), GAPP_ROOT_STR) != 0)
             {
-                ecs_entity_t eclone = pixio_clone(GAPP_ECS_WORLD, toutliner_item_get_entity(oitem));
+                ecs_entity_t eclone = pixio_clone(world, toutliner_item_get_entity(oitem));
                 gapp_outliner_fn_selected_entity(outliner, eclone, TRUE);
             }
 
@@ -257,18 +203,6 @@ static void gapp_outliner_s_toolbar_duplicate_clicked(GtkWidget *widget, GappOut
     }
 }
 
-/**
- * Maneja la activación de elementos en la vista de lista del outliner.
- *
- * Esta función se llama cuando se activan elementos en la vista de lista.
- * Recorre los elementos seleccionados y llama a la función de selección
- * de entidad para cada uno de ellos.
- *
- * @param selection El modelo de selección múltiple.
- * @param position La posición del primer elemento activado.
- * @param n_items El número de elementos activados.
- * @param outliner El puntero al GappOutliner.
- */
 static void gapp_outliner_s_list_view_activated(GtkMultiSelection *selection, guint position, guint n_items, GappOutliner *outliner)
 {
     g_return_if_fail(selection != NULL && outliner != NULL);
@@ -327,21 +261,6 @@ static void column_factory_s_setup_name(GtkSignalListItemFactory *factory, GtkLi
     gtk_box_append(GTK_BOX(box), label);
 }
 
-/**
- * column_factory_s_bind_name:
- * @factory: El #GtkSignalListItemFactory que llamó a esta función
- * @list_item: El #GtkListItem que representa el elemento en la columna
- * @outliner: El #GappOutliner al que pertenece el elemento
- *
- * Función auxiliar llamada por el #GtkSignalListItemFactory para configurar
- * la apariencia de cada elemento en la columna "Nombre" del Outliner.
- *
- * Esta función obtiene el #TOutlinerItem asociado al listitem, configura
- * el widget expander, establece el icono y la etiqueta con la información
- * del elemento, y maneja el caso especial del elemento raíz.
- *
- * Since: 1.0
- */
 static void column_factory_s_bind_name(GtkSignalListItemFactory *factory, GtkListItem *list_item, GappOutliner *outliner)
 {
     GtkTreeListRow *row_item = gtk_list_item_get_item(list_item);
@@ -371,20 +290,6 @@ static void column_factory_s_bind_name(GtkSignalListItemFactory *factory, GtkLis
     g_object_unref(oitem);
 }
 
-/**
- * s_setup_outliner_popover_entity_item_factory:
- * @factory: El #GtkSignalListItemFactory que llamó a esta función
- * @listitem: El #GtkListItem que representa el elemento en el listview
- * @data: Datos adicionales (no utilizados aquí)
- *
- * Función auxiliar llamada por el #GtkSignalListItemFactory para configurar
- * la estructura visual de cada elemento en el listview del popover de entidades.
- *
- * Esta función crea un contenedor horizontal con un icono y una etiqueta,
- * y los establece como el widget hijo del listitem.
- *
- * Since: 1.0
- */
 static void s_setup_outliner_popover_entity_item_factory(GtkSignalListItemFactory *factory, GtkListItem *listitem, gpointer data)
 {
     GtkWidget *hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
@@ -396,21 +301,6 @@ static void s_setup_outliner_popover_entity_item_factory(GtkSignalListItemFactor
     gtk_list_item_set_child(GTK_LIST_ITEM(listitem), hbox_parent);
 }
 
-/**
- * s_bind_outliner_popover_entity_item_factory:
- * @factory: El #GtkSignalListItemFactory que llamó a esta función
- * @listitem: El #GtkListItem que representa el elemento en el listview
- * @data: Datos adicionales (no utilizados aquí)
- *
- * Función auxiliar llamada por el #GtkSignalListItemFactory para configurar
- * la apariencia de cada elemento en el listview del popover de entidades.
- *
- * Esta función obtiene el #TOutlinerPopoverItem asociado al listitem,
- * y actualiza los widgets hijos (icono y etiqueta) con la información
- * del elemento del popover.
- *
- * Since: 1.0
- */
 static void s_bind_outliner_popover_entity_item_factory(GtkSignalListItemFactory *factory, GtkListItem *listitem, gpointer data)
 {
     TOutlinerPopoverItem *popoverItem = gtk_list_item_get_item(listitem);
@@ -424,21 +314,6 @@ static void s_bind_outliner_popover_entity_item_factory(GtkSignalListItemFactory
     gtk_label_set_label(GTK_LABEL(label), toutliner_popover_item_get_name(popoverItem));
 }
 
-/**
- * s_outliner_popover_entity_item_activated:
- * @self: El #GtkListView donde se activó el elemento
- * @position: La posición del elemento activado en el listview
- * @popover: El #GtkPopover que contiene el listview
- *
- * Función auxiliar llamada cuando se activa un elemento en el listview
- * del popover de entidades. Esta función se encarga de crear una nueva
- * entidad en el mundo ECS y enfocarla en el esquema del Outliner.
- *
- * El elemento activado en el listview contiene información sobre el
- * tipo de entidad a crear, como su nombre y los componentes a asignar.
- *
- * Since: 1.0
- */
 static void s_outliner_popover_entity_item_activated(GtkListView *self, guint position, GtkWidget *popover)
 {
     GtkSelectionModel *selection = gtk_list_view_get_model(self);
@@ -446,31 +321,38 @@ static void s_outliner_popover_entity_item_activated(GtkListView *self, guint po
 
     GappOutliner *outliner = g_object_get_data(G_OBJECT(popover), "outliner");
 
-    TOutlinerItem *itemSelected = gapp_outliner_fn_get_selected_item(outliner->selection);
-    ecs_entity_t parent = itemSelected ? toutliner_item_get_entity(itemSelected) : pixio_get_root(GAPP_ECS_WORLD);
-    ecs_entity_t entity = pixio_new(GAPP_ECS_WORLD, parent, toutliner_popover_item_get_name(popoverItem));
-
-    const char *componentName = toutliner_popover_item_get_component(popoverItem);
-    if (strcmp(componentName, "entity.empty") != 0)
-        pixio_set_component_by_name(GAPP_ECS_WORLD, entity, componentName);
+    const gchar *name = toutliner_popover_item_get_name(popoverItem);
+    const gchar *component = toutliner_popover_item_get_component(popoverItem);
+    ecs_entity_t entity = gapp_outliner_fn_create_entity(outliner, name, component);
 
     gapp_outliner_fn_focus_entity(outliner, entity);
     gtk_popover_popdown(GTK_POPOVER(popover));
     g_object_unref(popoverItem);
 }
 
+static gboolean s_outliner_drop_file_browser(GtkDropTarget *target, const GValue *value, double x, double y, GappOutliner *outliner)
+{
+    if (G_VALUE_HOLDS(value, G_TYPE_FILE_INFO))
+    {
+        GFileInfo *file_info = g_value_get_object(value);
+        GFile *file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
+
+        gchar *pathfile = g_file_get_path(file);
+        gchar *filename = g_file_info_get_name(file_info);
+
+        if (gobu_fs_is_extension(filename, BROWSER_FILE_IMAGE))
+        {
+            gapp_outliner_fn_create_entity(outliner, gobu_fs_get_name(filename, TRUE), "pixio_type_module.pixio_sprite_t");
+        }
+
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
 // MARK: --- UI ---
 
-/**
- * Crea y devuelve un nuevo GListStore con elementos para un menú desplegable del outliner.
- *
- * Esta función inicializa un GListStore con varios TOutlinerPopoverItem, cada uno
- * representando una entidad o elemento de interfaz de usuario diferente que se puede
- * agregar al outliner. Los elementos incluyen varias entidades gráficas, de audio,
- * y de interfaz de usuario.
- *
- * @return GListStore* Un puntero al nuevo GListStore creado y poblado con elementos.
- */
 static GListStore *gapp_outliner_ui_popover_new(void)
 {
     GListStore *store = toutliner_popover_new();
@@ -606,6 +488,10 @@ static void gapp_outliner_ui_setup(GappOutliner *self)
             // gtk_list_view_set_single_click_activate(GTK_LIST_VIEW(list_view), TRUE);
             gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), self->list_view);
 
+            GtkDropTarget *drop = gtk_drop_target_new(G_TYPE_FILE_INFO, GDK_ACTION_MOVE);
+            g_signal_connect(drop, "drop", G_CALLBACK(s_outliner_drop_file_browser), self);
+            gtk_widget_add_controller(self->list_view, GTK_EVENT_CONTROLLER(drop));
+
             g_signal_connect(self->selection, "selection-changed", G_CALLBACK(gapp_outliner_s_list_view_activated), self);
         }
     }
@@ -613,11 +499,6 @@ static void gapp_outliner_ui_setup(GappOutliner *self)
 
 // MARK: --- API ---
 
-/**
- * Crea y inicializa una nueva instancia de GappOutliner.
- *
- * @return Puntero a la nueva instancia de GappOutliner.
- */
 GappOutliner *gapp_outliner_new(void)
 {
     return g_object_new(GAPP_TYPE_OUTLINER,
@@ -625,28 +506,6 @@ GappOutliner *gapp_outliner_new(void)
                         NULL);
 }
 
-/**
- * gapp_outliner_set_name_entity:
- * @outliner: (transfer none): El #GappOutliner que contiene la entidad.
- * @entity: La entidad cuyo nombre se va a cambiar.
- * @name: (transfer none): El nuevo nombre para la entidad.
- *
- * Establece un nuevo nombre para una entidad específica en el esquema y actualiza la interfaz de usuario.
- *
- * Esta función realiza las siguientes operaciones:
- * - Busca el ítem correspondiente a la entidad en la selección del esquema.
- * - Actualiza el nombre del ítem utilizando la función toutliner_item_set_name().
- * - Actualiza la etiqueta en la interfaz de usuario para reflejar el nuevo nombre.
- *
- * Nota: El nuevo nombre se copia internamente, por lo que el llamador mantiene
- * la propiedad de la cadena original.
- *
- * Advertencia: Esta función asume que la entidad existe en el esquema y que
- * la estructura del widget es la esperada. Si la entidad no se encuentra o
- * la estructura del widget ha cambiado, el comportamiento puede ser indefinido.
- *
- * Since: 1.0
- */
 void gapp_outliner_set_name_entity(GappOutliner *outliner, ecs_entity_t entity, const char *name)
 {
     // Buscar el ítem correspondiente a la entidad

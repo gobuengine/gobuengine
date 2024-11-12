@@ -91,8 +91,6 @@ void pixio_delete(ecs_world_t *world, ecs_entity_t entity)
 ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity)
 {
     ecs_entity_t clone = ecs_clone(world, 0, entity, TRUE);
-    // pixio_set_name(world, clone, pixio_get_name(world, entity));
-    pixio_set_parent(world, clone, pixio_get_parent(world, entity));
 
     ecs_iter_t it = ecs_children(world, entity);
     while (ecs_children_next(&it))
