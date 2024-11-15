@@ -19,8 +19,7 @@ struct _GappBrowser
     GtkDirectoryList *directory;
 };
 
-static void
-gapp_browser_dispose(GObject *object);
+static void gapp_browser_dispose(GObject *object);
 static int gapp_browser_fn_sorting(GFileInfo *a, GFileInfo *b, gpointer data);
 static GListModel *gapp_browser_fn_create_list_model(GFile *file);
 static GListModel *gapp_browser_fn_create_list_model_directory(gpointer file_info, gpointer data);
@@ -29,6 +28,8 @@ static GtkWidget *gapp_browser_ui_menupopup_file(GappBrowser *self);
 static void gapp_browser_s_view_file_setup_factory(GtkListItemFactory *factory, GtkListItem *list_item, gpointer data);
 static void gapp_browser_s_view_file_bind_factory(GtkListItemFactory *factory, GtkListItem *list_item, GappBrowser *browser);
 static void gapp_browser_ui_setup(GappBrowser *self);
+
+static GFile *browser_file_info_to_file(GFileInfo *info);
 
 // --- MARK:BASE CLASS ---
 
@@ -66,12 +67,30 @@ static void gapp_browser_init(GappBrowser *self)
  *
  * @param directory Puntero al GtkDirectoryList a configurar.
  */
-static void gapp_browser_set_monitored_directory(GtkDirectoryList *directory)
+static void browser_set_monitored_directory(GtkDirectoryList *directory)
 {
     g_return_if_fail(GTK_IS_DIRECTORY_LIST(directory));
 
     gtk_directory_list_set_monitored(directory, TRUE);
     gtk_directory_list_set_io_priority(directory, G_PRIORITY_DEFAULT_IDLE);
+}
+
+/**
+ * Crea y devuelve un modelo de lista ordenado a partir de una lista de directorios.
+ *
+ * Esta función toma una lista de directorios GTK y la envuelve en un modelo
+ * de lista ordenado usando una función personalizada de ordenamiento (gapp_browser_fn_sorting).
+ * El ordenamiento se aplica automáticamente a todos los elementos de la lista.
+ *
+ * @param list Puntero a GtkDirectoryList que contiene los elementos a ordenar
+ * @return GListModel* Modelo de lista ordenado. NULL si falla la creación
+ */
+static GListModel *browser_fn_get_list_model_to_directory_list(GtkDirectoryList *list)
+{
+    g_return_val_if_fail(list != NULL, NULL);
+    GtkSorter *sorter = gtk_custom_sorter_new(gapp_browser_fn_sorting, NULL, NULL);
+    GListModel *sorted_model = G_LIST_MODEL(gtk_sort_list_model_new(G_LIST_MODEL(list), sorter));
+    return sorted_model;
 }
 
 /**
@@ -87,8 +106,8 @@ static void gapp_browser_set_monitored_directory(GtkDirectoryList *directory)
 static GListModel *gapp_browser_fn_create_list_model(GFile *file)
 {
     GtkDirectoryList *list = gtk_directory_list_new("standard::*", file);
-    gapp_browser_set_monitored_directory(list);
-    return G_LIST_MODEL(gtk_sort_list_model_new(G_LIST_MODEL(list), gtk_custom_sorter_new(gapp_browser_fn_sorting, NULL, NULL)));
+    browser_set_monitored_directory(list);
+    return browser_fn_get_list_model_to_directory_list(list);
 }
 
 /**
@@ -110,7 +129,7 @@ static GListModel *gapp_browser_fn_create_list_model_directory(gpointer file_inf
     if (type_a != G_FILE_TYPE_DIRECTORY)
         return NULL;
 
-    GFile *file = G_FILE(g_file_info_get_attribute_object(G_FILE_INFO(file_info), "standard::file"));
+    GFile *file = browser_file_info_to_file(G_FILE_INFO(file_info));
     g_return_val_if_fail(file != NULL, NULL);
 
     return gapp_browser_fn_create_list_model(file);
@@ -173,7 +192,7 @@ static GFileInfo *gapp_browser_fn_get_selected_file(GtkSelectionModel *selection
  * @param info Puntero a GFileInfo del cual extraer el GFile.
  * @return Puntero a GFile extraído del GFileInfo, o NULL si no se puede obtener.
  */
-static GFile *gapp_browser_fn_file_info_to_file(GFileInfo *info)
+static GFile *browser_file_info_to_file(GFileInfo *info)
 {
     g_return_val_if_fail(G_IS_FILE_INFO(info), NULL);
 
@@ -221,7 +240,7 @@ static gchar *gapp_browser_fn_dialog_get_selected_path(GappWidgetDialogEntry *di
         return NULL;
     }
 
-    file = gapp_browser_fn_file_info_to_file(info);
+    file = browser_file_info_to_file(info);
     if (!G_IS_FILE(file))
     {
         g_warning("gapp_browser_fn_dialog_get_selected_path: Failed to get file");
@@ -302,7 +321,7 @@ static gboolean gapp_browser_s_file_drop(GtkDropTarget *target, const GValue *va
         {
             GtkTreeListRow *row = gtk_list_item_get_item(GTK_LIST_ITEM(data));
             GFileInfo *info = gtk_tree_list_row_get_item(row);
-            pathfile = g_file_get_path(gapp_browser_fn_file_info_to_file(info));
+            pathfile = g_file_get_path(browser_file_info_to_file(info));
         }
 
         if (!g_file_test(pathfile, G_FILE_TEST_IS_DIR))
@@ -332,13 +351,13 @@ static gboolean gapp_browser_s_file_drop(GtkDropTarget *target, const GValue *va
         GtkTreeListRow *row = gtk_list_item_get_item(GTK_LIST_ITEM(data));
         GFileInfo *info = gtk_tree_list_row_get_item(row);
 
-        char *pathfile = g_file_get_path(gapp_browser_fn_file_info_to_file(info));
+        char *pathfile = g_file_get_path(browser_file_info_to_file(info));
         if (!g_file_test(pathfile, G_FILE_TEST_IS_DIR))
             pathfile = g_path_get_dirname(pathfile);
 
         // File origen
         GFileInfo *file = g_value_get_object(value);
-        GFile *file_src = gapp_browser_fn_file_info_to_file(file);
+        GFile *file_src = browser_file_info_to_file(file);
         GFile *file_dst = g_file_new_for_path(g_build_filename(pathfile, g_file_get_basename(file_src), NULL));
         if (!g_file_move(file_src, file_dst, G_FILE_COPY_NONE, NULL, NULL, NULL, &error))
         {
@@ -404,7 +423,6 @@ static void gapp_browser_s_toolbar_create_folder_clicked(GtkWidget *widget, Gapp
     g_signal_connect(dialog->button_ok, "clicked", G_CALLBACK(s_responde_create_folder), dialog);
 }
 
-// -- Create scene new
 static void s_responde_create_scene(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
     const char *filename = gapp_browser_fn_dialog_get_selected_path(dialog, ".gscene");
@@ -419,7 +437,6 @@ static void gapp_browser_s_toolbar_create_scene_clicked(GtkWidget *widget, GappB
     g_signal_connect(dialog->button_ok, "clicked", G_CALLBACK(s_responde_create_scene), dialog);
 }
 
-// -- Create script new
 static void s_responde_create_script(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
     const char *filename = gapp_browser_fn_dialog_get_selected_path(dialog, BROWSER_FILE_SCRIPT);
@@ -459,11 +476,11 @@ static void s_responde_remove_file_item(GtkAlertDialog *dialog, GAsyncResult *re
 
             g_autoptr(GtkTreeListRow) row = g_list_model_get_item(G_LIST_MODEL(model), i);
             GFileInfo *info = G_FILE_INFO(gtk_tree_list_row_get_item(GTK_TREE_LIST_ROW(row)));
-            GFile *file = gapp_browser_fn_file_info_to_file(info);
+            GFile *file = browser_file_info_to_file(info);
 
             // Verifica que no sea un directorio y que no sea la carpeta "Content"
             if (!gapp_browser_is_content_folder(self, g_file_get_path(file)))
-                g_file_trash(gapp_browser_fn_file_info_to_file(info), NULL, NULL);
+                g_file_trash(browser_file_info_to_file(info), NULL, NULL);
         }
     }
 }
@@ -503,7 +520,7 @@ static void gapp_browser_s_view_file_activated(GtkListView *self, guint position
 
     g_autoptr(GtkTreeListRow) row = g_list_model_get_item(G_LIST_MODEL(model), position);
     GFileInfo *info = G_FILE_INFO(gtk_tree_list_row_get_item(GTK_TREE_LIST_ROW(row)));
-    GFile *file = gapp_browser_fn_file_info_to_file(info);
+    GFile *file = browser_file_info_to_file(info);
 
     const char *filename = g_file_info_get_name(info);
     if (gobu_fs_is_extension(filename, BROWSER_FILE_SCRIPT))
@@ -600,7 +617,7 @@ static void gapp_browser_s_view_file_bind_factory(GtkListItemFactory *factory, G
     // TODO: Una func para obtener el icono de los archivos...
     const char *ext_file = g_file_info_get_name(fileInfo);
     if (gobu_fs_is_extension(ext_file, ".png") || gobu_fs_is_extension(ext_file, ".jpg"))
-        gtk_image_set_from_file(icon, g_file_get_path(gapp_browser_fn_file_info_to_file(fileInfo)));
+        gtk_image_set_from_file(icon, g_file_get_path(browser_file_info_to_file(fileInfo)));
     else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileInfo));
 
@@ -608,7 +625,7 @@ static void gapp_browser_s_view_file_bind_factory(GtkListItemFactory *factory, G
     gtk_label_set_text(GTK_LABEL(label), name);
 
     // Si es la carpeta Content
-    if (gapp_browser_is_content_folder(browser, g_file_get_path(gapp_browser_fn_file_info_to_file(fileInfo))))
+    if (gapp_browser_is_content_folder(browser, g_file_get_path(browser_file_info_to_file(fileInfo))))
         gtk_tree_list_row_set_expanded(row, TRUE);
 }
 
@@ -721,9 +738,9 @@ static void gapp_browser_ui_setup(GappBrowser *self)
     gtk_box_append(GTK_BOX(self), scroll);
     {
         self->directory = gtk_directory_list_new("standard::*", NULL);
-        gapp_browser_set_monitored_directory(self->directory);
+        browser_set_monitored_directory(self->directory);
 
-        GtkTreeListModel *tree_model = gtk_tree_list_model_new(G_LIST_MODEL(self->directory),
+        GtkTreeListModel *tree_model = gtk_tree_list_model_new(browser_fn_get_list_model_to_directory_list(self->directory),
                                                                FALSE,
                                                                FALSE,
                                                                gapp_browser_fn_create_list_model_directory,
@@ -791,7 +808,7 @@ void gapp_browser_set_folder(GappBrowser *browser, const gchar *path)
 
     g_return_if_fail(GTK_IS_DIRECTORY_LIST(browser->directory));
     gtk_directory_list_set_file(GTK_DIRECTORY_LIST(browser->directory), file);
-    gapp_browser_set_monitored_directory(GTK_DIRECTORY_LIST(browser->directory));
+    browser_set_monitored_directory(GTK_DIRECTORY_LIST(browser->directory));
 
     g_object_unref(file);
 }
@@ -811,7 +828,7 @@ gchar *gapp_browser_get_current_folder(GappBrowser *browser)
     g_return_val_if_fail(GAPP_IS_BROWSER(browser), NULL);
 
     GFileInfo *info = gapp_browser_fn_get_selected_file(browser->selection);
-    g_autofree gchar *pathfile = g_file_get_path(gapp_browser_fn_file_info_to_file(info));
+    g_autofree gchar *pathfile = g_file_get_path(browser_file_info_to_file(info));
 
     if (!g_file_test(pathfile, G_FILE_TEST_IS_DIR))
         pathfile = g_path_get_dirname(pathfile);
@@ -854,4 +871,3 @@ gchar *gapp_browser_get_content_path(GappBrowser *browser)
 
     return content_path;
 }
-

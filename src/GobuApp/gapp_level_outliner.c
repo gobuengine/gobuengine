@@ -338,11 +338,11 @@ static gboolean s_outliner_drop_file_browser(GtkDropTarget *target, const GValue
         GFile *file = G_FILE(g_file_info_get_attribute_object(file_info, "standard::file"));
 
         gchar *pathfile = g_file_get_path(file);
-        gchar *filename = g_file_info_get_name(file_info);
+        const gchar *filename = g_file_info_get_name(file_info);
 
         if (gobu_fs_is_extension(filename, BROWSER_FILE_IMAGE))
         {
-            gapp_outliner_fn_create_entity(outliner, gobu_fs_get_name(filename, TRUE), "pixio_type_module.pixio_sprite_t");
+            gapp_outliner_fn_create_entity(outliner, gobu_fs_get_name(filename, TRUE), GAPP_COMPS_SPRITE_RENDER);
         }
 
         return TRUE;
@@ -363,19 +363,19 @@ static GListStore *gapp_outliner_ui_popover_new(void)
         const char *label;
         const char *type;
     } items[] = {
-        {"list-add-symbolic", "Entity", "entity.empty"},
-        {"emblem-photos-symbolic", "Sprite", "pixio_type_module.pixio_sprite_t"},
-        {"emblem-photos-symbolic", "Tiling Sprite", "entity.empty"},
-        {"emblem-photos-symbolic", "Tilemap", "entity.empty"},
-        {"preferences-desktop-wallpaper-symbolic", "Animated Sprite", "entity.empty"},
-        {"microphone-sensitivity-high-symbolic", "Audio Listener", "entity.empty"},
-        {"audio-volume-medium-symbolic", "Sound", "entity.empty"},
-        {"camera-photo-symbolic", "Camera", "entity.empty"},
-        {"list-add-symbolic", "Light", "entity.empty"},
-        {"input-dialpad-symbolic", "Particle System", "entity.empty"},
-        {"face-monkey-symbolic", "Panel", "entity.empty"},
-        {"face-monkey", "Text", "pixio_type_module.pixio_text_t"},
-        {"face-monkey", "Shape Rectangle", "pixio_type_module.pixio_shape_rec_t"},
+        {"list-add-symbolic", "Entity", GAPP_COMPS_EMPTY},
+        {"emblem-photos-symbolic", "Sprite", GAPP_COMPS_SPRITE_RENDER},
+        {"emblem-photos-symbolic", "Tiling Sprite", GAPP_COMPS_EMPTY},
+        {"emblem-photos-symbolic", "Tilemap", GAPP_COMPS_EMPTY},
+        {"preferences-desktop-wallpaper-symbolic", "Animated Sprite", GAPP_COMPS_EMPTY},
+        {"microphone-sensitivity-high-symbolic", "Audio Listener", GAPP_COMPS_EMPTY},
+        {"audio-volume-medium-symbolic", "Sound", GAPP_COMPS_EMPTY},
+        {"camera-photo-symbolic", "Camera", GAPP_COMPS_EMPTY},
+        {"list-add-symbolic", "Light", GAPP_COMPS_EMPTY},
+        {"input-dialpad-symbolic", "Particle System", GAPP_COMPS_EMPTY},
+        {"face-monkey-symbolic", "Panel", GAPP_COMPS_EMPTY},
+        {"face-monkey", "Text", GAPP_COMPS_GUI_TEXT},
+        {"face-monkey", "Shape Rectangle", GAPP_COMPS_GUI_SHAPE_RECTANGLE},
     };
 
     for (size_t i = 0; i < G_N_ELEMENTS(items); i++)

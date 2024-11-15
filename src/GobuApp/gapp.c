@@ -228,8 +228,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
     gapp_set_headerbar_button_sensitives(self, TRUE);
 
     // Cambiar el path del navegador
-    g_autofree gchar *data_path = gobu_path_join(gobu_path_dirname(path), "Data", NULL);
-    gapp_browser_set_folder(self->browser, data_path);
+    gapp_browser_set_folder(self->browser, gobu_path_dirname(path));
 
     // actualizamos el titulo
     g_autofree gchar *title = g_strdup_printf("%s - %s", GOBU_VERSION_STR, gapp_project_config_get_name(gappMain->config));
