@@ -195,7 +195,7 @@ static gboolean isContentFolder(GappBrowser *browser, const gchar *path)
 
 // MARK: SIGNAL
 
-static GdkContentProvider *gapp_browser_s_file_drag(GtkDragSource *source, double x, double y, GtkListItem *list_item)
+static GdkContentProvider *onBrowserPrepareFileDrag(GtkDragSource *source, double x, double y, GtkListItem *list_item)
 {
     GtkTreeListRow *row = gtk_list_item_get_item(list_item);
     GFileInfo *fileInfo = gtk_tree_list_row_get_item(row);
@@ -206,7 +206,7 @@ static GdkContentProvider *gapp_browser_s_file_drag(GtkDragSource *source, doubl
                                           1);
 }
 
-static gboolean gapp_browser_s_file_drop(GtkDropTarget *target, const GValue *value, double x, double y, gpointer data)
+static gboolean onBrowserFileDrop(GtkDropTarget *target, const GValue *value, double x, double y, gpointer data)
 {
     if (G_VALUE_HOLDS(value, GDK_TYPE_FILE_LIST))
     {
@@ -236,7 +236,7 @@ static gboolean gapp_browser_s_file_drop(GtkDropTarget *target, const GValue *va
             GFile *file_dst = g_file_new_for_path(g_build_filename(pathfile, g_file_get_basename(file_src), NULL));
             if (!gobu_fs_copyc(file_src, file_dst, &error))
             {
-                g_warning("gapp_browser_s_file_drop: Failed to copy file: %s", error->message);
+                g_warning("onBrowserFileDrop: Failed to copy file: %s", error->message);
                 g_clear_error(&error);
             }
         }
@@ -263,7 +263,7 @@ static gboolean gapp_browser_s_file_drop(GtkDropTarget *target, const GValue *va
         GFile *file_dst = g_file_new_for_path(g_build_filename(pathfile, g_file_get_basename(file_src), NULL));
         if (!g_file_move(file_src, file_dst, G_FILE_COPY_NONE, NULL, NULL, NULL, &error))
         {
-            g_warning("gapp_browser_s_file_drop: Failed to move file: %s", error->message);
+            g_warning("onBrowserFileDrop: Failed to move file: %s", error->message);
             g_clear_error(&error);
         }
 
@@ -419,16 +419,16 @@ static void onBrowserViewFileSetupFactory(GtkListItemFactory *factory, GtkListIt
     gtk_box_append(GTK_BOX(box), label);
 
     GtkDropTarget *drop = gtk_drop_target_new(GDK_TYPE_FILE_LIST, GDK_ACTION_COPY);
-    g_signal_connect(drop, "drop", G_CALLBACK(gapp_browser_s_file_drop), list_item);
+    g_signal_connect(drop, "drop", G_CALLBACK(onBrowserFileDrop), list_item);
     gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(drop));
 
     GtkDropTarget *drop_move = gtk_drop_target_new(G_TYPE_FILE_INFO, GDK_ACTION_MOVE);
-    g_signal_connect(drop_move, "drop", G_CALLBACK(gapp_browser_s_file_drop), list_item);
+    g_signal_connect(drop_move, "drop", G_CALLBACK(onBrowserFileDrop), list_item);
     gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(drop_move));
 
     GtkDragSource *drag = gtk_drag_source_new();
     gtk_drag_source_set_actions(drag, GDK_ACTION_MOVE);
-    g_signal_connect(drag, "prepare", G_CALLBACK(gapp_browser_s_file_drag), list_item);
+    g_signal_connect(drag, "prepare", G_CALLBACK(onBrowserPrepareFileDrag), list_item);
     gtk_widget_add_controller(expander, GTK_EVENT_CONTROLLER(drag));
 
     // GtkGesture *gesture = gtk_gesture_click_new();
@@ -602,7 +602,7 @@ static void gapp_browser_ui_setup(GappBrowser *self)
         g_signal_connect(list_view, "activate", G_CALLBACK(onBrowserFileActivated), self);
 
         GtkDropTarget *drop = gtk_drop_target_new(GDK_TYPE_FILE_LIST, GDK_ACTION_COPY);
-        g_signal_connect(drop, "drop", G_CALLBACK(gapp_browser_s_file_drop), self);
+        g_signal_connect(drop, "drop", G_CALLBACK(onBrowserFileDrop), self);
         gtk_widget_add_controller(list_view, GTK_EVENT_CONTROLLER(drop));
 
         // GtkGesture *gesture = gtk_gesture_click_new();
