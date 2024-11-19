@@ -22,6 +22,9 @@ void gapp_append_right_panel(GappMain *self, const gchar *title, GtkWidget *modu
 
 void gapp_append_left_panel(GappMain *self, const gchar *icon, GtkWidget *module);
 
+const gchar *gapp_get_project_path(void);
+void gapp_set_project_path(const gchar *path);
+
 G_END_DECLS
 
 #endif // GAPP_H

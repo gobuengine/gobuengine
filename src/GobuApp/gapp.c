@@ -29,6 +29,8 @@ struct _GappMain
     GtkWidget *title_window;
     // ecs unique world to proyect: test fase 1
     ecs_world_t *world;
+    //
+    gchar *path_project;
 };
 
 G_DEFINE_TYPE(GappMain, gapp_main, GTK_TYPE_APPLICATION)
@@ -215,22 +217,14 @@ void gapp_open_project(GappMain *self, const gchar *path)
     g_return_if_fail(GAPP_IS_MAIN(self));
     g_return_if_fail(path != NULL && *path != '\0');
 
-    // Crear una escena inicial
+    gapp_set_project_path(gobu_path_dirname(path));
+
     gapp_append_right_panel(self, "Scene", gobu_level_editor_new(), FALSE);
-
-    // Cerrar la página de proyectos
     gtk_notebook_remove_page(GTK_NOTEBOOK(self->dnotebook), 0);
-
-    // Mostrar el notebook del panel izquierdo
     gtk_widget_set_visible(GTK_WIDGET(self->vnotebook), TRUE);
-
-    // Habilitar los botones del título-headerbar
     gapp_set_headerbar_button_sensitives(self, TRUE);
+    browserSetFolderContent(GAPP_BROWSER(self->browser));
 
-    // Cambiar el path del navegador
-    gapp_browser_set_folder(self->browser, gobu_path_dirname(path));
-
-    // actualizamos el titulo
     g_autofree gchar *title = g_strdup_printf("%s - %s", GOBU_VERSION_STR, gapp_project_config_get_name(gappMain->config));
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
@@ -265,6 +259,17 @@ void gapp_append_left_panel(GappMain *self, const gchar *icon_name, GtkWidget *m
     {
         g_warning("Failed to append page to notebook");
     }
+}
+
+const gchar *gapp_get_project_path(void)
+{
+    return g_strdup(gappMain->path_project);
+}
+
+void gapp_set_project_path(const gchar *path)
+{
+    g_return_if_fail(path != NULL && *path != '\0');
+    gappMain->path_project = g_strdup(path);
 }
 
 // -----------------

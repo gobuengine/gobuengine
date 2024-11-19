@@ -50,15 +50,6 @@ static void gobu_project_manager_init(GobuProjectManager *self)
 
 // MARK: PRIVATE FUNC
 
-// TODO: mejorar esta func, no me gusta como trabaja.
-// creo que se puede hacer en gobu_fn_grid_view_list_project_model.
-
-/**
- * Filtra una lista de proyectos, manteniendo solo aquellos cuyos archivos de proyecto no existen.
- *
- * @param list Lista binn de proyectos a filtrar.
- * @return binn* Nueva lista binn con los proyectos filtrados.
- */
 static binn *gobu_fn_if_project_exist_register(binn *list)
 {
     g_return_val_if_fail(list != NULL, NULL);
@@ -98,17 +89,6 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
     return list_new;
 }
 
-/**
- * Carga la lista de proyectos registrados desde el archivo de configuración.
- *
- * Esta función intenta cargar la lista de proyectos desde un archivo binario
- * serializado en formato binn. Si el archivo no existe, retorna una lista vacía.
- * En caso de error al cargar el archivo, se emite una advertencia y se retorna NULL.
- *
- * @return Un puntero a la estructura binn que contiene la lista de proyectos,
- *         una lista vacía si el archivo no existe, o NULL en caso de error.
- *         El llamador es responsable de liberar la memoria con binn_free().
- */
 static binn *gobu_fn_register_load_projects(void)
 {
     binn *list = NULL;
@@ -136,16 +116,6 @@ static binn *gobu_fn_register_load_projects(void)
     return gobu_fn_if_project_exist_register(list);
 }
 
-/**
- * Registra un nuevo proyecto en la lista de proyectos.
- *
- * Esta función añade la ruta de un nuevo proyecto a un archivo de configuración
- * serializado en formato binn. Si el archivo no existe, lo crea. La función
- * asegura que el directorio de configuración exista antes de escribir el archivo.
- *
- * @param path La ruta del proyecto a registrar.
- * @return TRUE si el registro fue exitoso, FALSE en caso contrario.
- */
 static gboolean gobu_fn_register_project(const gchar *path)
 {
     g_return_val_if_fail(path != NULL && *path != '\0', FALSE);
@@ -195,18 +165,6 @@ cleanup:
     return success;
 }
 
-/**
- * gobu_fn_create_project:
- * @name: El nombre del nuevo proyecto.
- * @path: La ruta donde se creará el proyecto.
- *
- * Crea un nuevo proyecto Gobu en el sistema de archivos.
- *
- * Esta función crea un directorio para el proyecto, un subdirectorio 'Content',
- * y un archivo de configuración 'game.gobuproject' con configuraciones básicas.
- *
- * Returns: TRUE si el proyecto se creó exitosamente, FALSE en caso contrario.
- */
 static gboolean gobu_fn_create_project(const gchar *name, const gchar *path)
 {
     g_return_val_if_fail(name != NULL && *name != '\0', FALSE);
@@ -248,16 +206,6 @@ static gboolean gobu_fn_create_project(const gchar *name, const gchar *path)
     return is_created;
 }
 
-/**
- * Abre el editor principal para un proyecto.
- *
- * Esta función crea una nueva instancia del editor principal (GobuEditorMain)
- * asociada con el gestor de proyectos actual, y luego muestra el editor.
- *
- * @param path La ruta del proyecto a abrir.
- * @param self Puntero al GobuProjectManager actual.
- * @return gboolean TRUE si el editor se abrió correctamente, FALSE en caso contrario.
- */
 static gboolean gobu_fn_open_editor_main(const gchar *path, GobuProjectManager *self)
 {
     g_return_val_if_fail(path != NULL, FALSE);
@@ -275,17 +223,6 @@ static gboolean gobu_fn_open_editor_main(const gchar *path, GobuProjectManager *
     return TRUE;
 }
 
-/**
- * gobu_fn_validate_project_name:
- * @project_name: El nombre del proyecto a validar.
- *
- * Valida el nombre del proyecto según las siguientes reglas:
- * 1. No debe ser NULL.
- * 2. No debe estar vacío.
- * 3. Solo debe contener letras (mayúsculas y minúsculas), números, guiones bajos y guiones.
- *
- * Returns: TRUE si el nombre es válido, FALSE en caso contrario.
- */
 static gboolean gobu_fn_validate_project_name(const char *project_name)
 {
     if (project_name == NULL || *project_name == '\0')
@@ -297,17 +234,6 @@ static gboolean gobu_fn_validate_project_name(const char *project_name)
     return strspn(project_name, valid_chars) == strlen(project_name);
 }
 
-/**
- * Maneja la respuesta del diálogo de selección de carpeta.
- *
- * Esta función se llama cuando el usuario ha seleccionado una carpeta en el
- * diálogo de selección de archivos. Si la selección fue exitosa, actualiza
- * la etiqueta del botón con la ruta de la carpeta seleccionada.
- *
- * @param source El diálogo de archivo GTK que generó la respuesta.
- * @param res    El resultado asíncrono de la operación de selección.
- * @param self   Puntero a la instancia de GobuProjectManager.
- */
 static void gobu_fn_response_file_chooser_folder(GtkFileDialog *source, GAsyncResult *res, GobuProjectManager *self)
 {
     g_return_if_fail(GTK_IS_FILE_DIALOG(source));
@@ -334,15 +260,6 @@ static void gobu_fn_response_file_chooser_folder(GtkFileDialog *source, GAsyncRe
     }
 }
 
-/**
- * gobu_fn_open_dialog_response:
- * @source: El GtkFileDialog que emitió la señal.
- * @result: El GAsyncResult con el resultado de la operación.
- * @user_data: Datos de usuario (no utilizados aquí).
- *
- * Maneja la respuesta del diálogo de selección de archivo.
- * Imprime la ruta del archivo seleccionado, si se seleccionó alguno.
- */
 static void gobu_fn_open_dialog_response(GObject *source, GAsyncResult *result, GobuProjectManager *self)
 {
     GtkFileDialog *dialog = GTK_FILE_DIALOG(source);
@@ -360,15 +277,6 @@ static void gobu_fn_open_dialog_response(GObject *source, GAsyncResult *result, 
     }
 }
 
-/**
- * Crea y llena un modelo de lista de cadenas con las rutas de los proyectos.
- *
- * Esta función carga la lista de proyectos registrados, extrae la ruta de cada proyecto,
- * le añade el subdirectorio "Content" y crea una GtkStringList con estas rutas.
- *
- * @return Un nuevo GtkStringList con las rutas de los proyectos.
- *         El llamador es responsable de liberar este objeto con g_object_unref() cuando ya no se necesite.
- */
 static GtkStringList *gobu_fn_grid_view_list_project_model(void)
 {
     GtkStringList *sl = gtk_string_list_new(NULL);
@@ -398,16 +306,6 @@ static GtkStringList *gobu_fn_grid_view_list_project_model(void)
 
 // MARK:SIGNAL
 
-/**
- * Configura un elemento de la lista para el factory de ítems.
- *
- * Esta función crea y configura los widgets para cada elemento de la lista.
- * Cada ítem consiste en una caja vertical que contiene una imagen y una etiqueta.
- *
- * @param factory    El factory de ítems de la lista.
- * @param list_item  El ítem de la lista que se está configurando.
- * @param user_data  Datos de usuario (no utilizado en esta implementación).
- */
 static void gobu_s_item_factory_setup_item(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data)
 {
     g_return_if_fail(GTK_IS_LIST_ITEM_FACTORY(factory));
@@ -434,17 +332,6 @@ static void gobu_s_item_factory_setup_item(GtkListItemFactory *factory, GtkListI
     gtk_box_append(GTK_BOX(box), label);
 }
 
-/**
- * Vincula los datos del elemento de la lista con los widgets correspondientes.
- *
- * Esta función actualiza la imagen y el texto de cada elemento de la lista
- * basándose en la ruta del proyecto. Intenta cargar una imagen de miniatura
- * del proyecto y muestra el nombre del proyecto como texto.
- *
- * @param factory    El factory de ítems de la lista (no utilizado en esta función).
- * @param list_item  El ítem de la lista que se está vinculando.
- * @param user_data  Datos de usuario (no utilizado en esta implementación).
- */
 static void gobu_s_item_factory_bind_item(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data)
 {
     g_return_if_fail(GTK_IS_LIST_ITEM(list_item));
@@ -483,15 +370,6 @@ static void gobu_s_item_factory_bind_item(GtkListItemFactory *factory, GtkListIt
     gtk_widget_set_tooltip_text(box, path_project);
 }
 
-/**
- * Maneja el evento de clic del botón de selección de archivos.
- *
- * Esta función crea y muestra un diálogo de archivo para seleccionar una carpeta.
- * Se activa cuando se hace clic en el botón asociado en la interfaz del gestor de proyectos.
- *
- * @param button El widget GTK que representa el botón que se ha clicado.
- * @param self   Puntero a la instancia de GobuProjectManager.
- */
 static void gobu_s_btn_file_chooser_clicked(GtkWidget *button, GobuProjectManager *self)
 {
     g_return_if_fail(GTK_IS_WIDGET(button));
@@ -505,14 +383,6 @@ static void gobu_s_btn_file_chooser_clicked(GtkWidget *button, GobuProjectManage
                                   self);
 }
 
-/**
- * gobu_s_open_dialog_new_project_clicked:
- * @button: El GtkWidget del botón que fue clicado.
- * @self: La instancia de GobuProjectManager asociada.
- *
- * Manejador de señal para el evento "clicked" del botón que abre el diálogo de nuevo proyecto.
- * Esta función se encarga de invocar la interfaz de usuario para crear un nuevo proyecto.
- */
 static void gobu_s_open_dialog_new_project_clicked(GtkWidget *button, GobuProjectManager *self)
 {
     g_return_if_fail(GTK_IS_WIDGET(button));
@@ -522,17 +392,6 @@ static void gobu_s_open_dialog_new_project_clicked(GtkWidget *button, GobuProjec
     gobu_ui_dialog_new_project(self);
 }
 
-/**
- * gobu_s_create_project_clicked:
- * @button: El GtkWidget del botón que fue clicado.
- * @self: La instancia de GobuProjectManager asociada.
- *
- * Manejador de señal para el evento "clicked" del botón de creación de proyecto.
- * Obtiene el nombre y la ruta del proyecto de los widgets correspondientes y
- * llama a la función gobu_fn_create_project() para crear el proyecto.
- *
- * TODO: Manejar el resultado de gobu_fn_create_project() y actualizar la UI en consecuencia.
- */
 static void gobu_s_create_project_clicked(GtkWidget *button, GobuProjectManager *self)
 {
     g_return_if_fail(GTK_IS_WIDGET(button));
@@ -559,17 +418,6 @@ static void gobu_s_create_project_clicked(GtkWidget *button, GobuProjectManager 
     gtk_window_close(GTK_WINDOW(gtk_widget_get_ancestor(button, GTK_TYPE_WINDOW)));
 }
 
-/**
- * gobu_s_list_project_activated:
- * @grid_view: El GtkGridView que emitió la señal de activación.
- * @position: La posición del item activado en el grid view.
- * @self: La instancia de GobuProjectManager asociada.
- *
- * Manejador de señal para el evento "activate" del GtkGridView de proyectos.
- * Se llama cuando un usuario activa (por ejemplo, hace doble clic) un proyecto en la vista.
- *
- * TODO: Implementar la funcionalidad completa de activación de proyecto.
- */
 static void gobu_s_list_project_activated(GtkGridView *grid_view, guint position, GobuProjectManager *self)
 {
     GtkSelectionModel *select_model = gtk_grid_view_get_model(grid_view);
@@ -583,14 +431,6 @@ static void gobu_s_list_project_activated(GtkGridView *grid_view, guint position
     gobu_fn_open_editor_main(gobu_path_join(path_project, GAPP_GAME_FILE_PROJECT, NULL), self);
 }
 
-/**
- * gobu_s_open_other_project_clicked:
- * @button: El GtkWidget del botón que fue clicado.
- * @self: La instancia de GobuProjectManager asociada.
- *
- * Maneja el clic en el botón de apertura de proyecto.
- * Crea y muestra un GtkFileDialog para seleccionar un archivo de proyecto.
- */
 static void gobu_s_open_other_project_clicked(GtkWidget *button, GobuProjectManager *self)
 {
     g_return_if_fail(GOBU_IS_PROJECT_MANAGER(self));
@@ -609,20 +449,6 @@ static void gobu_s_open_other_project_clicked(GtkWidget *button, GobuProjectMana
     g_debug("Diálogo de selección de proyecto abierto");
 }
 
-/**
- * gobu_s_entry_name_changed:
- * @entry: El GtkEntry que emitió la señal "changed".
- * @self: La instancia de GobuProjectManager asociada.
- *
- * Manejador de señal para el evento "changed" del campo de entrada del nombre del proyecto.
- * Valida el nombre del proyecto en tiempo real y actualiza la sensibilidad del botón de creación.
- *
- * Esta función verifica que:
- * 1. El nombre del proyecto sea válido según gobu_fn_validate_project_name().
- * 2. No exista ya un directorio con ese nombre en la ruta seleccionada.
- *
- * Muestra un estado de error si alguna de estas condiciones no se cumple.
- */
 static void gobu_s_entry_name_changed(GtkWidget *entry, GobuProjectManager *self)
 {
     g_return_if_fail(GTK_IS_ENTRY(entry));
@@ -782,29 +608,11 @@ static void gobu_project_manager_ui_setup(GobuProjectManager *self)
 
 // --- MARK:BEGIN API ---
 
-/**
- * gobu_project_manager_new:
- * @app: La instancia de GtkApplication a la que se asociará el GobuProjectManager.
- *
- * Crea una nueva instancia de GobuProjectManager.
- *
- * Returns: (transfer full): Una nueva instancia de #GobuProjectManager.
- *   Usa g_object_unref() cuando ya no la necesites.
- */
 GobuProjectManager *gobu_project_manager_new(void)
 {
     return g_object_new(GOBU_TYPE_PROJECT_MANAGER, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
 }
 
-/**
- * gobu_project_manager_show:
- * @self: La instancia de GobuProjectManager a mostrar.
- *
- * Muestra la ventana del GobuProjectManager, trayéndola al frente
- * si ya estaba visible.
- *
- * Esta función es parte de la API pública de GobuProjectManager.
- */
 void gobu_project_manager_show(GobuProjectManager *self)
 {
     g_return_if_fail(GOBU_IS_PROJECT_MANAGER(self));

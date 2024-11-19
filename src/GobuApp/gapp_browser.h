@@ -29,19 +29,6 @@
 #define GAPP_BROWSER_H
 #include "config.h"
 
-#define BROWSER_FILE_COMPONENT  ".gcomponent"
-#define BROWSER_FILE_SCRIPT     ".lua"
-#define BROWSER_FILE_SCENE      ".gscene"
-#define BROWSER_FILE_TILEMAP    ".gtilemap"
-#define BROWSER_FILE_SPRITE     ".gsprite"
-#define BROWSER_FILE_PREFAB     ".gprefab"
-#define BROWSER_FILE_ANIMATION  ".ganimation"
-#define BROWSER_FILE_TILESET    ".gtileset"
-#define BROWSER_FILE_IMAGE      ".png"
-#define BROWSER_FILE_AUDIO      ".wav"
-#define BROWSER_FILE_FONT       ".ttf"
-#define BROWSER_FILE_SHADER     ".glsl"
-
 G_BEGIN_DECLS
 
 #define GAPP_TYPE_BROWSER (gapp_browser_get_type())
@@ -49,11 +36,13 @@ G_DECLARE_FINAL_TYPE(GappBrowser, gapp_browser, GAPP, BROWSER, GtkBox)
 
 GappBrowser *gapp_browser_new(void);
 
-void gapp_browser_set_folder(GappBrowser *browser, const gchar *path);
+void browserSetFolder(GappBrowser *browser, const gchar *path);
 
-gchar *gapp_browser_get_current_folder(GappBrowser *browser);
+void browserSetFolderContent(GappBrowser *browser);
 
-gchar *gapp_browser_get_content_path(GappBrowser *browser);
+gchar *browserGetCurrentFolder(GappBrowser *browser);
+
+gchar *browserGetContentPath(GappBrowser *browser);
 
 G_END_DECLS
 
