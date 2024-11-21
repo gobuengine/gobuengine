@@ -80,7 +80,9 @@
         "limits": "c",
         "gapp_level_inspector.h": "c",
         "gapp_level_outliner.h": "c",
-        "type_enum.h": "c"
+        "type_enum.h": "c",
+        "type_outliner_item.h": "c",
+        "gapp_viewport.h": "c"
     },
     "mesonbuild.configureOnOpen": false
 }

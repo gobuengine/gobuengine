@@ -50,10 +50,10 @@ static void gapp_viewport_init(GappViewport *self)
     gtk_widget_set_hexpand(GTK_WIDGET(self), TRUE);
     gtk_widget_set_vexpand(GTK_WIDGET(self), TRUE);
 
-    g_signal_connect(self, "render", G_CALLBACK(gapp_s_render), self);
-    g_signal_connect(self, "realize", G_CALLBACK(gapp_s_realize), self);
-    g_signal_connect(self, "unrealize", G_CALLBACK(gapp_s_unrealize), self);
-    g_signal_connect(self, "resize", G_CALLBACK(gapp_s_resize), self);
+    // g_signal_connect(self, "render", G_CALLBACK(gapp_s_render), self);
+    // g_signal_connect(self, "realize", G_CALLBACK(gapp_s_realize), self);
+    // g_signal_connect(self, "unrealize", G_CALLBACK(gapp_s_unrealize), self);
+    // g_signal_connect(self, "resize", G_CALLBACK(gapp_s_resize), self);
 
     // GtkEventController *zoom = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
     // gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(zoom));

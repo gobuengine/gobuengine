@@ -27,6 +27,7 @@ sources = [
   'gapp_level_inspector.c',
   'gapp_level_outliner.c',
   'gapp_level_editor.c',
+  'gapp_scene.c',
   'gapp_project_manager.c',
   'gapp_project_setting.c',
   'gapp_project_config.c',
