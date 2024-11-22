@@ -382,9 +382,9 @@ static gboolean onOutlinerReceiveBrowserFileDrop(GtkDropTarget *target, const GV
         gchar *pathfile = g_file_get_path(file);
         const gchar *filename = g_file_info_get_name(file_info);
 
-        if (gobu_fs_is_extension(filename, BROWSER_FILE_IMAGE))
+        if (fsIsExtension(filename, BROWSER_FILE_IMAGE))
         {
-            // outlinerCreateEntityWithComponent(outliner, gobu_fs_get_name(filename, TRUE), GAPP_COMPS_SPRITE_RENDER);
+            // outlinerCreateEntityWithComponent(outliner, fsGetName(filename, TRUE), GAPP_COMPS_SPRITE_RENDER);
         }
 
         return TRUE;

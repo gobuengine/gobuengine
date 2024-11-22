@@ -12,34 +12,40 @@ struct _GappBrowser
     GtkDirectoryList *directory;
 };
 
+typedef struct
+{
+    const gchar *iconName;
+    const gchar *name;
+    GCallback callback;
+} menuItemAddFileNew;
+
 // MARK:PRIVATE
 static void gappBrowserConfigureInterface(GappBrowser *self);
 
-// static GtkWidget *createFileActionsMenu(GappBrowser *self);
+static GtkWidget *browserToolbarSetupInterfacePopoverMenu(GtkWidget *parent, GappBrowser *self);
 static void onBrowserViewFileBindFactory(GtkListItemFactory *factory, GtkListItem *list_item, GappBrowser *browser);
 static void onBrowserViewFileSetupFactory(GtkListItemFactory *factory, GtkListItem *list_item, gpointer data);
 static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowser *browser);
 static void onBrowserToolbarRemoveFileClicked(GtkWidget *widget, GappBrowser *self);
 static void onBrowserRemoveFileInDialog(GtkAlertDialog *dialog, GAsyncResult *res, GappBrowser *self);
-static void onBrowserToolbarCreateScriptClicked(GtkWidget *widget, GappBrowser *self);
 static void onBrowserCreateScriptInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog);
-static void onBrowserToolbarCreateSceneClicked(GtkWidget *widget, GappBrowser *self);
 static void onBrowserCreateSceneInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog);
-static void onBrowserToolbarCreateFolderClicked(GtkWidget *widget, GappBrowser *self);
+static void onBrowserCreatePrefabInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog);
 static void onBrowserCreateFolderInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog);
-static void onBrowserToolbarShowPopover(GtkWidget *widget, GtkWidget *popover);
 static gboolean onBrowserFileDrop(GtkDropTarget *target, const GValue *value, double x, double y, gpointer data);
 static GdkContentProvider *onBrowserPrepareFileDrag(GtkDragSource *source, double x, double y, GtkListItem *list_item);
 static int onBrowserCustomFileTypeComparator(GFileInfo *a, GFileInfo *b, gpointer data);
 static GListModel *onBrowserCreateChildModelForTreeRow(gpointer file_info, gpointer data);
 
-static gboolean isContentFolder(GappBrowser *browser, const gchar *path);
-static gchar *getSelectedPathFromDialog(GappWidgetDialogEntry *dialog, const gchar *ext);
-static GFile *createFileFromFileInfo(GFileInfo *info);
-static GFileInfo *getSelectedFile(GtkSelectionModel *selection);
-static GListModel *createGListFromGFile(GFile *file);
-static GListModel *getGListModelFromDirectoryList(GtkDirectoryList *list);
-static void setMonitoredDirectory(GtkDirectoryList *directory);
+static void browserShowPopover(GtkWidget *widget, GtkWidget *popover);
+static void browserHidePopover(GtkWidget *popover);
+static gboolean browserIsContentFolder(GappBrowser *browser, const gchar *path);
+static gchar *browserGetSelectedPathFromDialog(GappWidgetDialogEntry *dialog, const gchar *ext);
+static GFile *browserCreateFileFromFileInfo(GFileInfo *info);
+static GFileInfo *browserGetSelectedFile(GtkSelectionModel *selection);
+static GListModel *browserCreateGListFromGFile(GFile *file);
+static GListModel *browserGetGListModelFromDirectoryList(GtkDirectoryList *list);
+static void browserSetMonitoredDirectory(GtkDirectoryList *directory);
 
 // MARK:BASE CLASS
 
@@ -73,7 +79,7 @@ GappBrowser *gapp_browser_new(void)
 
 // MARK: API PRIVATE
 
-static void setMonitoredDirectory(GtkDirectoryList *directory)
+static void browserSetMonitoredDirectory(GtkDirectoryList *directory)
 {
     g_return_if_fail(GTK_IS_DIRECTORY_LIST(directory));
 
@@ -81,7 +87,7 @@ static void setMonitoredDirectory(GtkDirectoryList *directory)
     gtk_directory_list_set_io_priority(directory, G_PRIORITY_DEFAULT_IDLE);
 }
 
-static GListModel *getGListModelFromDirectoryList(GtkDirectoryList *list)
+static GListModel *browserGetGListModelFromDirectoryList(GtkDirectoryList *list)
 {
     g_return_val_if_fail(list != NULL, NULL);
     GtkSorter *sorter = gtk_custom_sorter_new(onBrowserCustomFileTypeComparator, NULL, NULL);
@@ -89,14 +95,14 @@ static GListModel *getGListModelFromDirectoryList(GtkDirectoryList *list)
     return sorted_model;
 }
 
-static GListModel *createGListFromGFile(GFile *file)
+static GListModel *browserCreateGListFromGFile(GFile *file)
 {
     GtkDirectoryList *list = gtk_directory_list_new("standard::*", file);
-    setMonitoredDirectory(list);
-    return getGListModelFromDirectoryList(list);
+    browserSetMonitoredDirectory(list);
+    return browserGetGListModelFromDirectoryList(list);
 }
 
-static GFileInfo *getSelectedFile(GtkSelectionModel *selection)
+static GFileInfo *browserGetSelectedFile(GtkSelectionModel *selection)
 {
     guint position = 0;
     GListModel *model = gtk_multi_selection_get_model(GTK_MULTI_SELECTION(selection));
@@ -117,7 +123,7 @@ static GFileInfo *getSelectedFile(GtkSelectionModel *selection)
     return info;
 }
 
-static GFile *createFileFromFileInfo(GFileInfo *info)
+static GFile *browserCreateFileFromFileInfo(GFileInfo *info)
 {
     g_return_val_if_fail(G_IS_FILE_INFO(info), NULL);
 
@@ -125,7 +131,7 @@ static GFile *createFileFromFileInfo(GFileInfo *info)
     return file;
 }
 
-static gchar *getSelectedPathFromDialog(GappWidgetDialogEntry *dialog, const gchar *ext)
+static gchar *browserGetSelectedPathFromDialog(GappWidgetDialogEntry *dialog, const gchar *ext)
 {
     g_return_val_if_fail(dialog != NULL && dialog->entry != NULL && dialog->data != NULL, NULL);
 
@@ -137,28 +143,28 @@ static gchar *getSelectedPathFromDialog(GappWidgetDialogEntry *dialog, const gch
 
     if (filename == NULL || strlen(filename) == 0)
     {
-        g_warning("getSelectedPathFromDialog: Folder name is empty");
+        g_warning("browserGetSelectedPathFromDialog: Folder name is empty");
         return NULL;
     }
 
     selection = GTK_SELECTION_MODEL(dialog->data);
     if (!GTK_IS_SELECTION_MODEL(selection))
     {
-        g_warning("getSelectedPathFromDialog: Invalid selection model");
+        g_warning("browserGetSelectedPathFromDialog: Invalid selection model");
         return NULL;
     }
 
-    info = getSelectedFile(selection);
+    info = browserGetSelectedFile(selection);
     if (!G_IS_FILE_INFO(info))
     {
-        g_warning("getSelectedPathFromDialog: Failed to get file info");
+        g_warning("browserGetSelectedPathFromDialog: Failed to get file info");
         return NULL;
     }
 
-    file = createFileFromFileInfo(info);
+    file = browserCreateFileFromFileInfo(info);
     if (!G_IS_FILE(file))
     {
-        g_warning("getSelectedPathFromDialog: Failed to get file");
+        g_warning("browserGetSelectedPathFromDialog: Failed to get file");
         g_object_unref(info);
         return NULL;
     }
@@ -178,7 +184,7 @@ static gchar *getSelectedPathFromDialog(GappWidgetDialogEntry *dialog, const gch
     return pathname;
 }
 
-static gboolean isContentFolder(GappBrowser *browser, const gchar *path)
+static gboolean browserIsContentFolder(GappBrowser *browser, const gchar *path)
 {
     gchar *content_path = browserGetContentPath(browser);
     gboolean result = g_strcmp0(path, content_path) == 0;
@@ -186,19 +192,19 @@ static gboolean isContentFolder(GappBrowser *browser, const gchar *path)
     return result;
 }
 
-static void setIconForFileInfo(GtkImage *icon, GFileInfo *fileInfo)
+static void browserSetIconForFileInfo(GtkImage *icon, GFileInfo *fileInfo)
 {
     const char *ext_file = g_file_info_get_name(fileInfo);
 
-    if (gobu_fs_is_extension(ext_file, BROWSER_FILE_IMAGE) || gobu_fs_is_extension(ext_file, BROWSER_FILE_IMAGE2))
-        gtk_image_set_from_file(icon, g_file_get_path(createFileFromFileInfo(fileInfo)));
-    else if (gobu_fs_is_extension(ext_file, BROWSER_FILE_PREFAB))
+    if (fsIsExtension(ext_file, BROWSER_FILE_IMAGE) || fsIsExtension(ext_file, BROWSER_FILE_IMAGE2))
+        gtk_image_set_from_file(icon, g_file_get_path(browserCreateFileFromFileInfo(fileInfo)));
+    else if (fsIsExtension(ext_file, BROWSER_FILE_PREFAB))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_PREFAB));
-    else if (gobu_fs_is_extension(ext_file, BROWSER_FILE_SCENE))
+    else if (fsIsExtension(ext_file, BROWSER_FILE_SCENE))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCENE));
-    else if (gobu_fs_is_extension(ext_file, BROWSER_FILE_SCRIPT))
+    else if (fsIsExtension(ext_file, BROWSER_FILE_SCRIPT))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCRIPT));
-    else if (gobu_fs_is_extension(ext_file, BROWSER_FILE_ANIMATION))
+    else if (fsIsExtension(ext_file, BROWSER_FILE_ANIMATION))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_ANIM2D));
     else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileInfo));
@@ -214,10 +220,10 @@ static GListModel *onBrowserCreateChildModelForTreeRow(gpointer file_info, gpoin
     if (type_a != G_FILE_TYPE_DIRECTORY)
         return NULL;
 
-    GFile *file = createFileFromFileInfo(G_FILE_INFO(file_info));
+    GFile *file = browserCreateFileFromFileInfo(G_FILE_INFO(file_info));
     g_return_val_if_fail(file != NULL, NULL);
 
-    return createGListFromGFile(file);
+    return browserCreateGListFromGFile(file);
 }
 
 static int onBrowserCustomFileTypeComparator(GFileInfo *a, GFileInfo *b, gpointer data)
@@ -261,7 +267,7 @@ static gboolean onBrowserFileDrop(GtkDropTarget *target, const GValue *value, do
         {
             GtkTreeListRow *row = gtk_list_item_get_item(GTK_LIST_ITEM(data));
             GFileInfo *info = gtk_tree_list_row_get_item(row);
-            pathfile = g_file_get_path(createFileFromFileInfo(info));
+            pathfile = g_file_get_path(browserCreateFileFromFileInfo(info));
         }
 
         if (!g_file_test(pathfile, G_FILE_TEST_IS_DIR))
@@ -272,7 +278,7 @@ static gboolean onBrowserFileDrop(GtkDropTarget *target, const GValue *value, do
         {
             GFile *file_src = G_FILE(l->data);
             GFile *file_dst = g_file_new_for_path(g_build_filename(pathfile, g_file_get_basename(file_src), NULL));
-            if (!gobu_fs_copyc(file_src, file_dst, &error))
+            if (!fsCopy(file_src, file_dst, &error))
             {
                 g_warning("onBrowserFileDrop: Failed to copy file: %s", error->message);
                 g_clear_error(&error);
@@ -291,13 +297,13 @@ static gboolean onBrowserFileDrop(GtkDropTarget *target, const GValue *value, do
         GtkTreeListRow *row = gtk_list_item_get_item(GTK_LIST_ITEM(data));
         GFileInfo *info = gtk_tree_list_row_get_item(row);
 
-        char *pathfile = g_file_get_path(createFileFromFileInfo(info));
+        char *pathfile = g_file_get_path(browserCreateFileFromFileInfo(info));
         if (!g_file_test(pathfile, G_FILE_TEST_IS_DIR))
             pathfile = g_path_get_dirname(pathfile);
 
         // File origen
         GFileInfo *file = g_value_get_object(value);
-        GFile *file_src = createFileFromFileInfo(file);
+        GFile *file_src = browserCreateFileFromFileInfo(file);
         GFile *file_dst = g_file_new_for_path(g_build_filename(pathfile, g_file_get_basename(file_src), NULL));
         if (!g_file_move(file_src, file_dst, G_FILE_COPY_NONE, NULL, NULL, NULL, &error))
         {
@@ -311,57 +317,44 @@ static gboolean onBrowserFileDrop(GtkDropTarget *target, const GValue *value, do
     return FALSE;
 }
 
-static void onBrowserToolbarShowPopover(GtkWidget *widget, GtkWidget *popover)
-{
-    g_return_if_fail(GTK_IS_WIDGET(widget));
-    g_return_if_fail(GTK_IS_POPOVER(popover));
-
-    gtk_popover_popup(GTK_POPOVER(popover));
-}
-
 static void onBrowserCreateFolderInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
-    const char *foldername = getSelectedPathFromDialog(dialog, "");
+    const char *foldername = browserGetSelectedPathFromDialog(dialog, "");
     if (foldername != NULL)
         g_mkdir_with_parents(foldername, 0755);
 }
 
-static void onBrowserToolbarCreateFolderClicked(GtkWidget *widget, GappBrowser *self)
-{
-    GtkWidget *root = gtk_widget_get_root(GTK_WIDGET(self));
-    g_return_if_fail(GTK_IS_WINDOW(root));
-
-    GappWidgetDialogEntry *dialog = gapp_widget_dialog_new_entry_text(root, "New folder", "Folder name");
-    dialog->data = self->selection;
-    g_signal_connect(dialog->button_ok, "clicked", G_CALLBACK(onBrowserCreateFolderInDialog), dialog);
-}
-
 static void onBrowserCreateSceneInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
-    const char *filename = getSelectedPathFromDialog(dialog, BROWSER_FILE_SCENE);
+    const char *filename = browserGetSelectedPathFromDialog(dialog, BROWSER_FILE_SCENE);
     if (filename != NULL)
         g_file_set_contents(filename, "{}", -1, NULL);
 }
 
-static void onBrowserToolbarCreateSceneClicked(GtkWidget *widget, GappBrowser *self)
+static void onBrowserCreatePrefabInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
-    GappWidgetDialogEntry *dialog = gapp_widget_dialog_new_entry_text(gtk_widget_get_root(self), "New scene", "Scene name");
-    dialog->data = self->selection;
-    g_signal_connect(dialog->button_ok, "clicked", G_CALLBACK(onBrowserCreateSceneInDialog), dialog);
+    const char *filename = browserGetSelectedPathFromDialog(dialog, BROWSER_FILE_PREFAB);
+    if (filename != NULL)
+        g_file_set_contents(filename, "{}", -1, NULL);
 }
 
 static void onBrowserCreateScriptInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
-    const char *filename = getSelectedPathFromDialog(dialog, BROWSER_FILE_SCRIPT);
+    const char *filename = browserGetSelectedPathFromDialog(dialog, BROWSER_FILE_SCRIPT);
     if (filename != NULL)
         g_file_set_contents(filename, "", -1, NULL);
 }
 
-static void onBrowserToolbarCreateScriptClicked(GtkWidget *widget, GappBrowser *self)
+static void onBrowserToolbarCreateDialog(GtkWidget *widget, GappBrowser *self)
 {
-    GappWidgetDialogEntry *dialog = gapp_widget_dialog_new_entry_text(gtk_widget_get_root(self), "New script", "Script name");
+    const gchar *title = g_object_get_data(G_OBJECT(widget), "title");
+    GCallback callback = G_CALLBACK(g_object_get_data(G_OBJECT(widget), "callback"));
+
+    GappWidgetDialogEntry *dialog = gapp_widget_dialog_new_entry_text(gtk_widget_get_root(self), title, "Name");
     dialog->data = self->selection;
-    g_signal_connect(dialog->button_ok, "clicked", G_CALLBACK(onBrowserCreateScriptInDialog), dialog);
+    g_signal_connect(dialog->button_ok, "clicked", callback, dialog);
+
+    browserHidePopover(GTK_WIDGET(g_object_get_data(G_OBJECT(widget), "popover")));
 }
 
 static void onBrowserRemoveFileInDialog(GtkAlertDialog *dialog, GAsyncResult *res, GappBrowser *self)
@@ -381,11 +374,11 @@ static void onBrowserRemoveFileInDialog(GtkAlertDialog *dialog, GAsyncResult *re
 
             g_autoptr(GtkTreeListRow) row = g_list_model_get_item(G_LIST_MODEL(model), i);
             GFileInfo *info = G_FILE_INFO(gtk_tree_list_row_get_item(GTK_TREE_LIST_ROW(row)));
-            GFile *file = createFileFromFileInfo(info);
+            GFile *file = browserCreateFileFromFileInfo(info);
 
             // Verifica que no sea un directorio y que no sea la carpeta "Content"
-            if (!isContentFolder(self, g_file_get_path(file)))
-                g_file_trash(createFileFromFileInfo(info), NULL, NULL);
+            if (!browserIsContentFolder(self, g_file_get_path(file)))
+                g_file_trash(browserCreateFileFromFileInfo(info), NULL, NULL);
         }
     }
 }
@@ -420,26 +413,26 @@ static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowse
 
     g_autoptr(GtkTreeListRow) row = g_list_model_get_item(G_LIST_MODEL(model), position);
     GFileInfo *info = G_FILE_INFO(gtk_tree_list_row_get_item(GTK_TREE_LIST_ROW(row)));
-    GFile *file = createFileFromFileInfo(info);
+    GFile *file = browserCreateFileFromFileInfo(info);
 
     const char *filename = g_file_info_get_name(info);
-    if (gobu_fs_is_extension(filename, BROWSER_FILE_SCRIPT))
+    if (fsIsExtension(filename, BROWSER_FILE_SCRIPT))
     {
         widget_module = gapp_script_new(g_file_get_path(file));
         icon = GAPP_RESOURCE_ICON_SCRIPT;
     }
-    else if (gobu_fs_is_extension(filename, BROWSER_FILE_SCENE))
+    else if (fsIsExtension(filename, BROWSER_FILE_SCENE))
     {
         widget_module = gapp_scene_new();
     }
-    else if (gobu_fs_is_extension(filename, BROWSER_FILE_PREFAB))
+    else if (fsIsExtension(filename, BROWSER_FILE_PREFAB))
     {
         widget_module = gapp_scene_new();
         icon = GAPP_RESOURCE_ICON_PREFAB;
     }
 
     if (widget_module != NULL)
-        gapp_append_right_panel(icon, gobu_fs_get_name(filename, TRUE), widget_module, TRUE);
+        gapp_append_right_panel(icon, fsGetName(filename, TRUE), widget_module, TRUE);
 }
 
 static void onBrowserViewFileSetupFactory(GtkListItemFactory *factory, GtkListItem *list_item, gpointer data)
@@ -508,76 +501,70 @@ static void onBrowserViewFileBindFactory(GtkListItemFactory *factory, GtkListIte
     GtkWidget *label = gtk_widget_get_last_child(box);
     g_return_if_fail(GTK_IS_IMAGE(icon) && GTK_IS_LABEL(label));
 
-    setIconForFileInfo(GTK_IMAGE(icon), fileInfo);
+    browserSetIconForFileInfo(GTK_IMAGE(icon), fileInfo);
 
     const gchar *name = g_file_info_get_name(fileInfo);
     gtk_label_set_text(GTK_LABEL(label), name);
 
     // Si es la carpeta Content
-    if (isContentFolder(browser, g_file_get_path(createFileFromFileInfo(fileInfo))))
+    if (browserIsContentFolder(browser, g_file_get_path(browserCreateFileFromFileInfo(fileInfo))))
         gtk_tree_list_row_set_expanded(row, TRUE);
 }
 
 // MARK: UI
 
-// static GtkWidget *createFileActionsMenu(GappBrowser *self)
-// {
-//     GtkWidget *item;
+// TODO: Hacer esta función más dinámica
+static GtkWidget *browserToolbarSetupInterfacePopoverMenu(GtkWidget *parent, GappBrowser *self)
+{
+    const menuItemAddFileNew menuItems[] = {
+        {"folder-new-symbolic", "New folder", G_CALLBACK(onBrowserCreateFolderInDialog)},
+        {NULL, NULL, NULL},
+        {"document-new-symbolic", "Scene", G_CALLBACK(onBrowserCreateSceneInDialog)},
+        {"document-new-symbolic", "Prefab", G_CALLBACK(onBrowserCreatePrefabInDialog)},
+        {"document-new-symbolic", "Script", G_CALLBACK(onBrowserCreateScriptInDialog)},
+    };
 
-//     GtkWidget *popover = gtk_popover_new();
-//     gtk_popover_set_cascade_popdown(GTK_POPOVER(popover), TRUE);
-//     // gtk_widget_set_parent(popover, widget);
-//     gtk_popover_set_has_arrow(GTK_POPOVER(popover), FALSE);
-//     // gtk_popover_set_pointing_to(GTK_POPOVER(popover), &(GdkRectangle){x, y, 1, 1});
+    GtkWidget *popover = gtk_popover_new();
+    gtk_widget_set_parent(popover, parent);
+    // gtk_widget_add_css_class(popover, "popover");
 
-//     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-//     gtk_popover_set_child(GTK_POPOVER(popover), box);
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
+    gtk_popover_set_child(GTK_POPOVER(popover), box);
 
-//     // si no tenemos nada seleccionado o si tenemos una carpeta seleccionada.
-//     item = gapp_widget_button_new_icon_with_label(NULL, "New folder");
-//     gtk_box_append(GTK_BOX(box), item);
-//     g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarCreateFolderClicked), self);
+    for (size_t i = 0; i < G_N_ELEMENTS(menuItems); i++)
+    {
+        if (menuItems[i].iconName == NULL)
+        {
+            gtk_box_append(GTK_BOX(box), gapp_widget_separator_h());
+            continue;
+        }
 
-//     item = gapp_widget_button_new_icon_with_label(NULL, "New scene");
-//     gtk_box_append(GTK_BOX(box), item);
-//     g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarCreateSceneClicked), self);
+        GtkWidget *item = gapp_widget_button_new_icon_with_label(menuItems[i].iconName, menuItems[i].name);
+        gtk_box_append(GTK_BOX(box), item);
 
-//     item = gapp_widget_button_new_icon_with_label(NULL, "New script");
-//     gtk_box_append(GTK_BOX(box), item);
-//     g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarCreateScriptClicked), self);
+        if (menuItems[i].callback)
+        {
+            g_object_set_data(G_OBJECT(item), "title", stringDup(menuItems[i].name));
+            g_object_set_data(G_OBJECT(item), "callback", menuItems[i].callback);
+            g_object_set_data(G_OBJECT(item), "popover", popover);
+            g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarCreateDialog), self);
+        }
+        else
+            gtk_widget_set_sensitive(item, FALSE);
+    }
 
-//     // Si tenemos una carpeta o un archivo seleccionado.
-//     gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_VERTICAL));
+    return popover;
+}
 
-//     item = gapp_widget_button_new_icon_with_label(NULL, "Delete...");
-//     gtk_box_append(GTK_BOX(box), item);
+static void browserShowPopover(GtkWidget *widget, GtkWidget *popover)
+{
+    gtk_popover_popup(GTK_POPOVER(popover));
+}
 
-//     item = gapp_widget_button_new_icon_with_label(NULL, "Rename");
-//     gtk_box_append(GTK_BOX(box), item);
-
-//     item = gapp_widget_button_new_icon_with_label(NULL, "Move to...");
-//     gtk_box_append(GTK_BOX(box), item);
-
-//     item = gapp_widget_button_new_icon_with_label(NULL, "Duplicate");
-//     gtk_box_append(GTK_BOX(box), item);
-
-//     gtk_box_append(GTK_BOX(box), gtk_separator_new(GTK_ORIENTATION_VERTICAL));
-
-//     item = gapp_widget_button_new_icon_with_label(NULL, "Open explorer...");
-//     gtk_box_append(GTK_BOX(box), item);
-
-//     return popover;
-// }
-
-// static GtkWidget *createAddPopoverForToolbar(GtkWidget *widget, gpointer data)
-// {
-//     GtkWidget *popover;
-
-//     popover = gtk_popover_menu_new_from_model(NULL);
-//     gtk_widget_set_parent(popover, widget);
-
-//     return popover;
-// }
+static void browserHidePopover(GtkWidget *popover)
+{
+    gtk_popover_popdown(GTK_POPOVER(popover));
+}
 
 static void gappBrowserConfigureInterface(GappBrowser *self)
 {
@@ -586,32 +573,15 @@ static void gappBrowserConfigureInterface(GappBrowser *self)
     GtkWidget *toolbar = gapp_widget_toolbar_new();
     gtk_box_append(GTK_BOX(self), toolbar);
     {
-        // GtkWidget *menu = createFileActionsMenu(self);
 
-        // item = gtk_menu_button_new();
-        // gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(item), "view-more-symbolic");
-        // gtk_menu_button_set_has_frame(GTK_MENU_BUTTON(item), FALSE);
-        // gtk_menu_button_set_popover(GTK_MENU_BUTTON(item), GTK_WIDGET(menu));
-        // gtk_widget_set_tooltip_text(item, "More options...");
-        // gtk_box_append(GTK_BOX(toolbar), item);
-
-        item = gapp_widget_button_new_icon_with_label("folder-new-symbolic", NULL);
+        item = gapp_widget_button_new_icon_with_label("list-add-symbolic", NULL);
         gtk_widget_set_size_request(item, -1, 20);
+        gtk_widget_set_tooltip_text(item, "More options...");
         gtk_box_append(GTK_BOX(toolbar), item);
-        gtk_widget_set_tooltip_text(item, "New folder");
-        g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarCreateFolderClicked), self);
-
-        item = gapp_widget_button_new_icon_with_label("application-x-appliance-symbolic", NULL);
-        gtk_widget_set_size_request(item, -1, 20);
-        gtk_box_append(GTK_BOX(toolbar), item);
-        gtk_widget_set_tooltip_text(item, "New scene");
-        g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarCreateSceneClicked), self);
-
-        item = gapp_widget_button_new_icon_with_label("x-office-spreadsheet-symbolic", NULL);
-        gtk_widget_set_size_request(item, -1, 20);
-        gtk_box_append(GTK_BOX(toolbar), item);
-        gtk_widget_set_tooltip_text(item, "New scripts");
-        g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarCreateScriptClicked), self);
+        {
+            GtkWidget *menu_popover = browserToolbarSetupInterfacePopoverMenu(item, self);
+            g_signal_connect(item, "clicked", G_CALLBACK(browserShowPopover), menu_popover);
+        }
 
         item = gapp_widget_button_new_icon_with_label("user-trash-symbolic", NULL);
         gtk_widget_set_size_request(item, -1, 20);
@@ -627,9 +597,9 @@ static void gappBrowserConfigureInterface(GappBrowser *self)
     gtk_box_append(GTK_BOX(self), scroll);
     {
         self->directory = gtk_directory_list_new("standard::*", NULL);
-        setMonitoredDirectory(self->directory);
+        browserSetMonitoredDirectory(self->directory);
 
-        GtkTreeListModel *tree_model = gtk_tree_list_model_new(getGListModelFromDirectoryList(self->directory),
+        GtkTreeListModel *tree_model = gtk_tree_list_model_new(browserGetGListModelFromDirectoryList(self->directory),
                                                                FALSE,
                                                                FALSE,
                                                                onBrowserCreateChildModelForTreeRow,
@@ -669,7 +639,7 @@ void browserSetFolder(GappBrowser *browser, const gchar *path)
 
     g_return_if_fail(GTK_IS_DIRECTORY_LIST(browser->directory));
     gtk_directory_list_set_file(GTK_DIRECTORY_LIST(browser->directory), file);
-    setMonitoredDirectory(GTK_DIRECTORY_LIST(browser->directory));
+    browserSetMonitoredDirectory(GTK_DIRECTORY_LIST(browser->directory));
 
     g_object_unref(file);
 }
@@ -687,8 +657,8 @@ gchar *browserGetCurrentFolder(GappBrowser *browser)
 {
     g_return_val_if_fail(GAPP_IS_BROWSER(browser), NULL);
 
-    GFileInfo *info = getSelectedFile(browser->selection);
-    g_autofree gchar *pathfile = g_file_get_path(createFileFromFileInfo(info));
+    GFileInfo *info = browserGetSelectedFile(browser->selection);
+    g_autofree gchar *pathfile = g_file_get_path(browserCreateFileFromFileInfo(info));
 
     if (!g_file_test(pathfile, G_FILE_TEST_IS_DIR))
         pathfile = g_path_get_dirname(pathfile);

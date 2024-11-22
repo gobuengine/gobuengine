@@ -444,7 +444,7 @@ static void bind_listitem(GtkListItemFactory *factory, GtkListItem *list_item, g
 
     // TODO: Una func para obtener el icono de los archivos...
     const char *ext_file = g_file_info_get_name(fileinfo);
-    if (gobu_fs_is_extension(ext_file, ".png") || gobu_fs_is_extension(ext_file, ".jpg"))
+    if (fsIsExtension(ext_file, ".png") || fsIsExtension(ext_file, ".jpg"))
         gtk_image_set_from_file(icon, g_file_get_path(file));
     else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileinfo));

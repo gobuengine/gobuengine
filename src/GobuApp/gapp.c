@@ -223,6 +223,7 @@ ecs_world_t *gapp_get_world_instance(void)
 
 GdkPaintable *gapp_get_resource_icon(GappResourceIcon icon)
 {
+    g_return_val_if_fail(gappMain->ricons[icon] != NULL, NULL);
     return gtk_image_get_paintable(gappMain->ricons[icon]);
 }
 
@@ -231,7 +232,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
     g_return_if_fail(GAPP_IS_MAIN(self));
     g_return_if_fail(path != NULL && *path != '\0');
 
-    gapp_set_project_path(gobu_path_dirname(path));
+    gapp_set_project_path(pathDirname(path));
 
     gapp_append_right_panel(GAPP_RESOURCE_ICON_SCENE, "Untitle~", gapp_scene_new(), TRUE);
     gtk_notebook_remove_page(GTK_NOTEBOOK(self->dnotebook), 0);
@@ -250,10 +251,10 @@ void gapp_append_right_panel(GappResourceIcon icon, const gchar *title, GtkWidge
     g_return_if_fail(GTK_IS_WIDGET(module));
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
-    GtkWidget *icon_widget = gtk_image_new_from_paintable(gapp_get_resource_icon(icon));
-    gtk_box_append(GTK_BOX(box), icon_widget);
-    GtkWidget *label = gtk_label_new(title);
-    gtk_box_append(GTK_BOX(box), label);
+    if (icon != GAPP_RESOURCE_ICON_NONE)
+        gtk_box_append(GTK_BOX(box), gtk_image_new_from_paintable(gapp_get_resource_icon(icon)));
+        
+    gtk_box_append(GTK_BOX(box), gtk_label_new(title));
 
     gapp_widget_notebook_append_page(GTK_NOTEBOOK(gappMain->dnotebook),
                                      box,

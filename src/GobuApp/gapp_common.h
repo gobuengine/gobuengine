@@ -14,65 +14,63 @@ extern "C"
 {
 #endif
 
-    bool gobu_path_is_dir(const char *pathname);
+    bool pathIsDir(const char *pathname);
 
-    bool gobu_path_create_new(const char *pathname);
+    bool pathCreateNew(const char *pathname);
 
-    const char *gobu_path_user_config_dir(void);
+    const char *pathUserConfigDir(void);
 
-    char *gobu_path_relative_content(const char *path);
+    char *pathRelativeContent(const char *path);
 
-    char *gobu_path_join_relative_content(const char *path);
+    char *pathNormalize(const char *path);
 
-    char *gobu_path_normalize(const char *path);
+    char *pathJoin(const char *first_path, ...);
 
-    char *gobu_path_join(const char *first_path, ...);
+    char *pathBasename(const char *filename);
 
-    char *gobu_path_basename(const char *filename);
+    char *pathDirname(const char *filename);
 
-    char *gobu_path_dirname(const char *filename);
+    char *pathCurrentDir(void);
 
-    char *gobu_path_current_dir(void);
+    bool pathExist(const char *filename);
 
-    bool gobu_path_exist(const char *filename);
+    char *stringDups(const char *format, ...);
 
-    char *gobu_strdups(const char *format, ...);
+    char *stringDup(const char *str);
 
-    char *gobu_strdup(const char *str);
+    char *StringTolower(const char *text);
 
-    char *gobu_str_tolower(const char *text);
+    char *StringUppercase(const char *text);
 
-    char *gobu_str_uppercase(const char *text);
+    bool StringIsequal(const char *text1, const char *text2);
 
-    bool gobu_str_isequal(const char *text1, const char *text2);
+    char **StringSplit(const char *string, const char *delimiter);
 
-    char **gobu_str_split(const char *string, const char *delimiter);
+    void StringSplitFree(char **str_array);
 
-    void gobu_str_split_free(char **str_array);
+    char *StringTrim(char *str);
 
-    char *gobu_str_trim(char *str);
+    char *StringRemoveSpaces(char *str);
 
-    char *gobu_str_remove_spaces(char *str);
+    char *StringSanitize(char *str);
 
-    char *gobu_str_sanitize(char *str);
+    char *StringReplace(const char *str, const char *find, const char *replace);
 
-    char *gobu_str_replace(const char *str, const char *find, const char *replace);
+    bool fsCopy(GFile *src, GFile *dest, GError **error);
 
-    bool gobu_fs_copyc(GFile *src, GFile *dest, GError **error);
+    bool fsWrite(const char *filename, const char *contents);
 
-    bool gobu_fs_write_file(const char *filename, const char *contents);
+    bool fsExist(const char *filename);
 
-    bool gobu_fs_file_exist(const char *filename);
+    bool fsTest(const char *filename, GFileTest test);
 
-    bool gobu_fs_test(const char *filename, GFileTest test);
+    const char *fsGetExtname(const char *filename);
 
-    const char *gobu_fs_extname(const char *filename);
+    char *fsGetName(const char *filename, bool with_ext);
 
-    char *gobu_fs_get_name(const char *filename, bool with_ext);
+    bool fsIsExtension(const char *filename, const char *ext);
 
-    bool gobu_fs_is_extension(const char *filename, const char *ext);
-
-    char *gobu_fs_get_contents(const char *filename, gsize *length);
+    char *fsRead(const char *filename, gsize *length);
 
 #ifdef __cplusplus
 }
