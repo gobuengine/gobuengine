@@ -2,6 +2,7 @@
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_viewport.h"
+#include "gapp_inspector.h"
 
 #include "types/type_outliner_item.h"
 #include "types/type_outliner_popover_item.h"
@@ -594,7 +595,8 @@ static GtkWidget *setupOutlinerInterface(GappScene *scene)
 
 static GtkWidget *setupInspectorInterface(GappScene *scene)
 {
-    return gtk_label_new("Inspector");
+    GtkWidget *inspector = gapp_inspector_new();
+    return inspector;
 }
 
 static GtkWidget *setupViewportInterface(GappScene *scene)

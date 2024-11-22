@@ -1,5 +1,6 @@
 #include "gapp_inspector_widgets.h"
 #include "gapp_common.h"
+#include "gapp_widget.h"
 #include "types/type_enum.h"
 
 /**
@@ -160,7 +161,7 @@ static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_pt
  * @param cursor El cursor de metadatos ECS para el campo de cadena.
  * @return GtkWidget* El widget de entrada creado.
  */
-GtkWidget *gapp_inspector_widgets_input_string(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_StringInput(ecs_meta_cursor_t cursor)
 {
     ecs_string_t **field = (ecs_string_t **)ecs_meta_get_ptr(&cursor);
 
@@ -183,7 +184,7 @@ GtkWidget *gapp_inspector_widgets_input_string(ecs_meta_cursor_t cursor)
  * @param cursor Cursor de metadatos ECS que apunta al campo booleano.
  * @return GtkWidget* Un nuevo GtkCheckButton configurado y conectado.
  */
-GtkWidget *gapp_inspector_widgets_input_bool(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_BoolInput(ecs_meta_cursor_t cursor)
 {
     ecs_bool_t *field = (ecs_bool_t *)ecs_meta_get_ptr(&cursor);
 
@@ -205,7 +206,7 @@ GtkWidget *gapp_inspector_widgets_input_bool(ecs_meta_cursor_t cursor)
  * @param cursor El cursor de metadatos ECS para el campo u32.
  * @return GtkWidget* El widget GtkSpinButton creado.
  */
-GtkWidget *gapp_inspector_widgets_input_u32(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *inspectorWidgetCreate_NumberU32Input(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_u32_t *field = (ecs_u32_t *)ecs_meta_get_ptr(&cursor);
 
@@ -231,7 +232,7 @@ GtkWidget *gapp_inspector_widgets_input_u32(ecs_meta_cursor_t cursor, ecs_member
  * @param cursor El cursor de metadatos ECS para el campo f64.
  * @return GtkWidget* El widget GtkSpinButton creado.
  */
-GtkWidget *gapp_inspector_widgets_input_f64(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *inspectorWidgetCreate_NumberF64Input(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_f64_t *field = (ecs_f64_t *)ecs_meta_get_ptr(&cursor);
 
@@ -260,7 +261,7 @@ GtkWidget *gapp_inspector_widgets_input_f64(ecs_meta_cursor_t cursor, ecs_member
  * @param cursor ECS meta cursor pointing to an ecs_f32_t field.
  * @return A GtkWidget (GtkSpinButton) for inputting float values.
  */
-GtkWidget *gapp_inspector_widgets_input_f32(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *inspectorWidgetCreate_NumberF32Input(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_f32_t *field = (ecs_f32_t *)ecs_meta_get_ptr(&cursor);
     ecs_entity_t field_type = ecs_meta_get_type(&cursor);
@@ -287,7 +288,7 @@ GtkWidget *gapp_inspector_widgets_input_f32(ecs_meta_cursor_t cursor, ecs_member
  * @param cursor El cursor de metadatos ECS para el campo de color.
  * @return GtkWidget* El widget GtkColorDialogButton creado.
  */
-GtkWidget *gapp_inspector_widgets_input_color(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_ColorInput(ecs_meta_cursor_t cursor)
 {
     pixio_color_t *field = (pixio_color_t *)ecs_meta_get_ptr(&cursor);
     GdkRGBA color = pixio_color_to_gdk_rgba(field);
@@ -310,7 +311,7 @@ GtkWidget *gapp_inspector_widgets_input_color(ecs_meta_cursor_t cursor)
  * @param cursor El cursor de metadatos ECS para el campo de vector 2D.
  * @return GtkWidget* El widget compuesto creado.
  */
-GtkWidget *gapp_inspector_widgets_input_vector2(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
 {
     pixio_vector2_t *field = (pixio_vector2_t *)ecs_meta_get_ptr(&cursor);
 
@@ -375,7 +376,7 @@ static gint object_ienum_compare_func(ObjectIEnum *ienum_a, ObjectIEnum *ienum_b
         return 0;
 }
 
-GtkWidget *gapp_inspector_widgets_input_enum(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_EnumInput(ecs_meta_cursor_t cursor)
 {
     void *field_ptr = ecs_meta_get_ptr(&cursor);
     ecs_entity_t field_type = ecs_meta_get_type(&cursor);
@@ -487,7 +488,7 @@ static gboolean filter_texture_func(GFileInfo *file, gpointer data)
            g_str_has_suffix(name, ".jpeg");
 }
 
-GtkWidget *gapp_inspector_widgets_input_texture(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_TextureInput(ecs_meta_cursor_t cursor)
 {
     GtkCustomFilter *filter = gtk_custom_filter_new(filter_texture_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
@@ -502,7 +503,7 @@ static gboolean filter_font_func(GFileInfo *file, gpointer data)
     return g_str_has_suffix(name, ".ttf");
 }
 
-GtkWidget *gapp_inspector_widgets_input_font(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_FontInput(ecs_meta_cursor_t cursor)
 {
     GtkCustomFilter *filter = gtk_custom_filter_new(filter_font_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
@@ -518,7 +519,7 @@ static gboolean filter_sounds_func(GFileInfo *file, gpointer data)
            g_str_has_suffix(name, ".wav");
 }
 
-GtkWidget *gapp_inspector_widgets_input_sound(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_widgets_input_sound(ecs_meta_cursor_t cursor)
 {
     GtkCustomFilter *filter = gtk_custom_filter_new(filter_sounds_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
@@ -533,10 +534,139 @@ static gboolean filter_scene_func(GFileInfo *file, gpointer data)
     return g_str_has_suffix(name, ".gscene");
 }
 
-GtkWidget *gapp_inspector_widgets_input_scene(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_widgets_input_scene(ecs_meta_cursor_t cursor)
 {
     GtkCustomFilter *filter = gtk_custom_filter_new(filter_scene_func, NULL, NULL);
     GtkWidget *widget = gapp_inspector_widgets_input_resource(filter, cursor);
     // g_object_unref(filter);
     return widget;
+}
+
+GtkWidget *inspectorWidgetCreateGroupChild(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation)
+{
+    GtkWidget *label, *box;
+
+    box = gtk_box_new(orientation, 1);
+
+    if (label_str != NULL)
+    {
+        label = gtk_label_new(label_str);
+        gtk_label_set_xalign(label, 0);
+        gtk_widget_set_halign(label, GTK_ALIGN_START);
+        gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+        gtk_widget_set_hexpand(label, TRUE);
+        gtk_widget_set_size_request(label, 80, -1);
+        gtk_widget_add_css_class(label, "title-4");
+        gtk_box_append(box, label);
+    }
+
+    gtk_widget_set_hexpand(input, TRUE);
+    gtk_widget_set_size_request(input, 240, -1);
+    gtk_box_append(box, input);
+    gtk_size_group_add_widget(size_group, input);
+
+    return box;
+}
+
+GtkWidget *inspectorWidgetCreateGroup(GtkWidget *list, const gchar *title_str, bool buttonRemove)
+{
+    GtkWidget *expander = gtk_expander_new(NULL);
+    gtk_expander_set_expanded(GTK_EXPANDER(expander), TRUE);
+    gtk_widget_add_css_class(expander, "expander_n");
+    gtk_list_box_append(list, expander);
+
+    // toolbar expander
+    GtkWidget *title = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_expander_set_label_widget(GTK_EXPANDER(expander), title);
+    {
+        GtkWidget *label = gtk_label_new(title_str);
+        gtk_widget_set_hexpand(label, TRUE);
+        gtk_widget_set_halign(label, GTK_ALIGN_START);
+        gtk_box_append(GTK_BOX(title), label);
+
+        if (buttonRemove)
+        {
+            // GtkWidget *button_off = gtk_switch_new();
+            // gtk_box_append(GTK_BOX(title), button_off);
+            // gtk_widget_set_margin_end(button_off, 5);
+            // gtk_widget_add_css_class(button_off, "expander_button");
+            // gtk_widget_set_margin_start(button_off, 0);
+            // gtk_widget_set_tooltip_text(button_off, "Remove component");
+            // gtk_switch_set_active(GTK_SWITCH(button_off), TRUE);
+            // // g_signal_connect(button_off, "clicked", G_CALLBACK(gapp_inspector_component_remove_clicked), entity);
+
+            GtkWidget *button = gtk_button_new_from_icon_name("user-trash-symbolic");
+            gtk_widget_add_css_class(button, "expander_button");
+            gtk_widget_set_margin_start(button, 0);
+            gtk_widget_set_tooltip_text(button, "Remove component");
+            gtk_box_append(GTK_BOX(title), button);
+            // g_signal_connect(button, "clicked", G_CALLBACK(gapp_inspector_component_remove_clicked), entity);
+        }
+    }
+
+    // content expander
+    GtkWidget *content = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gapp_widget_set_margin(content, 4);
+    gtk_expander_set_child(GTK_EXPANDER(expander), content);
+
+    return content;
+}
+
+void inspectorWidgetAddComponentToInspector(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component)
+{
+    ecs_meta_cursor_t cursor = ecs_meta_cursor(world, component, ptr);
+
+    const EcsStruct *struct_member = ecs_get(world, component, EcsStruct);
+
+    ecs_meta_push(&cursor);
+    for (int i = 0; i < ECS_MEMBER_DESC_CACHE_SIZE; i++)
+    {
+        GtkWidget *input = NULL;
+        const char *field_name = ecs_meta_get_member(&cursor);
+        if (!field_name)
+            break;
+
+        struct WidgetCreator
+        {
+            ecs_entity_t type;
+            GtkWidget *(*create_widget)(ecs_meta_cursor_t, ecs_member_t *);
+        } WidgetCreator[] = {
+            {ecs_id(ecs_string_t), inspectorWidgetCreate_StringInput},
+            {ecs_id(ecs_bool_t), inspectorWidgetCreate_BoolInput},
+            {ecs_id(ecs_u32_t), inspectorWidgetCreate_NumberU32Input},
+            {ecs_id(ecs_f64_t), inspectorWidgetCreate_NumberF64Input},
+            {ecs_id(ecs_f32_t), inspectorWidgetCreate_NumberF32Input},
+            {ecs_id(pixio_vector2_t), inspectorWidgetCreate_Vector2Input},
+            {ecs_id(pixio_color_t), inspectorWidgetCreate_ColorInput},
+            {ecs_id(pixio_resource_texture_t), inspectorWidgetCreate_TextureInput},
+            {ecs_id(pixio_resource_font_t), inspectorWidgetCreate_FontInput},
+            {ecs_id(pixio_texture_filter_t), inspectorWidgetCreate_EnumInput},
+            {ecs_id(pixio_texture_flip_t), inspectorWidgetCreate_EnumInput},
+            {ecs_id(pixio_origin_t), inspectorWidgetCreate_EnumInput},
+            {0, NULL} // Marca de fin
+            // Agregar más tipos según sea necesario
+        };
+
+        ecs_entity_t field_type = ecs_meta_get_type(&cursor);
+        ecs_member_t *member = ecs_vec_get_t(&struct_member->members, ecs_member_t, i);
+
+        for (size_t n = 0; n < G_N_ELEMENTS(WidgetCreator); n++)
+        {
+            if (WidgetCreator[n].type == field_type && WidgetCreator[n].create_widget != NULL)
+            {
+                input = WidgetCreator[n].create_widget(cursor, member);
+                break;
+            }
+        }
+
+        if (input)
+        {
+            GtkWidget *size_group = g_object_get_data(G_OBJECT(content), "size-group");
+            GtkWidget *child = inspectorWidgetCreateGroupChild(size_group, field_name, input, GTK_ORIENTATION_HORIZONTAL);
+            gtk_box_append(GTK_BOX(content), child);
+        }
+
+        ecs_meta_next(&cursor);
+    }
+    ecs_meta_pop(&cursor);
 }
