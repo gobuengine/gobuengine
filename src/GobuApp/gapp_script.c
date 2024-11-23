@@ -112,6 +112,13 @@ void gapp_script_fn_save_file(GappScript *self)
 // MARK: SIGNALS
 // --------------------
 
+static void gapp_script_s_ready(GtkTextBuffer *buffer, GappScript *self)
+{
+    const gchar *filename = gapp_script_get_filename(self);
+    if (self->filename)
+        gapp_script_load_file(self, self->filename);
+}
+
 static void gapp_script_s_buffer_changed(GtkTextBuffer *buffer, GappScript *self)
 {
     self->modified = TRUE;
@@ -214,6 +221,7 @@ static void gapp_script_setup_ui(GappScript *self)
         gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), self->view_source);
 
         g_signal_connect(self->buffer, "changed", G_CALLBACK(gapp_script_s_buffer_changed), self);
+        g_signal_connect(self, "realize", G_CALLBACK(gapp_script_s_ready), self);
     }
 }
 
@@ -229,17 +237,10 @@ static void gapp_script_setup_ui(GappScript *self)
  */
 GappScript *gapp_script_new(const gchar *filename)
 {
-    GappScript *script = g_object_new(GAPP_TYPE_SCRIPT,
-                                      "orientation", GTK_ORIENTATION_VERTICAL,
-                                      "filename", filename,
-                                      NULL);
-
-    if (filename != NULL)
-    {
-        gapp_script_load_file(script, filename);
-    }
-
-    return script;
+    return g_object_new(GAPP_TYPE_SCRIPT,
+                        "orientation", GTK_ORIENTATION_VERTICAL,
+                        "filename", filename,
+                        NULL);
 }
 
 /**
@@ -272,4 +273,10 @@ void gapp_script_load_file(GappScript *self, const gchar *filename)
         g_source_remove(self->timeout);
 
     // self->timeout = g_timeout_add(5000, gapp_script_s_autosave_timeout, self);
+}
+
+const gchar *gapp_script_get_filename(GappScript *self)
+{
+    g_return_val_if_fail(GAPP_IS_SCRIPT(self), NULL);
+    return self->filename;
 }

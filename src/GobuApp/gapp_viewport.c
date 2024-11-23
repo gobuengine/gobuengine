@@ -50,10 +50,10 @@ static void gapp_viewport_init(GappViewport *self)
     gtk_widget_set_hexpand(GTK_WIDGET(self), TRUE);
     gtk_widget_set_vexpand(GTK_WIDGET(self), TRUE);
 
-    // g_signal_connect(self, "render", G_CALLBACK(gapp_s_render), self);
-    // g_signal_connect(self, "realize", G_CALLBACK(gapp_s_realize), self);
-    // g_signal_connect(self, "unrealize", G_CALLBACK(gapp_s_unrealize), self);
-    // g_signal_connect(self, "resize", G_CALLBACK(gapp_s_resize), self);
+    g_signal_connect(self, "render", G_CALLBACK(gapp_s_render), self);
+    g_signal_connect(self, "realize", G_CALLBACK(gapp_s_realize), self);
+    g_signal_connect(self, "unrealize", G_CALLBACK(gapp_s_unrealize), self);
+    g_signal_connect(self, "resize", G_CALLBACK(gapp_s_resize), self);
 
     // GtkEventController *zoom = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_VERTICAL);
     // gtk_widget_add_controller(self, GTK_EVENT_CONTROLLER(zoom));
@@ -69,26 +69,9 @@ static void gapp_viewport_init(GappViewport *self)
     // g_signal_connect(gesture, "pressed", G_CALLBACK(signal_viewport_mouse_button_pressed), self);
     // g_signal_connect(gesture, "released", G_CALLBACK(signal_viewport_mouse_button_released), self);
 
-    gtk_widget_add_tick_callback(GTK_WIDGET(self), tick_cb_queue, self, NULL);
+    // gtk_widget_add_tick_callback(GTK_WIDGET(self), tick_cb_queue, self, NULL);
 }
 
-/**
- * tick_cb_queue:
- * @self: (transfer none): El #GtkWidget que se va a redibujar.
- * @frame_clock: (transfer none): El #GdkFrameClock que proporciona la señal de tick.
- * @user_data: (transfer none): Datos adicionales pasados a la función (no utilizado).
- *
- * Función de callback para el tick del reloj de cuadros.
- *
- * Esta función se llama en cada tick del reloj de cuadros y solicita
- * un redibujado del widget. Se utiliza para actualizar continuamente
- * la visualización del widget, lo que es útil para animaciones o
- * contenido dinámico.
- *
- * Returns: Siempre devuelve %G_SOURCE_CONTINUE para mantener el callback activo.
- *
- * Since: 1.0
- */
 static gboolean tick_cb_queue(GappViewport *self, GdkFrameClock *frame_clock, gpointer user_data)
 {
     GdkFrameTimings *prev_timings;
@@ -106,9 +89,8 @@ static gboolean tick_cb_queue(GappViewport *self, GdkFrameClock *frame_clock, gp
 
     self->deltaTime = (frame_time - self->first_frame_time) / 1000000.0;
 
-
     history_start = gdk_frame_clock_get_history_start(frame_clock);
-    if (frame % 60 == 0)
+    if (frame % 120 == 0)
     {
         history_len = frame - history_start;
         if (history_len > 0)
@@ -117,7 +99,7 @@ static gboolean tick_cb_queue(GappViewport *self, GdkFrameClock *frame_clock, gp
             prev_frame_time = gdk_frame_timings_get_frame_time(prev_timings);
         }
     }
-    
+
     gtk_widget_queue_draw(self);
 
     return G_SOURCE_CONTINUE;
@@ -136,24 +118,26 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
     if (gtk_gl_area_get_error(area) != NULL)
         return FALSE;
 
-    if (!self->initialized)
-    {
-        int width = gtk_widget_get_width(GTK_WIDGET(area));
-        int height = gtk_widget_get_height(GTK_WIDGET(area));
-        self->initialized = true;
+    // if (!self->initialized)
+    // {
+    //     int width = gtk_widget_get_width(GTK_WIDGET(area));
+    //     int height = gtk_widget_get_height(GTK_WIDGET(area));
+    //     self->initialized = true;
 
-        pixi_init(width, height);
+    //     pixi_init(width, height);
 
-        g_signal_emit_by_name(self, "viewport-ready", width, height, 0);
-    }
+    //     g_signal_emit_by_name(self, "viewport-ready", width, height, 0);
+    // }
 
-    if (!self->customRender)
-        pixi_render_begin();
+    // if (!self->customRender)
+    //     pixi_render_begin();
 
     g_signal_emit_by_name(self, "viewport-render", self->deltaTime, 0);
 
-    if (!self->customRender)
-        pixi_render_end();
+    // if (!self->customRender)
+    //     pixi_render_end();
+    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
 
     glFlush();
 

@@ -12,6 +12,7 @@ struct _GappInspector
     GtkWidget *listbox;
 };
 
+// MARK: CLASS
 G_DEFINE_TYPE(GappInspector, gapp_inspector, GTK_TYPE_BOX)
 
 static void object_class_dispose(GObject *object)
@@ -68,4 +69,14 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
         g_object_set_data(G_OBJECT(expander), "size-group", self->size_group);
         inspectorWidgetAddComponentToInspector(expander, world, component_ptr, e_component);
     }
+}
+
+void inspectorSetEmpty(GappInspector *self, const gchar *message)
+{
+    gtk_list_box_remove_all(self->listbox);
+
+    GtkWidget *label = gtk_label_new(message);
+    gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+    gtk_list_box_append(self->listbox, label);
 }

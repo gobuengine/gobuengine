@@ -18,6 +18,7 @@ struct _GappScene
     struct _outliner
     {
         GtkWidget *self;
+        GtkWidget *popoverBtnAdd;
         // GtkTreeListModel *tree_model;
         GtkSingleSelection *selection;
         // GtkWidget *list_view;
@@ -65,6 +66,8 @@ static void object_class_dispose(GObject *object)
 {
     GappScene *scene = GAPP_SCENE(object);
 
+    gtk_widget_unparent(scene->outliner.popoverBtnAdd);
+
     G_OBJECT_CLASS(gapp_scene_parent_class)->dispose(object);
 }
 
@@ -106,9 +109,8 @@ static GListStore *outlinerBuildEntityComponentItem(void)
         {"camera-photo-symbolic", "Camera", GAPP_COMPS_EMPTY},
         {"list-add-symbolic", "Light", GAPP_COMPS_EMPTY},
         {"input-dialpad-symbolic", "Particle System", GAPP_COMPS_EMPTY},
-        {"face-monkey-symbolic", "Panel", GAPP_COMPS_EMPTY},
         {"face-monkey", "Text", GAPP_COMPS_GUI_TEXT},
-        {"face-monkey", "Shape Rectangle", GAPP_COMPS_GUI_SHAPE_RECTANGLE},
+        {"face-monkey", "Rectangle", GAPP_COMPS_GUI_SHAPE_RECTANGLE},
     };
 
     for (size_t i = 0; i < G_N_ELEMENTS(items); i++)
@@ -544,8 +546,8 @@ static GtkWidget *setupOutlinerInterface(GappScene *scene)
     gtk_widget_set_size_request(item, -1, 20);
     gtk_box_append(GTK_BOX(toolbar), item);
     {
-        GtkWidget *menu_popover = outlinerToolbarSetupInterfacePopoverMenu(item, scene);
-        g_signal_connect(item, "clicked", G_CALLBACK(onOutlinerToolbarShowPopover), menu_popover);
+        scene->outliner.popoverBtnAdd = outlinerToolbarSetupInterfacePopoverMenu(item, scene);
+        g_signal_connect(item, "clicked", G_CALLBACK(onOutlinerToolbarShowPopover), scene->outliner.popoverBtnAdd);
     }
 
     item = gapp_widget_button_new_icon_with_label("edit-copy-symbolic", NULL);
@@ -596,6 +598,7 @@ static GtkWidget *setupOutlinerInterface(GappScene *scene)
 static GtkWidget *setupInspectorInterface(GappScene *scene)
 {
     GtkWidget *inspector = gapp_inspector_new();
+    inspectorSetEmpty(inspector, "Select an entity to view its properties");
     return inspector;
 }
 
