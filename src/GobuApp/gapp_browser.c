@@ -48,7 +48,6 @@ static GListModel *browserGetGListModelFromDirectoryList(GtkDirectoryList *list)
 static void browserSetMonitoredDirectory(GtkDirectoryList *directory);
 
 // MARK:BASE CLASS
-
 G_DEFINE_TYPE(GappBrowser, gapp_browser, GTK_TYPE_BOX)
 
 static void object_class_dispose(GObject *object)
@@ -416,6 +415,8 @@ static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowse
     GFile *file = browserCreateFileFromFileInfo(info);
 
     const char *filename = g_file_info_get_name(info);
+    const char *name = fsGetName(filename, TRUE);
+
     if (fsIsExtension(filename, BROWSER_FILE_SCRIPT))
     {
         widget_module = gapp_script_new(g_file_get_path(file));
@@ -423,16 +424,16 @@ static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowse
     }
     else if (fsIsExtension(filename, BROWSER_FILE_SCENE))
     {
-        widget_module = gapp_scene_new();
+        widget_module = gapp_scene_new(name);
     }
     else if (fsIsExtension(filename, BROWSER_FILE_PREFAB))
     {
-        widget_module = gapp_scene_new();
+        widget_module = gapp_scene_new(name);
         icon = GAPP_RESOURCE_ICON_PREFAB;
     }
 
     if (widget_module != NULL)
-        gapp_append_right_panel(icon, fsGetName(filename, TRUE), widget_module, TRUE);
+        gapp_append_right_panel(icon, name, widget_module, TRUE);
 }
 
 static void onBrowserViewFileSetupFactory(GtkListItemFactory *factory, GtkListItem *list_item, gpointer data)

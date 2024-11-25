@@ -15,6 +15,7 @@ typedef struct pixio_entity
 } pixio_entity;
 
 ecs_world_t *pixio_world_init(void);
+void pixio_free(ecs_world_t *ecs);
 void pixio_world_process(ecs_world_t *ecs, float deltaTime);
 
 pixio_entity *pixio_entity_new(ecs_world_t *world, ecs_entity_t entity);

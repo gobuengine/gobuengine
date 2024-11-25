@@ -25,9 +25,6 @@ sources = [
   'gapp_console.c',
   'gapp_inspector_widgets.c',
   'gapp_inspector.c',
-  # 'gapp_level_inspector.c',
-  # 'gapp_level_outliner.c',
-  # 'gapp_level_editor.c',
   'gapp_scene.c',
   'gapp_project_manager.c',
   'gapp_project_setting.c',
@@ -43,18 +40,24 @@ sources = [
 # Headers
 
 headers = [
+  'config.h',
   'types/type_enum.h',
   'types/type_outliner_item.h',
   'types/type_outliner_popover_item.h',
-  'config.h',
   'gapp_asprite.h',
   'gapp_console.h',
-  'gapp_level_editor.h',
+  'gapp_inspector_widgets.h',
+  'gapp_inspector.h',
+  'gapp_scene.h',
   'gapp_project_manager.h',
   'gapp_project_setting.h',
+  'gapp_project_config.h',
   'gapp_script.h',
-  'gapp.h',
+  'gapp_viewport.h',
+  'gapp_browser.h',
   'gapp_common.h',
+  'gapp_widget.h',
+  'gapp.h',
 ]
 
 # Incluyir directorio actual

@@ -234,7 +234,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
 
     gapp_set_project_path(pathDirname(path));
 
-    gapp_append_right_panel(GAPP_RESOURCE_ICON_SCENE, "Untitle~", gapp_scene_new(), TRUE);
+    gapp_append_right_panel(GAPP_RESOURCE_ICON_SCENE, "Untitle~", gapp_scene_new("Untitle"), TRUE);
     gtk_notebook_remove_page(GTK_NOTEBOOK(self->dnotebook), 0);
     gtk_widget_set_visible(GTK_WIDGET(self->vnotebook), TRUE);
     gapp_set_headerbar_button_sensitives(self, TRUE);
@@ -253,7 +253,7 @@ void gapp_append_right_panel(GappResourceIcon icon, const gchar *title, GtkWidge
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
     if (icon != GAPP_RESOURCE_ICON_NONE)
         gtk_box_append(GTK_BOX(box), gtk_image_new_from_paintable(gapp_get_resource_icon(icon)));
-        
+
     gtk_box_append(GTK_BOX(box), gtk_label_new(title));
 
     gapp_widget_notebook_append_page(GTK_NOTEBOOK(gappMain->dnotebook),

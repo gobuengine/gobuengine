@@ -1,9 +1,9 @@
 #include "gapp_inspector.h"
+#include "gapp_inspector_widgets.h"
+#include "pixio/pixio_type.h"
 #include "gapp_common.h"
 #include "gapp_widget.h"
-#include "gapp_inspector_widgets.h"
-
-#include "pixio/pixio_type.h"
+#include "gapp.h"
 
 struct _GappInspector
 {
@@ -51,7 +51,6 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
 
     const ecs_type_t *type = ecs_get_type(world, entity);
 
-    // TODO: add widget based on type
     for (uint32_t i = 0; i < type->count; i++)
     {
         ecs_id_t id = type->array[i];

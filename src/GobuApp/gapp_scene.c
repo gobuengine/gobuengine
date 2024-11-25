@@ -9,29 +9,33 @@
 #include "pixio/pixio.h"
 #include "gapp.h"
 
+enum
+{
+    PROP_0,
+    PROP_SCENENAME,
+    N_PROPS
+};
+
 struct _GappScene
 {
     GtkBox parent_instance;
     GtkWidget *viewport;
     ecs_entity_t root;
+    ecs_world_t *world;
 
     struct _outliner
     {
         GtkWidget *self;
         GtkWidget *popoverBtnAdd;
-        // GtkTreeListModel *tree_model;
         GtkSingleSelection *selection;
-        // GtkWidget *list_view;
         GListStore *store;
     } outliner;
 
-    struct _inspector
-    {
-        GtkWidget *self;
-        GtkWidget *list_view;
-        GListStore *store;
-    } inspector;
+    GtkWidget *inspector;
+    gchar *scene_name;
 };
+
+static GParamSpec *properties[N_PROPS];
 
 // MARK:PRIVATE
 static GListStore *outlinerBuildEntityComponentItem(void);
@@ -41,6 +45,7 @@ static TOutlinerItem *outlinerGetSelectedItem(GtkSingleSelection *selection);
 static void outlinerEntitySelected(GappScene *scene, ecs_entity_t entity, gboolean selected);
 static gboolean outlinerSelectItemByEntity(GappScene *scene, ecs_entity_t entity);
 static ecs_entity_t outlinerCreateEntityWithComponent(GappScene *scene, const gchar *name, const gchar *componentName);
+static void outlinerEcsHookCallback(ecs_iter_t *it);
 
 static void onOutlinerPopoverItemActivated(GtkListView *self, guint position, GtkWidget *popover);
 static void onOutlinerToolbarShowPopover(GtkWidget *widget, GtkWidget *popover);
@@ -51,7 +56,6 @@ static void onOutlinerSetupItemFactory(GtkSignalListItemFactory *factory, GtkLis
 static void onOutlinerBindItemFactory(GtkSignalListItemFactory *factory, GtkListItem *list_item, GappScene *scene);
 static gboolean onOutlinerReceiveBrowserFileDrop(GtkDropTarget *target, const GValue *value, double x, double y, GappScene *scene);
 static void onOutlinerListViewSelectionChanged(GtkMultiSelection *selection, guint position, guint n_items, GappScene *scene);
-static void onOutlinerEcsHooksCallback(ecs_iter_t *it);
 
 static GtkWidget *outlinerToolbarSetupInterfacePopoverMenu(GtkWidget *parent, GappScene *scene);
 static void gappSceneConfigureInterface(GappScene *scene);
@@ -62,30 +66,75 @@ static GtkWidget *setupViewportInterface(GappScene *scene);
 // MARK:BASE CLASS
 G_DEFINE_TYPE(GappScene, gapp_scene, GTK_TYPE_BOX)
 
-static void object_class_dispose(GObject *object)
+static void set_property(GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
+{
+    GappScene *self = GAPP_SCENE(object);
+
+    switch (property_id)
+    {
+    case PROP_SCENENAME:
+        g_free(self->scene_name);
+        self->scene_name = g_value_dup_string(value);
+        break;
+
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+        break;
+    }
+}
+
+static void get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
+{
+    GappScene *self = GAPP_SCENE(object);
+
+    switch (property_id)
+    {
+    case PROP_SCENENAME:
+        g_value_set_string(value, self->scene_name);
+        break;
+
+    default:
+        G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
+        break;
+    }
+}
+
+static void dispose(GObject *object)
 {
     GappScene *scene = GAPP_SCENE(object);
-
     gtk_widget_unparent(scene->outliner.popoverBtnAdd);
-
+    pixio_free(scene->world);
     G_OBJECT_CLASS(gapp_scene_parent_class)->dispose(object);
 }
 
 static void gapp_scene_class_init(GappSceneClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
-    object_class->dispose = object_class_dispose;
+    object_class->dispose = dispose;
+    object_class->set_property = set_property;
+    object_class->get_property = get_property;
+
+    // Registrar las propiedades del objeto
+    properties[PROP_SCENENAME] = g_param_spec_string("scenename", "sceneName", "The file name of the item", NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+
+    g_object_class_install_properties(object_class, N_PROPS, properties);
 }
 
 static void gapp_scene_init(GappScene *scene)
 {
     g_return_if_fail(GAPP_IS_SCENE(scene));
     gappSceneConfigureInterface(scene);
+
+    // Por el momento cada escena o prefab tiene su propio mundo.
+    // En un futuro me gustaria hacer que una escena y prefab sean solo una entidad en un mundo global.
+    scene->world = pixio_world_init();
+    ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .ctx = scene});
+    scene->root = pixio_new_root(scene->world);
 }
 
-GappScene *gapp_scene_new(void)
+GappScene *gapp_scene_new(const gchar *scene_name)
 {
-    return g_object_new(GAPP_TYPE_SCENE, "orientation", GTK_ORIENTATION_VERTICAL, NULL);
+    return g_object_new(GAPP_TYPE_SCENE, "orientation", GTK_ORIENTATION_VERTICAL, "scenename", stringDup(scene_name), NULL);
 }
 
 // MARK: PRIVATE
@@ -123,14 +172,11 @@ static GListStore *outlinerBuildEntityComponentItem(void)
 
 static void outlinerSetEntityName(GappScene *scene, ecs_entity_t entity, const char *name)
 {
-    // Buscar el ítem correspondiente a la entidad
     TOutlinerItem *oitem = outlinerFindItemByEntity(scene->outliner.selection, entity);
     GtkWidget *expander = toutliner_item_get_expander(oitem);
 
-    // Actualizar el nombre del ítem
     toutliner_item_set_name(oitem, name);
 
-    // Actualizar la etiqueta en la interfaz de usuario
     GtkWidget *label = gtk_widget_get_last_child(gtk_tree_expander_get_child(expander));
     gtk_label_set_label(GTK_LABEL(label), name);
 }
@@ -179,8 +225,7 @@ static void outlinerEntitySelected(GappScene *scene, ecs_entity_t entity, gboole
         outlinerSelectItemByEntity(scene, entity);
     }
 
-    // GtkWidget *scene = gtk_widget_get_ancestor(GTK_WIDGET(scene->outliner), GAPP_TYPE_SCENE);
-    // gapp_inspector_set_entity(scene->inspector, GAPP_ECS_WORLD, entity);
+    inspectorSetEntity(scene->inspector, scene->world, entity);
 }
 
 static gboolean outlinerSelectItemByEntity(GappScene *scene, ecs_entity_t entity)
@@ -212,13 +257,53 @@ static ecs_entity_t outlinerCreateEntityWithComponent(GappScene *scene, const gc
 {
     TOutlinerItem *itemSelected = outlinerGetSelectedItem(scene->outliner.selection);
 
-    ecs_entity_t parent = itemSelected ? toutliner_item_get_entity(itemSelected) : pixio_get_root(GAPP_ECS_WORLD);
-    ecs_entity_t entity = pixio_new(GAPP_ECS_WORLD, parent, name);
+    ecs_entity_t parent = itemSelected ? toutliner_item_get_entity(itemSelected) : pixio_get_root(scene->world);
+    ecs_entity_t entity = pixio_new(scene->world, parent, name);
 
     if (strcmp(componentName, "entity.empty") != 0 && strlen(componentName) > 0)
-        pixio_set_component_by_name(GAPP_ECS_WORLD, entity, componentName);
+        pixio_set_component_by_name(scene->world, entity, componentName);
 
     return entity;
+}
+
+static void outlinerEcsHookCallback(ecs_iter_t *it)
+{
+    ecs_world_t *world = it->world;
+    ecs_entity_t event = it->event;
+    GappScene *scene = it->ctx;
+    GtkSingleSelection *outlinerSelect = scene->outliner.selection;
+
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t entity = it->entities[i];
+
+        if (event == EcsOnAdd)
+        {
+            TOutlinerItem *oitem = toutliner_item_new(world, entity);
+            GListStore *store = scene->outliner.store;
+
+            if (pixio_has_parent(world, entity))
+            {
+                ecs_entity_t parent = pixio_get_parent(world, entity);
+                TOutlinerItem *item_find = outlinerFindItemByEntity(outlinerSelect, parent);
+                if (item_find != NULL)
+                {
+                    store = toutliner_item_get_children(item_find);
+                }
+            }
+
+            toutliner_item_set_root(oitem, store);
+            g_list_store_append(store, oitem);
+        }
+        else if (event == EcsOnRemove)
+        {
+            guint position;
+            TOutlinerItem *oitem = outlinerFindItemByEntity(outlinerSelect, entity);
+
+            if (oitem && g_list_store_find(toutliner_item_get_root(oitem), oitem, &position))
+                g_list_store_remove(toutliner_item_get_root(oitem), position);
+        }
+    }
 }
 
 // MARK: SIGNAL
@@ -227,13 +312,13 @@ static void onOutlinerPopoverItemActivated(GtkListView *self, guint position, Gt
     GtkSelectionModel *selection = gtk_list_view_get_model(self);
     TOutlinerPopoverItem *popoverItem = TOUTLINER_POPOVER_ITEM(g_object_ref(g_list_model_get_item(G_LIST_MODEL(selection), position)));
 
-    // GappScene *scene = g_object_get_data(G_OBJECT(popover), "outliner");
+    GappScene *scene = g_object_get_data(G_OBJECT(popover), "scene");
 
-    // const gchar *name = toutliner_popover_item_get_name(popoverItem);
-    // const gchar *component = toutliner_popover_item_get_component(popoverItem);
-    // ecs_entity_t entity = outlinerCreateEntityWithComponent(outliner, name, component);
+    const gchar *name = toutliner_popover_item_get_name(popoverItem);
+    const gchar *component = toutliner_popover_item_get_component(popoverItem);
+    ecs_entity_t entity = outlinerCreateEntityWithComponent(scene, name, component);
 
-    // outlinerSelectItemByEntity(outliner, entity);
+    outlinerSelectItemByEntity(scene, entity);
     gtk_popover_popdown(GTK_POPOVER(popover));
     g_object_unref(popoverItem);
 }
@@ -247,7 +332,7 @@ static void onOutlinerToolbarDuplicate(GtkWidget *widget, GappScene *scene)
 {
     GListModel *model = gtk_multi_selection_get_model(scene->outliner.selection);
     guint n = g_list_model_get_n_items(model);
-    ecs_world_t *world = (GAPP_ECS_WORLD);
+    ecs_world_t *world = (scene->world);
 
     for (gint i = n - 1; i >= 0; i--)
     {
@@ -284,7 +369,7 @@ static void onOutlinerToolbarRemove(GtkWidget *widget, GappScene *scene)
 
             if (g_strcmp0(toutliner_item_get_name(oitem), GAPP_ROOT_STR) != 0)
             {
-                pixio_delete(GAPP_ECS_WORLD, toutliner_item_get_entity(oitem));
+                pixio_delete(scene->world, toutliner_item_get_entity(oitem));
                 isRemove = TRUE;
             }
 
@@ -293,8 +378,8 @@ static void onOutlinerToolbarRemove(GtkWidget *widget, GappScene *scene)
         }
     }
 
-    // if (isRemove)
-    //     outlinerEntitySelected(outliner, ecs_lookup(GAPP_ECS_WORLD, GAPP_ROOT_STR), TRUE);
+    if (isRemove)
+        outlinerEntitySelected(scene, ecs_lookup(scene->world, GAPP_ROOT_STR), TRUE);
 }
 
 static GListModel *onOutlinerCreateChildModelForTreeRow(GObject *item, GappScene *scene)
@@ -387,7 +472,7 @@ static gboolean onOutlinerReceiveBrowserFileDrop(GtkDropTarget *target, const GV
 
         if (fsIsExtension(filename, BROWSER_FILE_IMAGE))
         {
-            // outlinerCreateEntityWithComponent(outliner, fsGetName(filename, TRUE), GAPP_COMPS_SPRITE_RENDER);
+            outlinerCreateEntityWithComponent(scene, fsGetName(filename, TRUE), GAPP_COMPS_SPRITE_RENDER);
         }
 
         return TRUE;
@@ -411,51 +496,11 @@ static void onOutlinerListViewSelectionChanged(GtkMultiSelection *selection, gui
             GtkTreeListRow *row = g_list_model_get_item(model, i);
             TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
 
-            // outlinerEntitySelected(outliner, toutliner_item_get_entity(oitem), TRUE);
+            outlinerEntitySelected(scene, toutliner_item_get_entity(oitem), TRUE);
 
             g_object_unref(row);
         }
     }
-}
-
-static void onOutlinerEcsHooksCallback(ecs_iter_t *it)
-{
-    // ecs_world_t *world = it->world;
-    // ecs_entity_t event = it->event;
-    // GappScene *scene = it->ctx;
-    // GtkSingleSelection *outlinerSelect = gapp_outliner_get_selection(scene->outliner);
-
-    // for (int i = 0; i < it->count; i++)
-    // {
-    //     ecs_entity_t entity = it->entities[i];
-
-    //     if (event == EcsOnAdd)
-    //     {
-    //         TOutlinerItem *oitem = toutliner_item_new(world, entity);
-    //         GListStore *store = gapp_outliner_get_store(scene->outliner);
-
-    //         if (pixio_has_parent(world, entity))
-    //         {
-    //             ecs_entity_t parent = pixio_get_parent(world, entity);
-    //             TOutlinerItem *item_find = outlinerFindItemByEntity(outlinerSelect, parent);
-    //             if (item_find != NULL)
-    //             {
-    //                 store = toutliner_item_get_children(item_find);
-    //             }
-    //         }
-
-    //         toutliner_item_set_root(oitem, store);
-    //         g_list_store_append(store, oitem);
-    //     }
-    //     else if (event == EcsOnRemove)
-    //     {
-    //         guint position;
-    //         TOutlinerItem *oitem = outlinerFindItemByEntity(outlinerSelect, entity);
-
-    //         if (oitem && g_list_store_find(toutliner_item_get_root(oitem), oitem, &position))
-    //             g_list_store_remove(toutliner_item_get_root(oitem), position);
-    //     }
-    // }
 }
 
 static void onOutlinerSetupPopoverMenuItemFactory(GtkSignalListItemFactory *factory, GtkListItem *listitem, gpointer data)
@@ -491,7 +536,7 @@ static GtkWidget *outlinerToolbarSetupInterfacePopoverMenu(GtkWidget *parent, Ga
 
     GtkWidget *popover = gtk_popover_new();
     gtk_widget_set_parent(popover, parent);
-    g_object_set_data(G_OBJECT(popover), "outliner", scene);
+    g_object_set_data(G_OBJECT(popover), "scene", scene);
     gtk_widget_add_css_class(popover, "popover");
 
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
@@ -633,16 +678,17 @@ static void gappSceneConfigureInterface(GappScene *scene)
             gapp_viewport_set_custom_render(scene->viewport, FALSE);
             gtk_paned_set_start_child(GTK_PANED(paned_b), scene->viewport);
 
-            scene->inspector.self = setupInspectorInterface(scene);
-            gtk_widget_set_size_request(scene->inspector.self, 300, -1);
-            gtk_paned_set_end_child(GTK_PANED(paned_b), scene->inspector.self);
+            scene->inspector = setupInspectorInterface(scene);
+            gtk_widget_set_size_request(scene->inspector, 300, -1);
+            gtk_paned_set_end_child(GTK_PANED(paned_b), scene->inspector);
         }
     }
-
-    // Configura los hooks para el componente pixio_transform_t
-    // ecs_set_hooks(GAPP_ECS_WORLD, pixio_transform_t, {.on_add = gapp_s_hooks_callback, .on_remove = gapp_s_hooks_callback, .ctx = self});
-
-    // self->root = pixio_new_root(GAPP_ECS_WORLD);
 }
 
 // MARK: PUBLIC
+
+const gchar *sceneGetName(GappScene *scene)
+{
+    g_return_val_if_fail(GAPP_IS_SCENE(scene), NULL);
+    return scene->scene_name;
+}

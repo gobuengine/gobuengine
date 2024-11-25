@@ -14,6 +14,11 @@ ecs_world_t *pixio_world_init(void)
     return ecs;
 }
 
+void pixio_free(ecs_world_t *ecs)
+{
+    ecs_fini(ecs);
+}
+
 void pixio_world_process(ecs_world_t *ecs, float deltaTime)
 {
     ecs_progress(ecs, deltaTime);

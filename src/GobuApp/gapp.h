@@ -3,7 +3,7 @@
 #include "config.h"
 #include "pixio/pixio.h"
 
-#define GAPP_ECS_WORLD gapp_get_world_instance()
+#define GWORLD gapp_get_world_instance()
 
 typedef enum GappResourceIcon
 {

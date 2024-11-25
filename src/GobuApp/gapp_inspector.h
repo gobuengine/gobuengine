@@ -18,4 +18,3 @@ void inspectorSetEmpty(GappInspector *self, const gchar *message);
 G_END_DECLS
 
 #endif // GAPP_INSPECTOR_H
-

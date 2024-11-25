@@ -3,18 +3,12 @@
 #include "gapp_widget.h"
 #include <gtksourceview/gtksource.h>
 
-// --------------------
-// MARK:BASE CLASS
-// --------------------
-
 enum
 {
     PROP_0,
     PROP_FILENAME,
     N_PROPS
 };
-
-static GParamSpec *properties[N_PROPS];
 
 struct _GappScript
 {
@@ -25,11 +19,20 @@ struct _GappScript
     guint timeout;
 };
 
-static void gapp_script_setup_ui(GappScript *self);
+static GParamSpec *properties[N_PROPS];
 
+// MARK:PRIVATE
+static void gappScriptConfigureInterface(GappScript *self);
+
+static void onScriptReady(GtkTextBuffer *buffer, GappScript *self);
+static void onScriptBufferChanged(GtkTextBuffer *buffer, GappScript *self);
+static gboolean onScriptAutosaveTimeout(GappScript *self);
+static void onScriptToolbarSave(GtkWidget *widget, GappScript *self);
+
+// MARK:BASE CLASS
 G_DEFINE_TYPE(GappScript, gapp_script, GTK_TYPE_BOX)
 
-static void gapp_script_set_property(GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
+static void set_property(GObject *object, guint property_id, const GValue *value, GParamSpec *pspec)
 {
     GappScript *self = GAPP_SCRIPT(object);
 
@@ -46,7 +49,7 @@ static void gapp_script_set_property(GObject *object, guint property_id, const G
     }
 }
 
-static void gapp_script_get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
+static void get_property(GObject *object, guint property_id, GValue *value, GParamSpec *pspec)
 {
     GappScript *self = GAPP_SCRIPT(object);
 
@@ -62,7 +65,7 @@ static void gapp_script_get_property(GObject *object, guint property_id, GValue 
     }
 }
 
-static void gapp_script_dispose(GObject *object)
+static void dispose(GObject *object)
 {
     GappScript *self = GAPP_SCRIPT(object);
 
@@ -75,9 +78,9 @@ static void gapp_script_dispose(GObject *object)
 static void gapp_script_class_init(GappScriptClass *klass)
 {
     GObjectClass *object_class = G_OBJECT_CLASS(klass);
-    object_class->dispose = gapp_script_dispose;
-    object_class->set_property = gapp_script_set_property;
-    object_class->get_property = gapp_script_get_property;
+    object_class->dispose = dispose;
+    object_class->set_property = set_property;
+    object_class->get_property = get_property;
 
     // Registrar las propiedades del objeto
     properties[PROP_FILENAME] = g_param_spec_string("filename", "fileName", "The file name of the item", NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
@@ -87,64 +90,49 @@ static void gapp_script_class_init(GappScriptClass *klass)
 
 static void gapp_script_init(GappScript *self)
 {
-    gapp_script_setup_ui(self);
+    gappScriptConfigureInterface(self);
 }
 
-// --------------------
-// MARK: FUNCTION
-// --------------------
-
-void gapp_script_fn_save_file(GappScript *self)
+GappScript *gapp_script_new(const gchar *filename)
 {
-    GtkSourceBuffer *buffer = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->view_source)));
-    GtkTextIter start, end;
-    gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(buffer), &start, &end);
-
-    gchar *text = gtk_text_buffer_get_text(GTK_TEXT_BUFFER(buffer), &start, &end, FALSE);
-
-    g_file_set_contents(self->filename, text, -1, NULL);
-    g_free(text);
-
-    g_print("File successfully saved to %s", self->filename);
+    return g_object_new(GAPP_TYPE_SCRIPT,
+                        "orientation", GTK_ORIENTATION_VERTICAL,
+                        "filename", filename,
+                        NULL);
 }
 
-// --------------------
 // MARK: SIGNALS
-// --------------------
-
-static void gapp_script_s_ready(GtkTextBuffer *buffer, GappScript *self)
+static void onScriptReady(GtkTextBuffer *buffer, GappScript *self)
 {
-    const gchar *filename = gapp_script_get_filename(self);
+    const gchar *filename = scriptGetFilename(self);
     if (self->filename)
-        gapp_script_load_file(self, self->filename);
+        scriptLoadFile(self, self->filename);
 }
 
-static void gapp_script_s_buffer_changed(GtkTextBuffer *buffer, GappScript *self)
+static void onScriptBufferChanged(GtkTextBuffer *buffer, GappScript *self)
 {
     self->modified = TRUE;
 }
 
-static gboolean gapp_script_s_autosave_timeout(GappScript *self)
+static gboolean onScriptAutosaveTimeout(GappScript *self)
 {
     if (self->modified)
     {
-        gapp_script_fn_save_file(self);
+        scriptSaveFile(self);
         self->modified = FALSE;
     }
 
     return TRUE;
 }
 
-static void gapp_script_s_toolbar_save_clicked(GtkWidget *widget, GappScript *self)
+static void onScriptToolbarSave(GtkWidget *widget, GappScript *self)
 {
-    gapp_script_fn_save_file(self);
+    scriptSaveFile(self);
     self->modified = FALSE;
 }
 
-// --------------------
-// MARK: BEGIN UI
-// --------------------
-static void gapp_script_setup_ui(GappScript *self)
+// MARK: UI
+static void gappScriptConfigureInterface(GappScript *self)
 {
     GtkSourceStyleSchemeManager *scheme_manager = gtk_source_style_scheme_manager_get_default();
     GtkSourceStyleScheme *scheme = gtk_source_style_scheme_manager_get_scheme(scheme_manager, "Adwaita-dark");
@@ -157,14 +145,14 @@ static void gapp_script_setup_ui(GappScript *self)
     {
         GtkWidget *item;
 
-        item = gapp_widget_button_new_icon_with_label("edit-select-all-symbolic", "Build");
-        gtk_box_append(GTK_BOX(toolbar), item);
-        gtk_widget_set_tooltip_text(item, "Build script");
+        // item = gapp_widget_button_new_icon_with_label("edit-select-all-symbolic", "Build");
+        // gtk_box_append(GTK_BOX(toolbar), item);
+        // gtk_widget_set_tooltip_text(item, "Build script");
 
         item = gapp_widget_button_new_icon_with_label("media-removable-symbolic", "Save");
         gtk_box_append(GTK_BOX(toolbar), item);
         gtk_widget_set_tooltip_text(item, "Save script");
-        g_signal_connect(item, "clicked", G_CALLBACK(gapp_script_s_toolbar_save_clicked), self);
+        g_signal_connect(item, "clicked", G_CALLBACK(onScriptToolbarSave), self);
     }
 
     gtk_box_append(self, gapp_widget_separator_h());
@@ -220,36 +208,27 @@ static void gapp_script_setup_ui(GappScript *self)
         gtk_source_buffer_set_language(self->buffer, language);
         gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), self->view_source);
 
-        g_signal_connect(self->buffer, "changed", G_CALLBACK(gapp_script_s_buffer_changed), self);
-        g_signal_connect(self, "realize", G_CALLBACK(gapp_script_s_ready), self);
+        g_signal_connect(self->buffer, "changed", G_CALLBACK(onScriptBufferChanged), self);
+        g_signal_connect(self, "realize", G_CALLBACK(onScriptReady), self);
     }
 }
 
-// -----------------
-// MARK:BEGIN API
-// -----------------
-
-/**
- * Crea una nueva instancia de GappScript.
- *
- * @param filename Ruta del archivo a cargar (puede ser NULL).
- * @return Un nuevo objeto GappScript.
- */
-GappScript *gapp_script_new(const gchar *filename)
+// MARK: PUBLIC
+void scriptSaveFile(GappScript *self)
 {
-    return g_object_new(GAPP_TYPE_SCRIPT,
-                        "orientation", GTK_ORIENTATION_VERTICAL,
-                        "filename", filename,
-                        NULL);
+    GtkSourceBuffer *buffer = GTK_SOURCE_BUFFER(gtk_text_view_get_buffer(GTK_TEXT_VIEW(self->view_source)));
+    GtkTextIter start, end;
+    gtk_text_buffer_get_bounds(GTK_TEXT_BUFFER(buffer), &start, &end);
+
+    gchar *text = gtk_text_buffer_get_text(GTK_TEXT_BUFFER(buffer), &start, &end, FALSE);
+
+    g_file_set_contents(self->filename, text, -1, NULL);
+    g_free(text);
+
+    g_print("File successfully saved to %s", self->filename);
 }
 
-/**
- * Carga el contenido de un archivo en el buffer de texto del GappScript.
- *
- * @param self Puntero al objeto GappScript.
- * @param filename Ruta del archivo a cargar.
- */
-void gapp_script_load_file(GappScript *self, const gchar *filename)
+void scriptLoadFile(GappScript *self, const gchar *filename)
 {
     g_return_if_fail(GAPP_IS_SCRIPT(self));
     g_return_if_fail(filename != NULL);
@@ -272,10 +251,10 @@ void gapp_script_load_file(GappScript *self, const gchar *filename)
     if (self->timeout > 0)
         g_source_remove(self->timeout);
 
-    // self->timeout = g_timeout_add(5000, gapp_script_s_autosave_timeout, self);
+    // self->timeout = g_timeout_add(5000, onScriptAutosaveTimeout, self);
 }
 
-const gchar *gapp_script_get_filename(GappScript *self)
+const gchar *scriptGetFilename(GappScript *self)
 {
     g_return_val_if_fail(GAPP_IS_SCRIPT(self), NULL);
     return self->filename;

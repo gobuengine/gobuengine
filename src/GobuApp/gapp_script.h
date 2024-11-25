@@ -10,8 +10,9 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(GappScript, gapp_script, GAPP, SCRIPT, GtkBox)
 
 GappScript *gapp_script_new(const gchar *filename);
-void gapp_script_load_file(GappScript *self, const gchar *filename);
-const gchar *gapp_script_get_filename(GappScript *self);
+void scriptLoadFile(GappScript *self, const gchar *filename);
+const gchar *scriptGetFilename(GappScript *self);
+void scriptSaveFile(GappScript *self);
 
 G_END_DECLS
 
