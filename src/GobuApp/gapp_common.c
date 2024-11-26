@@ -53,10 +53,10 @@ const char *pathUserConfigDir(void)
  */
 char *pathRelativeContent(const char *path)
 {
-    char *npath = strstr(path, GOBU_PROJECT_CONTENT);
+    char *npath = strstr(path, GAPP_PROJECT_CONTENT);
     if (npath != NULL)
     {
-        npath += strlen(GOBU_PROJECT_CONTENT);
+        npath += strlen(GAPP_PROJECT_CONTENT);
     }
     else
     {

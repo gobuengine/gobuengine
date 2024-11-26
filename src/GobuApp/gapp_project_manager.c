@@ -68,7 +68,7 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
         const char *item_path = binn_object_str(&value, "path");
         if (item_path != NULL)
         {
-            g_autofree gchar *project_file = pathJoin(item_path, GAPP_GAME_FILE_PROJECT, NULL);
+            g_autofree gchar *project_file = pathJoin(item_path, GAPP_PROJECT_MANAGER_FILE, NULL);
             if (project_file != NULL && fsExist(project_file))
             {
                 if (binn_list_add_object(list_new, &value) == FALSE)
@@ -83,7 +83,7 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
         }
     }
 
-    gchar *config_file = pathJoin(g_get_user_config_dir(), "GOBU", GOBU_FILE_PROJECTS_NAME, NULL);
+    gchar *config_file = pathJoin(g_get_user_config_dir(), "GOBU", GAPP_FILE_PROJECTS_NAME, NULL);
     binn_save_to_file(list_new, config_file);
 
     return list_new;
@@ -92,7 +92,7 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
 static binn *gobu_fn_register_load_projects(void)
 {
     binn *list = NULL;
-    gchar *config_file = pathJoin(g_get_user_config_dir(), "GOBU", GOBU_FILE_PROJECTS_NAME, NULL);
+    gchar *config_file = pathJoin(g_get_user_config_dir(), "GOBU", GAPP_FILE_PROJECTS_NAME, NULL);
 
     if (fsExist(config_file))
     {
@@ -123,7 +123,7 @@ static gboolean gobu_fn_register_project(const gchar *path)
     binn *list = binn_list();
     gboolean success = FALSE;
     gchar *config_dir = pathJoin(g_get_user_config_dir(), "GOBU", NULL);
-    gchar *config_file = pathJoin(config_dir, GOBU_FILE_PROJECTS_NAME, NULL);
+    gchar *config_file = pathJoin(config_dir, GAPP_FILE_PROJECTS_NAME, NULL);
 
     // Asegurar que el directorio de configuración existe
     if (!pathCreateNew(config_dir))
@@ -177,8 +177,8 @@ static gboolean gobu_fn_create_project(const gchar *name, const gchar *path)
 
     if (!fsExist(project_dir))
     {
-        g_autofree gchar *content_dir = pathJoin(project_dir, "Data", "Content", NULL);
-        g_autofree gchar *project_file = pathJoin(project_dir, GAPP_GAME_FILE_PROJECT, NULL);
+        g_autofree gchar *content_dir = pathJoin(project_dir, "Game", "Content", NULL);
+        g_autofree gchar *project_file = pathJoin(project_dir, GAPP_PROJECT_MANAGER_FILE, NULL);
 
         // Crear directorios
         if (pathCreateNew(project_dir) &&
@@ -292,7 +292,7 @@ static GtkStringList *gobu_fn_grid_view_list_project_model(void)
             if (item_path != NULL)
             {
                 g_autofree gchar *content_path = pathJoin(item_path, "Content", NULL);
-                // g_autofree gchar *project_file = pathJoin(item_path, GAPP_GAME_FILE_PROJECT, NULL);
+                // g_autofree gchar *project_file = pathJoin(item_path, GAPP_PROJECT_MANAGER_FILE, NULL);
 
                 gtk_string_list_append(sl, content_path);
                 // g_free(content_path);
@@ -354,14 +354,14 @@ static void gobu_s_item_factory_bind_item(GtkListItemFactory *factory, GtkListIt
     const char *path_project = g_path_get_dirname(gtk_string_object_get_string(obj));
 
     // Configurar la imagen
-    gchar *thumbnail_path = pathJoin(path_project, "Saved", "thumbnail.png", NULL);
+    gchar *thumbnail_path = pathJoin(path_project, GAPP_PROJECT_MANAGER_PREVIEW, NULL);
     if (fsExist(thumbnail_path))
     {
         gtk_image_set_from_file(GTK_IMAGE(image), thumbnail_path);
     }
     else
     {
-        gtk_image_set_from_icon_name(GTK_IMAGE(image), "image-missing-symbolic");
+        gtk_image_set_from_icon_name(GTK_IMAGE(image), GAPP_PROJECT_MANAGER_ICON);
     }
     g_free(thumbnail_path);
 
@@ -407,7 +407,7 @@ static void gobu_s_create_project_clicked(GtkWidget *button, GobuProjectManager 
     if (is_created)
     {
         g_debug("Proyecto creado exitosamente");
-        gobu_fn_open_editor_main(pathJoin(path, name, GAPP_GAME_FILE_PROJECT, NULL), self);
+        gobu_fn_open_editor_main(pathJoin(path, name, GAPP_PROJECT_MANAGER_FILE, NULL), self);
     }
     else
     {
@@ -428,7 +428,7 @@ static void gobu_s_list_project_activated(GtkGridView *grid_view, guint position
     g_return_if_fail(GTK_IS_STRING_OBJECT(obj));
     const char *path_project = g_path_get_dirname(gtk_string_object_get_string(obj));
 
-    gobu_fn_open_editor_main(pathJoin(path_project, GAPP_GAME_FILE_PROJECT, NULL), self);
+    gobu_fn_open_editor_main(pathJoin(path_project, GAPP_PROJECT_MANAGER_FILE, NULL), self);
 }
 
 static void gobu_s_open_other_project_clicked(GtkWidget *button, GobuProjectManager *self)

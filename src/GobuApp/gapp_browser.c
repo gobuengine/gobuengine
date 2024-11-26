@@ -195,15 +195,15 @@ static void browserSetIconForFileInfo(GtkImage *icon, GFileInfo *fileInfo)
 {
     const char *ext_file = g_file_info_get_name(fileInfo);
 
-    if (fsIsExtension(ext_file, BROWSER_FILE_IMAGE) || fsIsExtension(ext_file, BROWSER_FILE_IMAGE2))
+    if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_IMAGE) || fsIsExtension(ext_file, GAPP_BROWSER_FILE_IMAGE2))
         gtk_image_set_from_file(icon, g_file_get_path(browserCreateFileFromFileInfo(fileInfo)));
-    else if (fsIsExtension(ext_file, BROWSER_FILE_PREFAB))
+    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_PREFAB))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_PREFAB));
-    else if (fsIsExtension(ext_file, BROWSER_FILE_SCENE))
+    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_SCENE))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCENE));
-    else if (fsIsExtension(ext_file, BROWSER_FILE_SCRIPT))
+    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_SCRIPT))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCRIPT));
-    else if (fsIsExtension(ext_file, BROWSER_FILE_ANIMATION))
+    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_ANIMATION))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_ANIM2D));
     else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileInfo));
@@ -325,21 +325,21 @@ static void onBrowserCreateFolderInDialog(GtkWidget *button, GappWidgetDialogEnt
 
 static void onBrowserCreateSceneInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
-    const char *filename = browserGetSelectedPathFromDialog(dialog, BROWSER_FILE_SCENE);
+    const char *filename = browserGetSelectedPathFromDialog(dialog, GAPP_BROWSER_FILE_SCENE);
     if (filename != NULL)
         g_file_set_contents(filename, "{}", -1, NULL);
 }
 
 static void onBrowserCreatePrefabInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
-    const char *filename = browserGetSelectedPathFromDialog(dialog, BROWSER_FILE_PREFAB);
+    const char *filename = browserGetSelectedPathFromDialog(dialog, GAPP_BROWSER_FILE_PREFAB);
     if (filename != NULL)
         g_file_set_contents(filename, "{}", -1, NULL);
 }
 
 static void onBrowserCreateScriptInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
-    const char *filename = browserGetSelectedPathFromDialog(dialog, BROWSER_FILE_SCRIPT);
+    const char *filename = browserGetSelectedPathFromDialog(dialog, GAPP_BROWSER_FILE_SCRIPT);
     if (filename != NULL)
         g_file_set_contents(filename, "", -1, NULL);
 }
@@ -417,16 +417,16 @@ static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowse
     const char *filename = g_file_info_get_name(info);
     const char *name = fsGetName(filename, TRUE);
 
-    if (fsIsExtension(filename, BROWSER_FILE_SCRIPT))
+    if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCRIPT))
     {
         widget_module = gapp_script_new(g_file_get_path(file));
         icon = GAPP_RESOURCE_ICON_SCRIPT;
     }
-    else if (fsIsExtension(filename, BROWSER_FILE_SCENE))
+    else if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCENE))
     {
         widget_module = gapp_scene_new(name);
     }
-    else if (fsIsExtension(filename, BROWSER_FILE_PREFAB))
+    else if (fsIsExtension(filename, GAPP_BROWSER_FILE_PREFAB))
     {
         widget_module = gapp_scene_new(name);
         icon = GAPP_RESOURCE_ICON_PREFAB;

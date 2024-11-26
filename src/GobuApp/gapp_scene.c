@@ -29,6 +29,8 @@ struct _GappScene
         GtkWidget *popoverBtnAdd;
         GtkSingleSelection *selection;
         GListStore *store;
+        GtkWidget *toolbar_btn_duplicate;
+        GtkWidget *toolbar_btn_remove;
     } outliner;
 
     GtkWidget *inspector;
@@ -470,7 +472,7 @@ static gboolean onOutlinerReceiveBrowserFileDrop(GtkDropTarget *target, const GV
         gchar *pathfile = g_file_get_path(file);
         const gchar *filename = g_file_info_get_name(file_info);
 
-        if (fsIsExtension(filename, BROWSER_FILE_IMAGE))
+        if (fsIsExtension(filename, GAPP_BROWSER_FILE_IMAGE))
         {
             outlinerCreateEntityWithComponent(scene, fsGetName(filename, TRUE), GAPP_COMPS_SPRITE_RENDER);
         }
@@ -497,6 +499,11 @@ static void onOutlinerListViewSelectionChanged(GtkMultiSelection *selection, gui
             TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
 
             outlinerEntitySelected(scene, toutliner_item_get_entity(oitem), TRUE);
+
+            // Si seleccionamos el Root, no podemos borrar ni duplicar.
+            bool isRoot = g_strcmp0(toutliner_item_get_name(oitem), GAPP_ROOT_STR) != 0;
+            gtk_widget_set_sensitive(scene->outliner.toolbar_btn_duplicate, isRoot);
+            gtk_widget_set_sensitive(scene->outliner.toolbar_btn_remove, isRoot);
 
             g_object_unref(row);
         }
@@ -595,15 +602,17 @@ static GtkWidget *setupOutlinerInterface(GappScene *scene)
         g_signal_connect(item, "clicked", G_CALLBACK(onOutlinerToolbarShowPopover), scene->outliner.popoverBtnAdd);
     }
 
-    item = gapp_widget_button_new_icon_with_label("edit-copy-symbolic", NULL);
-    gtk_widget_set_size_request(item, -1, 20);
-    gtk_box_append(GTK_BOX(toolbar), item);
-    g_signal_connect(item, "clicked", G_CALLBACK(onOutlinerToolbarDuplicate), scene);
+    scene->outliner.toolbar_btn_duplicate = gapp_widget_button_new_icon_with_label("edit-copy-symbolic", NULL);
+    gtk_widget_set_size_request(scene->outliner.toolbar_btn_duplicate, -1, 20);
+    gtk_box_append(GTK_BOX(toolbar), scene->outliner.toolbar_btn_duplicate);
+    gtk_widget_set_sensitive(scene->outliner.toolbar_btn_duplicate, FALSE);
+    g_signal_connect(scene->outliner.toolbar_btn_duplicate, "clicked", G_CALLBACK(onOutlinerToolbarDuplicate), scene);
 
-    item = gapp_widget_button_new_icon_with_label("user-trash-symbolic", NULL);
-    gtk_widget_set_size_request(item, -1, 20);
-    gtk_box_append(GTK_BOX(toolbar), item);
-    g_signal_connect(item, "clicked", G_CALLBACK(onOutlinerToolbarRemove), scene);
+    scene->outliner.toolbar_btn_remove = gapp_widget_button_new_icon_with_label("user-trash-symbolic", NULL);
+    gtk_widget_set_size_request(scene->outliner.toolbar_btn_remove, -1, 20);
+    gtk_box_append(GTK_BOX(toolbar), scene->outliner.toolbar_btn_remove);
+    gtk_widget_set_sensitive(scene->outliner.toolbar_btn_remove, FALSE);
+    g_signal_connect(scene->outliner.toolbar_btn_remove, "clicked", G_CALLBACK(onOutlinerToolbarRemove), scene);
 
     gtk_box_append(box, gapp_widget_separator_h());
 

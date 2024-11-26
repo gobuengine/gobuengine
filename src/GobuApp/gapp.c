@@ -69,7 +69,7 @@ static void gapp_main_activate(GappMain *app)
     app->ricons[GAPP_RESOURCE_ICON_SCRIPT] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/script.png");
     app->ricons[GAPP_RESOURCE_ICON_ANIM2D] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/anim2d.png");
 
-    app->title_window = gtk_label_new(GOBU_VERSION_STR);
+    app->title_window = gtk_label_new(GAPP_VERSION_STR);
 
     app->window = gtk_window_new();
     gtk_window_set_application(GTK_WINDOW(app->window), GTK_APPLICATION(app));
@@ -240,7 +240,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
     gapp_set_headerbar_button_sensitives(self, TRUE);
     browserSetFolderContent(GAPP_BROWSER(self->browser));
 
-    g_autofree gchar *title = g_strdup_printf("%s - %s", GOBU_VERSION_STR, gapp_project_config_get_name(gappMain->config));
+    g_autofree gchar *title = g_strdup_printf("%s - %s", GAPP_VERSION_STR, gapp_project_config_get_name(gappMain->config));
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
 
