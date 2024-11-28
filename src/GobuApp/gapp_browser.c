@@ -1,4 +1,5 @@
 #include "gapp_browser.h"
+#include "gapp_browser_filete.h"
 #include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp_scene.h"
@@ -327,14 +328,14 @@ static void onBrowserCreateSceneInDialog(GtkWidget *button, GappWidgetDialogEntr
 {
     const char *filename = browserGetSelectedPathFromDialog(dialog, GAPP_BROWSER_FILE_SCENE);
     if (filename != NULL)
-        g_file_set_contents(filename, "{}", -1, NULL);
+        g_file_set_contents(filename, TEMPLATE_SCENE_STR, -1, NULL);
 }
 
 static void onBrowserCreatePrefabInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
     const char *filename = browserGetSelectedPathFromDialog(dialog, GAPP_BROWSER_FILE_PREFAB);
     if (filename != NULL)
-        g_file_set_contents(filename, "{}", -1, NULL);
+        g_file_set_contents(filename, TEMPLATE_PREFAB_STR, -1, NULL);
 }
 
 static void onBrowserCreateScriptInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
@@ -415,25 +416,31 @@ static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowse
     GFile *file = browserCreateFileFromFileInfo(info);
 
     const char *filename = g_file_info_get_name(info);
-    const char *name = fsGetName(filename, TRUE);
+    char *name = fsGetName(filename, TRUE);
+    char *pathFile = g_file_get_path(file);
 
     if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCRIPT))
     {
-        widget_module = gapp_script_new(g_file_get_path(file));
+        widget_module = gapp_script_new(pathFile);
         icon = GAPP_RESOURCE_ICON_SCRIPT;
     }
     else if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCENE))
     {
-        widget_module = gapp_scene_new(name);
+        widget_module = gapp_scene_new(pathFile);
+        sceneOpen(widget_module);
     }
     else if (fsIsExtension(filename, GAPP_BROWSER_FILE_PREFAB))
     {
-        widget_module = gapp_scene_new(name);
+        widget_module = gapp_scene_new(pathFile);
+        sceneOpen(widget_module);
         icon = GAPP_RESOURCE_ICON_PREFAB;
     }
 
     if (widget_module != NULL)
         gapp_append_right_panel(icon, name, widget_module, TRUE);
+
+    g_free(pathFile);
+    g_free(name);
 }
 
 static void onBrowserViewFileSetupFactory(GtkListItemFactory *factory, GtkListItem *list_item, gpointer data)

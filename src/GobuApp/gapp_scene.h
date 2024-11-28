@@ -10,7 +10,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(GappScene, gapp_scene, GAPP, SCENE, GtkBox)
 
 GappScene *gapp_scene_new(const gchar *scene_name);
-const gchar *sceneGetName(GappScene *scene);
+const gchar *sceneGetFilename(GappScene *scene);
+void sceneOpen(GappScene *scene);
 
 G_END_DECLS
 

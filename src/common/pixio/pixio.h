@@ -8,22 +8,20 @@
 #include "flecs.h"
 #include "pixio_type.h"
 
-typedef struct pixio_entity
-{
-    ecs_world_t *world;
-    ecs_entity_t entity;
-} pixio_entity;
+#define PIXIO_ENTITY_ROOT_NAME "Root"
 
 ecs_world_t *pixio_world_init(void);
 void pixio_free(ecs_world_t *ecs);
 void pixio_world_process(ecs_world_t *ecs, float deltaTime);
 
-pixio_entity *pixio_entity_new(ecs_world_t *world, ecs_entity_t entity);
-void pixio_entity_free(pixio_entity *pixio_entity);
+char *pixio_world_serialize(ecs_world_t *world);
+char *pixio_entity_stringify(ecs_world_t *world, ecs_entity_t entity);
+void pixio_entity_parse(ecs_world_t *world, ecs_entity_t entity, const char *json);
 
-ecs_entity_t pixio_new(ecs_world_t *world, ecs_entity_t parent, const char *name);
+ecs_entity_t pixio_entity_new_low(ecs_world_t *world, ecs_entity_t parent);
+ecs_entity_t pixio_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name);
+ecs_entity_t pixio_entity_new_root(ecs_world_t *world);
 
-ecs_entity_t pixio_new_root(ecs_world_t *world);
 ecs_entity_t pixio_get_root(ecs_world_t *world);
 ecs_entity_t pixio_find_by_name(ecs_world_t *world, const char *name);
 

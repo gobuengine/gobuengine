@@ -431,11 +431,11 @@ bool fsIsExtension(const char *filename, const char *ext)
  * @param length La longitud máxima del contenido a leer.
  * @return Un puntero a la cadena de caracteres que contiene el contenido del archivo.
  */
-char *fsRead(const char *filename, gsize *length)
+char *fsRead(const char *filename)
 {
     GError *error = NULL;
     gchar *contents = NULL;
-    *length = 0;
+    gsize *length = 0;
 
     if (g_file_get_contents(filename, &contents, length, &error) == FALSE)
     {

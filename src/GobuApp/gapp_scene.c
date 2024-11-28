@@ -34,7 +34,7 @@ struct _GappScene
     } outliner;
 
     GtkWidget *inspector;
-    gchar *scene_name;
+    gchar *filename;
 };
 
 static GParamSpec *properties[N_PROPS];
@@ -58,6 +58,8 @@ static void onOutlinerSetupItemFactory(GtkSignalListItemFactory *factory, GtkLis
 static void onOutlinerBindItemFactory(GtkSignalListItemFactory *factory, GtkListItem *list_item, GappScene *scene);
 static gboolean onOutlinerReceiveBrowserFileDrop(GtkDropTarget *target, const GValue *value, double x, double y, GappScene *scene);
 static void onOutlinerListViewSelectionChanged(GtkMultiSelection *selection, guint position, guint n_items, GappScene *scene);
+static void onOutlinerSetupPopoverMenuItemFactory(GtkSignalListItemFactory *factory, GtkListItem *listitem, gpointer data);
+static void onOutlinerBindPopoverMenuItemFactory(GtkSignalListItemFactory *factory, GtkListItem *listitem, gpointer data);
 
 static GtkWidget *outlinerToolbarSetupInterfacePopoverMenu(GtkWidget *parent, GappScene *scene);
 static void gappSceneConfigureInterface(GappScene *scene);
@@ -75,8 +77,8 @@ static void set_property(GObject *object, guint property_id, const GValue *value
     switch (property_id)
     {
     case PROP_SCENENAME:
-        g_free(self->scene_name);
-        self->scene_name = g_value_dup_string(value);
+        g_free(self->filename);
+        self->filename = g_value_dup_string(value);
         break;
 
     default:
@@ -92,7 +94,7 @@ static void get_property(GObject *object, guint property_id, GValue *value, GPar
     switch (property_id)
     {
     case PROP_SCENENAME:
-        g_value_set_string(value, self->scene_name);
+        g_value_set_string(value, self->filename);
         break;
 
     default:
@@ -117,7 +119,7 @@ static void gapp_scene_class_init(GappSceneClass *klass)
     object_class->get_property = get_property;
 
     // Registrar las propiedades del objeto
-    properties[PROP_SCENENAME] = g_param_spec_string("scenename", "sceneName", "The file name of the item", NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
+    properties[PROP_SCENENAME] = g_param_spec_string("filename", "fileName", "The file name of the item", NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY);
 
     g_object_class_install_properties(object_class, N_PROPS, properties);
 }
@@ -131,12 +133,12 @@ static void gapp_scene_init(GappScene *scene)
     // En un futuro me gustaria hacer que una escena y prefab sean solo una entidad en un mundo global.
     scene->world = pixio_world_init();
     ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .ctx = scene});
-    scene->root = pixio_new_root(scene->world);
+    scene->root = pixio_entity_new_root(scene->world);
 }
 
-GappScene *gapp_scene_new(const gchar *scene_name)
+GappScene *gapp_scene_new(const gchar *filename)
 {
-    return g_object_new(GAPP_TYPE_SCENE, "orientation", GTK_ORIENTATION_VERTICAL, "scenename", stringDup(scene_name), NULL);
+    return g_object_new(GAPP_TYPE_SCENE, "orientation", GTK_ORIENTATION_VERTICAL, "filename", stringDup(filename), NULL);
 }
 
 // MARK: PRIVATE
@@ -260,7 +262,7 @@ static ecs_entity_t outlinerCreateEntityWithComponent(GappScene *scene, const gc
     TOutlinerItem *itemSelected = outlinerGetSelectedItem(scene->outliner.selection);
 
     ecs_entity_t parent = itemSelected ? toutliner_item_get_entity(itemSelected) : pixio_get_root(scene->world);
-    ecs_entity_t entity = pixio_new(scene->world, parent, name);
+    ecs_entity_t entity = pixio_entity_new(scene->world, parent, name);
 
     if (strcmp(componentName, "entity.empty") != 0 && strlen(componentName) > 0)
         pixio_set_component_by_name(scene->world, entity, componentName);
@@ -489,9 +491,8 @@ static void onOutlinerListViewSelectionChanged(GtkMultiSelection *selection, gui
 
     GListModel *model = gtk_multi_selection_get_model(selection);
     GtkSelectionModel *selection_model = GTK_SELECTION_MODEL(selection);
-    guint total_items = g_list_model_get_n_items(model);
 
-    for (guint i = 0; i < total_items; i++)
+    for (guint i = 0; i < g_list_model_get_n_items(model); i++)
     {
         if (gtk_selection_model_is_selected(selection_model, i))
         {
@@ -532,6 +533,15 @@ static void onOutlinerBindPopoverMenuItemFactory(GtkSignalListItemFactory *facto
     /* Actualizar el icono y la etiqueta con la información del elemento */
     gtk_image_set_from_icon_name(GTK_IMAGE(icon), toutliner_popover_item_get_icon_name(popoverItem));
     gtk_label_set_label(GTK_LABEL(label), toutliner_popover_item_get_name(popoverItem));
+}
+
+static void onSceneToolbarSave(GtkWidget *widget, GappScene *scene)
+{
+    const gchar *filename = sceneGetFilename(scene);
+    // char *json = pixio_world_serialize(scene->world);
+    char *json = pixio_entity_stringify(scene->world, scene->root);
+    fsWrite(filename, json);
+    ecs_os_free(json);
 }
 
 // MARK: UI
@@ -658,12 +668,27 @@ static GtkWidget *setupInspectorInterface(GappScene *scene)
 
 static GtkWidget *setupViewportInterface(GappScene *scene)
 {
+    GtkWidget *item;
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+
+    GtkWidget *toolbar = gapp_widget_toolbar_new();
+    gtk_box_append(box, toolbar);
+    {
+        item = gapp_widget_button_new_icon_with_label("media-removable-symbolic", "Save");
+        gtk_widget_set_tooltip_text(item, "Save");
+        gtk_box_append(GTK_BOX(toolbar), item);
+        g_signal_connect(item, "clicked", G_CALLBACK(onSceneToolbarSave), scene);
+    }
+
     GtkWidget *viewport = gapp_viewport_new();
+    gapp_viewport_set_custom_render(viewport, FALSE);
+    gtk_widget_set_vexpand(viewport, TRUE);
+    gtk_box_append(box, viewport);
 
     // g_signal_connect(viewport, "viewport-ready", G_CALLBACK(gapp_level_viewport_s_ready), self);
     // g_signal_connect(viewport, "viewport-render", G_CALLBACK(gapp_level_viewport_s_render), self);
 
-    return viewport;
+    return box;
 }
 
 static void gappSceneConfigureInterface(GappScene *scene)
@@ -684,7 +709,6 @@ static void gappSceneConfigureInterface(GappScene *scene)
         gtk_paned_set_end_child(GTK_PANED(paned), paned_b);
         {
             scene->viewport = setupViewportInterface(scene);
-            gapp_viewport_set_custom_render(scene->viewport, FALSE);
             gtk_paned_set_start_child(GTK_PANED(paned_b), scene->viewport);
 
             scene->inspector = setupInspectorInterface(scene);
@@ -696,8 +720,20 @@ static void gappSceneConfigureInterface(GappScene *scene)
 
 // MARK: PUBLIC
 
-const gchar *sceneGetName(GappScene *scene)
+const gchar *sceneGetFilename(GappScene *scene)
 {
     g_return_val_if_fail(GAPP_IS_SCENE(scene), NULL);
-    return scene->scene_name;
+    return stringDup(scene->filename);
+}
+
+void sceneOpen(GappScene *scene)
+{
+    g_return_if_fail(GAPP_IS_SCENE(scene));
+
+    char *buffer_scene = fsRead(sceneGetFilename(scene));
+    if (buffer_scene != NULL)
+    {
+        pixio_entity_parse(scene->world, scene->root, buffer_scene);
+        g_free(buffer_scene);
+    }
 }

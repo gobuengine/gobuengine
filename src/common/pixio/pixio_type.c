@@ -88,10 +88,10 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ecs_struct(world, {
         .entity = ecs_id(pixio_color_t),
         .members = {
-            {.name = "r", .type = ecs_id(ecs_char_t)},
-            {.name = "g", .type = ecs_id(ecs_char_t)},
-            {.name = "b", .type = ecs_id(ecs_char_t)},
-            {.name = "a", .type = ecs_id(ecs_char_t)},
+            {.name = "r", .type = ecs_id(ecs_byte_t)},
+            {.name = "g", .type = ecs_id(ecs_byte_t)},
+            {.name = "b", .type = ecs_id(ecs_byte_t)},
+            {.name = "a", .type = ecs_id(ecs_byte_t)},
         },
     });
 

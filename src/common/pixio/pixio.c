@@ -2,15 +2,13 @@
 #include "pixio_type.h"
 #include "pixio_render.h"
 
+static ecs_entity_to_json_desc_t desc_entity_json_init = ECS_ENTITY_TO_JSON_INIT;
+
 ecs_world_t *pixio_world_init(void)
 {
     ecs_world_t *ecs = ecs_init();
-
     ECS_IMPORT(ecs, pixio_rendering_module);
-
-    // render
     ecs_singleton_set(ecs, pixio_render_t, {.viewport = {800, 600}, .clear_color = WHITE, .viewport_lineColor = SKYBLUE, .grid_size = 64, .grid_enabled = true});
-
     return ecs;
 }
 
@@ -24,47 +22,60 @@ void pixio_world_process(ecs_world_t *ecs, float deltaTime)
     ecs_progress(ecs, deltaTime);
 }
 
-// Creates a new pixio_entity_t structure for a given entity in the ECS world.
-// The caller is responsible for freeing the returned structure using pixio_entity_free().
-pixio_entity *pixio_entity_new(ecs_world_t *world, ecs_entity_t entity)
+char *pixio_world_serialize(ecs_world_t *world)
 {
-    pixio_entity *pentity = g_new0(pixio_entity, 1);
-    pentity->entity = entity;
-    pentity->world = world;
-    return pentity;
+    return ecs_world_to_json(world, NULL);
 }
 
-// Frees a pixio_entity_t structure and its associated resources.
-void pixio_entity_free(pixio_entity *pixio_entity)
+char *pixio_entity_stringify(ecs_world_t *world, ecs_entity_t entity)
 {
-    if (pixio_entity)
-    {
-        g_free(pixio_entity);
-    }
+    desc_entity_json_init.serialize_doc = true;
+    // return ecs_entity_to_json(world, entity, &desc_entity_json_init);
+    // return pixio_world_serialize(world);
+    ecs_query_t *q = ecs_query(world, {
+        .terms = {
+            { ecs_childof(entity), .src.id = EcsSelf|EcsUp }
+        }
+    });
+
+    ecs_iter_t it = ecs_query_iter(world, q);
+    return ecs_iter_to_json(&it, NULL);
 }
 
-ecs_entity_t pixio_new(ecs_world_t *world, ecs_entity_t parent, const char *name)
+void pixio_entity_parse(ecs_world_t *world, ecs_entity_t entity, const char *json)
+{
+    desc_entity_json_init.serialize_doc = true;
+    ecs_entity_from_json(world, entity, json, NULL);
+}
+
+ecs_entity_t pixio_entity_new_low(ecs_world_t *world, ecs_entity_t parent)
 {
     ecs_entity_t entity = ecs_new_low_id(world);
     if (parent > 0)
         pixio_set_parent(world, entity, parent);
 
+    return entity;
+}
+
+ecs_entity_t pixio_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name)
+{
+    ecs_entity_t entity = pixio_entity_new_low(world, parent);
     pixio_set_name(world, entity, name);
     ecs_set(world, entity, pixio_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = PIXIO_CENTER});
 
     return entity;
 }
 
-ecs_entity_t pixio_new_root(ecs_world_t *world)
+ecs_entity_t pixio_entity_new_root(ecs_world_t *world)
 {
-    ecs_entity_t root = pixio_new(world, 0, "Root");
-    ecs_set_name(world, root, "Root");
+    ecs_entity_t root = pixio_entity_new(world, 0, PIXIO_ENTITY_ROOT_NAME);
+    ecs_set_name(world, root, PIXIO_ENTITY_ROOT_NAME);
     return root;
 }
 
 ecs_entity_t pixio_get_root(ecs_world_t *world)
 {
-    return ecs_lookup(world, "Root");
+    return ecs_lookup(world, PIXIO_ENTITY_ROOT_NAME);
 }
 
 void pixio_set_parent(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t parent)

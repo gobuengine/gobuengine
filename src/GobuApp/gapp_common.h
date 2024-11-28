@@ -70,7 +70,7 @@ extern "C"
 
     bool fsIsExtension(const char *filename, const char *ext);
 
-    char *fsRead(const char *filename, gsize *length);
+    char *fsRead(const char *filename);
 
 #ifdef __cplusplus
 }

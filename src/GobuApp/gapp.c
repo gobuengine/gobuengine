@@ -82,14 +82,16 @@ static void gapp_main_activate(GappMain *app)
         { // #toolbar headerbar
             GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
             gtk_header_bar_set_title_widget(header_bar, hbox);
-            app->btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save all");
-            gtk_box_append(hbox, app->btn_s);
+            {
+                // app->btn_s = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save all");
+                // gtk_box_append(hbox, app->btn_s);
 
-            app->btn_p = gapp_widget_button_new_icon_with_label("applications-games-symbolic", "Preview");
-            gtk_box_append(hbox, app->btn_p);
+                app->btn_p = gapp_widget_button_new_icon_with_label("applications-games-symbolic", "Preview");
+                gtk_box_append(hbox, app->btn_p);
 
-            app->btn_b = gapp_widget_button_new_icon_with_label("drive-optical-symbolic", "Build");
-            gtk_box_append(hbox, app->btn_b);
+                app->btn_b = gapp_widget_button_new_icon_with_label("drive-optical-symbolic", "Build");
+                gtk_box_append(hbox, app->btn_b);
+            }
         }
 
         { // #setting project, game
@@ -152,7 +154,7 @@ static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
 
 static void gapp_set_headerbar_button_sensitives(GappMain *self, gboolean sensitive)
 {
-    gtk_widget_set_visible(self->btn_s, sensitive);
+    // gtk_widget_set_visible(self->btn_s, sensitive);
     gtk_widget_set_visible(self->btn_p, sensitive);
     gtk_widget_set_visible(self->btn_b, sensitive);
     gtk_widget_set_visible(self->btn_set, sensitive);
