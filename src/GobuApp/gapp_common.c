@@ -78,7 +78,7 @@ char *pathRelativeContent(const char *path)
  */
 char *pathNormalize(const char *path)
 {
-    return StringReplace(path, "\\", "/");
+    return stringReplace(path, "\\", "/");
 }
 
 /**
@@ -193,7 +193,7 @@ char *stringDup(const char *str)
  * @param text La cadena de texto a convertir.
  * @return La cadena de texto convertida en minúsculas.
  */
-char *StringTolower(const char *text)
+char *stringTolower(const char *text)
 {
     return g_utf8_strdown(text, strlen(text));
 }
@@ -204,7 +204,7 @@ char *StringTolower(const char *text)
  * @param text La cadena que se va a convertir.
  * @return La cadena convertida en mayúsculas.
  */
-char *StringUppercase(const char *text)
+char *stringUppercase(const char *text)
 {
     return g_utf8_strup(text, strlen(text));
 }
@@ -216,7 +216,7 @@ char *StringUppercase(const char *text)
  * @param text2 La segunda cadena de texto a comparar.
  * @return true si las cadenas de texto son iguales, false en caso contrario.
  */
-bool StringIsequal(const char *text1, const char *text2)
+bool stringIsequal(const char *text1, const char *text2)
 {
     bool result = false;
 
@@ -236,7 +236,7 @@ bool StringIsequal(const char *text1, const char *text2)
  * @param delimiter El delimitador utilizado para dividir la cadena.
  * @return Un array de subcadenas.
  */
-char **StringSplit(const char *string, const char *delimiter)
+char **stringSplit(const char *string, const char *delimiter)
 {
     return g_strsplit(string, delimiter, -1);
 }
@@ -257,7 +257,7 @@ void StringSplitFree(char **str_array)
  * @param str La cadena de caracteres a recortar.
  * @return Un puntero a la cadena de caracteres recortada.
  */
-char *StringTrim(char *str)
+char *stringTrim(char *str)
 {
     return g_strstrip(str);
 }
@@ -268,9 +268,9 @@ char *StringTrim(char *str)
  * @param str La cadena de caracteres de la cual se eliminarán los espacios en blanco.
  * @return Un puntero a la cadena de caracteres resultante sin espacios en blanco.
  */
-char *StringRemoveSpaces(char *str)
+char *stringRemoveSpaces(char *str)
 {
-    return StringReplace(g_strdup(str), " ", "");
+    return stringReplace(g_strdup(str), " ", "");
 }
 
 /**
@@ -279,9 +279,9 @@ char *StringRemoveSpaces(char *str)
  * @param str La cadena que se va a sanitizar.
  * @return Un puntero a la cadena sanitizada.
  */
-char *StringSanitize(char *str)
+char *stringSanitize(char *str)
 {
-    return StringReplace(g_strdup(str), G_STR_DELIMITERS, "");
+    return stringReplace(g_strdup(str), G_STR_DELIMITERS, "");
 }
 
 /**
@@ -292,7 +292,7 @@ char *StringSanitize(char *str)
  * @param replace La subcadena para reemplazar las apariciones de 'find'.
  * @return Una nueva cadena con todas las apariciones de 'find' reemplazadas por 'replace'.
  */
-char *StringReplace(const char *str, const char *find, const char *replace)
+char *stringReplace(const char *str, const char *find, const char *replace)
 {
     char **split = g_strsplit(str, find, -1);
     char *result = g_strjoinv(replace, split);
@@ -402,7 +402,7 @@ char *fsGetName(const char *filename, bool with_ext)
     gchar *basename = pathBasename(filename);
     if (with_ext)
     {
-        gchar **sep_name = StringSplit(basename, ".");
+        gchar **sep_name = stringSplit(basename, ".");
         gchar *name = stringDup(sep_name[0]);
         StringSplitFree(sep_name);
         return name;

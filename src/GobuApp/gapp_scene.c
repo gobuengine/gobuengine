@@ -27,10 +27,11 @@ struct _GappScene
     {
         GtkWidget *self;
         GtkWidget *popoverBtnAdd;
-        GtkSingleSelection *selection;
-        GListStore *store;
         GtkWidget *toolbar_btn_duplicate;
         GtkWidget *toolbar_btn_remove;
+        GtkSingleSelection *selection;
+        GListStore *store;
+        GHashTable *items;
     } outliner;
 
     GtkWidget *inspector;
@@ -41,8 +42,10 @@ static GParamSpec *properties[N_PROPS];
 
 // MARK:PRIVATE
 static GListStore *outlinerBuildEntityComponentItem(void);
+static void outlinerInsertEntity(GappScene *scene, ecs_world_t *world, ecs_entity_t entity);
+static void outlinerRemoveEntity(GappScene *scene, ecs_entity_t entity);
 static void outlinerSetEntityName(GappScene *scene, ecs_entity_t entity, const char *name);
-static TOutlinerItem *outlinerFindItemByEntity(GtkSingleSelection *selection, ecs_entity_t entity);
+static TOutlinerItem *outlinerFindItemByEntity(GappScene *scene, ecs_entity_t entity);
 static TOutlinerItem *outlinerGetSelectedItem(GtkSingleSelection *selection);
 static void outlinerEntitySelected(GappScene *scene, ecs_entity_t entity, gboolean selected);
 static gboolean outlinerSelectItemByEntity(GappScene *scene, ecs_entity_t entity);
@@ -129,11 +132,7 @@ static void gapp_scene_init(GappScene *scene)
     g_return_if_fail(GAPP_IS_SCENE(scene));
     gappSceneConfigureInterface(scene);
 
-    // Por el momento cada escena o prefab tiene su propio mundo.
-    // En un futuro me gustaria hacer que una escena y prefab sean solo una entidad en un mundo global.
-    scene->world = pixio_world_init();
-    ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .ctx = scene});
-    scene->root = pixio_entity_new_root(scene->world);
+    scene->outliner.items = g_hash_table_new(g_direct_hash, g_direct_equal);
 }
 
 GappScene *gapp_scene_new(const gchar *filename)
@@ -174,9 +173,42 @@ static GListStore *outlinerBuildEntityComponentItem(void)
     return store;
 }
 
+static void outlinerInsertEntity(GappScene *scene, ecs_world_t *world, ecs_entity_t entity)
+{
+    TOutlinerItem *oitem = toutliner_item_new(world, entity);
+    GListStore *store = scene->outliner.store;
+
+    if (pixio_has_parent(world, entity))
+    {
+        ecs_entity_t parent = pixio_get_parent(world, entity);
+        TOutlinerItem *item_find = g_hash_table_lookup(scene->outliner.items, GUINT_TO_POINTER(parent));
+        if (item_find != NULL)
+        {
+            store = toutliner_item_get_children(item_find);
+        }
+    }
+
+    toutliner_item_set_root(oitem, store);
+    g_list_store_append(store, oitem);
+    g_hash_table_insert(scene->outliner.items, GUINT_TO_POINTER(entity), oitem);
+}
+
+static void outlinerRemoveEntity(GappScene *scene, ecs_entity_t entity)
+{
+    TOutlinerItem *oitem = outlinerFindItemByEntity(scene, entity);
+    if (oitem)
+    {
+        guint position;
+        if (g_list_store_find(toutliner_item_get_root(oitem), oitem, &position))
+            g_list_store_remove(toutliner_item_get_root(oitem), position);
+
+        g_hash_table_remove(scene->outliner.items, GUINT_TO_POINTER(entity));
+    }
+}
+
 static void outlinerSetEntityName(GappScene *scene, ecs_entity_t entity, const char *name)
 {
-    TOutlinerItem *oitem = outlinerFindItemByEntity(scene->outliner.selection, entity);
+    TOutlinerItem *oitem = outlinerFindItemByEntity(scene, entity);
     GtkWidget *expander = toutliner_item_get_expander(oitem);
 
     toutliner_item_set_name(oitem, name);
@@ -185,23 +217,9 @@ static void outlinerSetEntityName(GappScene *scene, ecs_entity_t entity, const c
     gtk_label_set_label(GTK_LABEL(label), name);
 }
 
-static TOutlinerItem *outlinerFindItemByEntity(GtkSingleSelection *selection, ecs_entity_t entity)
+static TOutlinerItem *outlinerFindItemByEntity(GappScene *scene, ecs_entity_t entity)
 {
-    GListModel *model = gtk_multi_selection_get_model(selection);
-    guint n = g_list_model_get_n_items(model);
-    for (guint i = 0; i < n; i++)
-    {
-        GtkTreeListRow *row = g_list_model_get_item(model, i);
-        TOutlinerItem *oitem = gtk_tree_list_row_get_item(row);
-
-        g_object_unref(row);
-        if (toutliner_item_get_entity(oitem) == entity)
-        {
-            return oitem;
-        }
-    }
-
-    return NULL;
+    return g_hash_table_lookup(scene->outliner.items, GUINT_TO_POINTER(entity));
 }
 
 static TOutlinerItem *outlinerGetSelectedItem(GtkSingleSelection *selection)
@@ -275,7 +293,6 @@ static void outlinerEcsHookCallback(ecs_iter_t *it)
     ecs_world_t *world = it->world;
     ecs_entity_t event = it->event;
     GappScene *scene = it->ctx;
-    GtkSingleSelection *outlinerSelect = scene->outliner.selection;
 
     for (int i = 0; i < it->count; i++)
     {
@@ -283,29 +300,15 @@ static void outlinerEcsHookCallback(ecs_iter_t *it)
 
         if (event == EcsOnAdd)
         {
-            TOutlinerItem *oitem = toutliner_item_new(world, entity);
-            GListStore *store = scene->outliner.store;
-
-            if (pixio_has_parent(world, entity))
-            {
-                ecs_entity_t parent = pixio_get_parent(world, entity);
-                TOutlinerItem *item_find = outlinerFindItemByEntity(outlinerSelect, parent);
-                if (item_find != NULL)
-                {
-                    store = toutliner_item_get_children(item_find);
-                }
-            }
-
-            toutliner_item_set_root(oitem, store);
-            g_list_store_append(store, oitem);
+            outlinerInsertEntity(scene, world, entity);
         }
         else if (event == EcsOnRemove)
         {
-            guint position;
-            TOutlinerItem *oitem = outlinerFindItemByEntity(outlinerSelect, entity);
-
-            if (oitem && g_list_store_find(toutliner_item_get_root(oitem), oitem, &position))
-                g_list_store_remove(toutliner_item_get_root(oitem), position);
+            outlinerRemoveEntity(scene, entity);
+        }
+        else if (event == EcsOnSet)
+        {
+            printf("EcsOnSet\n");
         }
     }
 }
@@ -348,7 +351,7 @@ static void onOutlinerToolbarDuplicate(GtkWidget *widget, GappScene *scene)
             if (g_strcmp0(toutliner_item_get_name(oitem), GAPP_ROOT_STR) != 0)
             {
                 ecs_entity_t eclone = pixio_clone(world, toutliner_item_get_entity(oitem));
-                // outlinerEntitySelected(outliner, eclone, TRUE);
+                outlinerEntitySelected(scene, eclone, TRUE);
             }
 
             g_object_unref(row);
@@ -391,7 +394,7 @@ static GListModel *onOutlinerCreateChildModelForTreeRow(GObject *item, GappScene
     TOutlinerItem *oitem = TOUTLINER_ITEM(item);
 
     GListStore *children = toutliner_item_get_children(oitem);
-    GtkWidget *expander = toutliner_item_get_expander(oitem);
+    GtkTreeExpander *expander = toutliner_item_get_expander(oitem);
 
     gboolean has_children = (g_list_model_get_n_items(G_LIST_MODEL(children)) > 0);
     gtk_tree_expander_set_hide_expander(GTK_TREE_EXPANDER(expander), !has_children);
@@ -404,10 +407,10 @@ static void onOutlinerSetupItemFactory(GtkSignalListItemFactory *factory, GtkLis
     // GtkDropTarget *drop;
     // GtkDragSource *drag;
 
-    GtkWidget *expander = gtk_tree_expander_new();
+    GtkTreeExpander *expander = gtk_tree_expander_new();
     gtk_list_item_set_child(GTK_LIST_ITEM(listitem), expander);
     // gtk_tree_expander_set_indent_for_depth(GTK_TREE_EXPANDER(expander), FALSE);
-    gtk_tree_expander_set_hide_expander(GTK_TREE_EXPANDER(expander), TRUE);
+    // gtk_tree_expander_set_hide_expander(GTK_TREE_EXPANDER(expander), TRUE);
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
     gapp_widget_set_margin(box, 6);
@@ -442,7 +445,7 @@ static void onOutlinerBindItemFactory(GtkSignalListItemFactory *factory, GtkList
 
     TOutlinerItem *oitem = gtk_tree_list_row_get_item(row_item);
 
-    GtkWidget *expander = gtk_list_item_get_child(list_item);
+    GtkTreeExpander *expander = gtk_list_item_get_child(list_item);
     toutliner_item_set_expander(oitem, expander);
 
     gtk_tree_expander_set_list_row(GTK_TREE_EXPANDER(expander), row_item);
@@ -538,10 +541,30 @@ static void onOutlinerBindPopoverMenuItemFactory(GtkSignalListItemFactory *facto
 static void onSceneToolbarSave(GtkWidget *widget, GappScene *scene)
 {
     const gchar *filename = sceneGetFilename(scene);
-    // char *json = pixio_world_serialize(scene->world);
-    char *json = pixio_entity_stringify(scene->world, scene->root);
+    char *json = pixio_world_serialize(scene->world);
     fsWrite(filename, json);
     ecs_os_free(json);
+}
+
+static void onSceneRealize(GtkWidget *widget, GappScene *scene)
+{
+    // Por el momento cada escena o prefab tiene su propio mundo.
+    // En un futuro me gustaria hacer que una escena y prefab sean solo una entidad en un mundo global.
+    scene->world = pixio_world_init();
+    ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .ctx = scene});
+    scene->root = pixio_entity_new_root(scene->world);
+
+    const char *filename = sceneGetFilename(scene);
+
+    if (strcmp(filename, "Untitle") == 0)
+        return;
+
+    char *buffer_scene = fsRead(filename);
+    if (buffer_scene != NULL)
+    {
+        pixio_world_deserialize(scene->world, buffer_scene);
+        g_free(buffer_scene);
+    }
 }
 
 // MARK: UI
@@ -716,6 +739,8 @@ static void gappSceneConfigureInterface(GappScene *scene)
             gtk_paned_set_end_child(GTK_PANED(paned_b), scene->inspector);
         }
     }
+
+    g_signal_connect(scene, "realize", G_CALLBACK(onSceneRealize), scene);
 }
 
 // MARK: PUBLIC
@@ -724,16 +749,4 @@ const gchar *sceneGetFilename(GappScene *scene)
 {
     g_return_val_if_fail(GAPP_IS_SCENE(scene), NULL);
     return stringDup(scene->filename);
-}
-
-void sceneOpen(GappScene *scene)
-{
-    g_return_if_fail(GAPP_IS_SCENE(scene));
-
-    char *buffer_scene = fsRead(sceneGetFilename(scene));
-    if (buffer_scene != NULL)
-    {
-        pixio_entity_parse(scene->world, scene->root, buffer_scene);
-        g_free(buffer_scene);
-    }
 }

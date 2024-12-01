@@ -427,12 +427,10 @@ static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowse
     else if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCENE))
     {
         widget_module = gapp_scene_new(pathFile);
-        sceneOpen(widget_module);
     }
     else if (fsIsExtension(filename, GAPP_BROWSER_FILE_PREFAB))
     {
         widget_module = gapp_scene_new(pathFile);
-        sceneOpen(widget_module);
         icon = GAPP_RESOURCE_ICON_PREFAB;
     }
 

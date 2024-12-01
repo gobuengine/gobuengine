@@ -136,7 +136,7 @@ static gboolean gapp_s_render(GtkGLArea *area, GdkGLContext *context, GappViewpo
 
     // if (!self->customRender)
     //     pixi_render_end();
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClearColor(1.0, 1.0, 1.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glFlush();

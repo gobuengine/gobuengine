@@ -4,16 +4,16 @@
 // -- -- -- -- -- -- -- -- --
 // MARK: - ENTITY_INFO COMPONENT
 // -- -- -- -- -- -- -- -- --
-static void observe_set_entity_info(ecs_iter_t *it)
-{
-    pixio_entity_t *info = ecs_field(it, pixio_entity_t, 0);
+// static void observe_set_entity_info(ecs_iter_t *it)
+// {
+//     pixio_entity_t *info = ecs_field(it, pixio_entity_t, 0);
 
-    for (int i = 0; i < it->count; i++)
-    {
-        ecs_enable(it->world, it->entities[i], info[i].enabled);
-        //ecs_set_name(it->world, it->entities[i], info[i].name);
-    }
-}
+//     for (int i = 0; i < it->count; i++)
+//     {
+//         ecs_enable(it->world, it->entities[i], info[i].enabled);
+//         //ecs_set_name(it->world, it->entities[i], info[i].name);
+//     }
+// }
 
 // -- -- -- -- -- -- -- -- --
 // MARK: - TEXT COMPONENT
@@ -25,7 +25,7 @@ static void observe_set_text_default(ecs_iter_t *it)
     for (int i = 0; i < it->count; i++)
     {
         text[i].font = (text[i].font.texture.id == 0) ? GetFontDefault() : text[i].font;
-        text[i].text = (text[i].text == NULL) ? "Text" : text[i].text;
+        text[i].text = (text[i].text == NULL) ? strdup("Text") : text[i].text;
         text[i].fontSize = (text[i].fontSize == 0) ? 10 : text[i].fontSize;
         text[i].spacing = (text[i].spacing <= 0.0f) ? (text[i].fontSize / 10) : text[i].spacing;
         text[i].color = (text[i].color.a == 0) ? PURPLE : text[i].color;

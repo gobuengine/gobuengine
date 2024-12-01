@@ -13,7 +13,7 @@ deps += dependency('libadwaita-1')
 deps += declare_dependency(link_with: libgobu_binn)
 deps += declare_dependency(link_with: libgobu_pixi)
 deps += declare_dependency(link_with: libgobu_pixio)
-deps += declare_dependency(link_with: libgobu_gbase)
+# deps += declare_dependency(link_with: libgobu_gbase)
 
 # Fuentes
 

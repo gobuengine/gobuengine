@@ -38,23 +38,23 @@ extern "C"
 
     char *stringDup(const char *str);
 
-    char *StringTolower(const char *text);
+    char *stringTolower(const char *text);
 
-    char *StringUppercase(const char *text);
+    char *stringUppercase(const char *text);
 
-    bool StringIsequal(const char *text1, const char *text2);
+    bool stringIsequal(const char *text1, const char *text2);
 
-    char **StringSplit(const char *string, const char *delimiter);
+    char **stringSplit(const char *string, const char *delimiter);
 
     void StringSplitFree(char **str_array);
 
-    char *StringTrim(char *str);
+    char *stringTrim(char *str);
 
-    char *StringRemoveSpaces(char *str);
+    char *stringRemoveSpaces(char *str);
 
-    char *StringSanitize(char *str);
+    char *stringSanitize(char *str);
 
-    char *StringReplace(const char *str, const char *find, const char *replace);
+    char *stringReplace(const char *str, const char *find, const char *replace);
 
     bool fsCopy(GFile *src, GFile *dest, GError **error);
 

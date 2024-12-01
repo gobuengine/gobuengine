@@ -4,6 +4,7 @@
 #include <gtk/gtk.h>
 #include <glib.h>
 #include <gio/gio.h>
+#include "gapp_common.h"
 
 #ifndef CONFIG_H
 #define CONFIG_H

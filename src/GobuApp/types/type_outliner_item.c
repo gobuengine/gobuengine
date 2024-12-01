@@ -8,7 +8,7 @@ struct _TOutlinerItem
     gchar *name;
     GListStore *children; // TOutlinerItem
     GListStore *root;     // TOutlinerItem
-    GtkWidget *expander;  // GtkExpander
+    GtkTreeExpander *expander;  // GtkExpander
 };
 
 G_DEFINE_TYPE(TOutlinerItem, toutliner_item, G_TYPE_OBJECT)
@@ -52,7 +52,7 @@ TOutlinerItem *toutliner_item_new(ecs_world_t *world, ecs_entity_t entity)
     TOutlinerItem *self = g_object_new(TOUTLINER_TYPE_ITEM, NULL);
 
     self->entity = entity;
-    self->name = g_strdup(pixio_get_name(world, entity));
+    self->name = stringDup(pixio_get_name(world, entity));
     self->children = g_list_store_new(TOUTLINER_TYPE_ITEM);
     self->root = NULL;
     self->expander = NULL;
@@ -75,7 +75,7 @@ ecs_entity_t toutliner_item_get_entity(TOutlinerItem *self)
 void toutliner_item_set_name(TOutlinerItem *self, const gchar *name)
 {
     g_free(self->name);
-    self->name = g_strdup(name);
+    self->name = stringDup(name);
 }
 
 gchar *toutliner_item_get_name(TOutlinerItem *self)

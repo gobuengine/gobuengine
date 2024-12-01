@@ -15,6 +15,8 @@ void pixio_free(ecs_world_t *ecs);
 void pixio_world_process(ecs_world_t *ecs, float deltaTime);
 
 char *pixio_world_serialize(ecs_world_t *world);
+void pixio_world_deserialize(ecs_world_t *world, const char *json);
+
 char *pixio_entity_stringify(ecs_world_t *world, ecs_entity_t entity);
 void pixio_entity_parse(ecs_world_t *world, ecs_entity_t entity, const char *json);
 
@@ -35,7 +37,7 @@ void pixio_delete(ecs_world_t *world, ecs_entity_t entity);
 
 ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity);
 
-bool pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name);
+void pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name);
 const char *pixio_get_name(ecs_world_t *world, ecs_entity_t entity);
 
 void pixio_set_enabled(ecs_world_t *world, ecs_entity_t entity, bool enabled);

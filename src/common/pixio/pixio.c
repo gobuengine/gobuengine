@@ -27,19 +27,15 @@ char *pixio_world_serialize(ecs_world_t *world)
     return ecs_world_to_json(world, NULL);
 }
 
+void pixio_world_deserialize(ecs_world_t *world, const char *json)
+{
+    ecs_world_from_json(world, json, NULL);
+}
+
 char *pixio_entity_stringify(ecs_world_t *world, ecs_entity_t entity)
 {
     desc_entity_json_init.serialize_doc = true;
-    // return ecs_entity_to_json(world, entity, &desc_entity_json_init);
-    // return pixio_world_serialize(world);
-    ecs_query_t *q = ecs_query(world, {
-        .terms = {
-            { ecs_childof(entity), .src.id = EcsSelf|EcsUp }
-        }
-    });
-
-    ecs_iter_t it = ecs_query_iter(world, q);
-    return ecs_iter_to_json(&it, NULL);
+    return ecs_entity_to_json(world, entity, &desc_entity_json_init);
 }
 
 void pixio_entity_parse(ecs_world_t *world, ecs_entity_t entity, const char *json)
@@ -60,7 +56,8 @@ ecs_entity_t pixio_entity_new_low(ecs_world_t *world, ecs_entity_t parent)
 ecs_entity_t pixio_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name)
 {
     ecs_entity_t entity = pixio_entity_new_low(world, parent);
-    pixio_set_name(world, entity, name);
+    gchar *name_entity = pixio_find_by_name(world, name) ? g_strdup_printf("%s%ld", name, entity) : g_strdup(name);
+    pixio_set_name(world, entity, name_entity);
     ecs_set(world, entity, pixio_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = PIXIO_CENTER});
 
     return entity;
@@ -107,6 +104,8 @@ void pixio_delete(ecs_world_t *world, ecs_entity_t entity)
 ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity)
 {
     ecs_entity_t clone = ecs_clone(world, 0, entity, TRUE);
+    pixio_set_name(world, clone, g_strdup_printf("%s%ld", pixio_get_name(world, entity), clone));
+    pixio_set_parent(world, clone, pixio_get_parent(world, entity));
 
     ecs_iter_t it = ecs_children(world, entity);
     while (ecs_children_next(&it))
@@ -125,25 +124,14 @@ ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity)
     return clone;
 }
 
-bool pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name)
+void pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name)
 {
-    if (pixio_find_by_name(world, name) == 0)
-    {
-        if (pixio_get_root(world) != entity)
-        {
-            ecs_doc_set_name(world, entity, name);
-            return TRUE;
-        }
-    }
-
-    return FALSE;
+    ecs_set_name(world, entity, name);
 }
 
-// Retrieves the name of a given entity from the ECS world.
-// Note: The caller is responsible for freeing the returned string.
 const char *pixio_get_name(ecs_world_t *world, ecs_entity_t entity)
 {
-    return ecs_doc_get_name(world, entity);
+    return ecs_get_name(world, entity);
 }
 
 ecs_entity_t pixio_find_by_name(ecs_world_t *world, const char *name)
