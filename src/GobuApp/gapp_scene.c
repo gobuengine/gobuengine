@@ -196,19 +196,22 @@ static void outlinerInsertEntity(GappScene *scene, ecs_world_t *world, ecs_entit
 static void outlinerRemoveEntity(GappScene *scene, ecs_entity_t entity)
 {
     TOutlinerItem *oitem = outlinerFindItemByEntity(scene, entity);
-    if (oitem)
-    {
-        guint position;
-        if (g_list_store_find(toutliner_item_get_root(oitem), oitem, &position))
-            g_list_store_remove(toutliner_item_get_root(oitem), position);
+    if (oitem == NULL)
+        return;
 
-        g_hash_table_remove(scene->outliner.items, GUINT_TO_POINTER(entity));
-    }
+    guint position;
+    if (g_list_store_find(toutliner_item_get_root(oitem), oitem, &position))
+        g_list_store_remove(toutliner_item_get_root(oitem), position);
+
+    g_hash_table_remove(scene->outliner.items, GUINT_TO_POINTER(entity));
 }
 
 static void outlinerSetEntityName(GappScene *scene, ecs_entity_t entity, const char *name)
 {
     TOutlinerItem *oitem = outlinerFindItemByEntity(scene, entity);
+    if (oitem == NULL)
+        return;
+
     GtkWidget *expander = toutliner_item_get_expander(oitem);
 
     toutliner_item_set_name(oitem, name);
@@ -243,9 +246,7 @@ static void outlinerEntitySelected(GappScene *scene, ecs_entity_t entity, gboole
     g_return_if_fail(entity != 0);
 
     if (selected)
-    {
         outlinerSelectItemByEntity(scene, entity);
-    }
 
     inspectorSetEntity(scene->inspector, scene->world, entity);
 }
@@ -313,9 +314,23 @@ static void outlinerEcsHookCallback(ecs_iter_t *it)
         {
             outlinerRemoveEntity(scene, entity);
         }
-        else if (event == EcsOnSet)
+    }
+}
+
+static void outlinerEcsObserverNameChange(ecs_iter_t *it)
+{
+    ecs_world_t *world = it->world;
+    ecs_entity_t event = it->event;
+    GappScene *scene = it->ctx;
+
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t entity = it->entities[i];
+
+        if (event == EcsOnSet)
         {
-            // printf("EcsOnSet\n");
+            const char *name = ecs_get_name(world, entity);
+            outlinerSetEntityName(scene, entity, name);
         }
     }
 }
@@ -558,7 +573,7 @@ static void onSceneRealize(GtkWidget *widget, GappScene *scene)
     // Por el momento cada escena o prefab tiene su propio mundo.
     // En un futuro me gustaria hacer que una escena y prefab sean solo una entidad en un mundo global.
     scene->world = pixio_world_init();
-    ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .on_set = outlinerEcsHookCallback, .ctx = scene});
+    ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .ctx = scene});
     scene->root = pixio_entity_new_root(scene->world);
 
     const char *filename = sceneGetFilename(scene);
@@ -572,6 +587,11 @@ static void onSceneRealize(GtkWidget *widget, GappScene *scene)
         pixio_world_deserialize(scene->world, buffer_scene);
         g_free(buffer_scene);
     }
+
+    ecs_observer(scene->world, {.query.terms = {{.id = ecs_pair_t(EcsIdentifier, EcsName)}},
+                                .events = {EcsOnSet},
+                                .callback = outlinerEcsObserverNameChange,
+                                .ctx = scene});
 }
 
 // MARK: UI

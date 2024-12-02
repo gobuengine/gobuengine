@@ -56,7 +56,7 @@ ecs_entity_t pixio_entity_new_low(ecs_world_t *world, ecs_entity_t parent)
 ecs_entity_t pixio_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name)
 {
     ecs_entity_t entity = pixio_entity_new_low(world, parent);
-    gchar *name_entity = pixio_find_by_name(world, name) ? g_strdup_printf("%s%ld", name, entity) : g_strdup(name);
+    gchar *name_entity = strcmp(name, PIXIO_ENTITY_ROOT_NAME)!=0 ? g_strdup_printf("%s%ld", name, entity) : g_strdup(name);
     pixio_set_name(world, entity, name_entity);
     ecs_set(world, entity, pixio_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = PIXIO_CENTER});
 

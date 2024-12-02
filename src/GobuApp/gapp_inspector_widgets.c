@@ -498,17 +498,59 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
     ecs_meta_pop(&cursor);
 }
 
+// --
+// inspectorWidgetCreateComponentDefaultEntity
+// --
+static void _entity_enabled_toggled(GtkWidget *widget, inspectorEntity *entityCustom)
+{
+    gboolean enabled = gtk_check_button_get_active(GTK_CHECK_BUTTON(widget));
+    pixio_set_enabled(entityCustom->world, entityCustom->entity, enabled);
+}
+
+static void _entity_name_changed(GtkEditable *widget, inspectorEntity *entityCustom)
+{
+    // Borramos la class error del input
+    gtk_widget_remove_css_class(GTK_WIDGET(widget), "error");
+
+    // Obtener la entidad asociada al widget
+    // pixio_entity *pentity = g_object_get_data(G_OBJECT(widget), "entity");
+
+    // Obtener el nuevo nombre del widget editable
+    const gchar *name = gtk_editable_get_text(widget);
+
+    // Actualizar el nombre de la entidad en el mundo del juego
+    if (pixio_find_by_name(entityCustom->world, name) == 0)
+    {
+        pixio_set_name(entityCustom->world, entityCustom->entity, name);
+        // GtkWidget *level_editor = gtk_widget_get_ancestor(GTK_WIDGET(self), GOBU_TYPE_LEVEL_EDITOR);
+        // GtkWidget *outliner = gobu_level_editor_get_outliner(level_editor);
+        // gapp_outliner_set_name_entity(outliner, pentity->entity, name);
+    }
+    else
+    {
+        gtk_widget_add_css_class(GTK_WIDGET(widget), "error");
+    }
+
+    // pixio_world_process(entityCustom->world, 0.0f);
+}
+
 void inspectorWidgetCreateComponentDefaultEntity(GtkWidget *listbox, GtkWidget *size_group, ecs_world_t *world, ecs_entity_t entity)
 {
+    inspectorEntity *entityCustom = g_new(inspectorEntity, 1);
+    entityCustom->world = world;
+    entityCustom->entity = entity;
+
     GtkWidget *content = inspectorWidgetCreateComponentGroup(listbox, FALSE, "pixio_entity_t", NULL, 0, 0);
 
     GtkWidget *entity_enabled = gtk_check_button_new();
     gtk_check_button_set_active(GTK_CHECK_BUTTON(entity_enabled), pixio_get_enabled(world, entity));
+    g_signal_connect(entity_enabled, "toggled", G_CALLBACK(_entity_enabled_toggled), entityCustom);
     gtk_box_append(GTK_BOX(content), inspectorWidgetCreateFieldRow(size_group, "enabled", entity_enabled, GTK_ORIENTATION_HORIZONTAL));
 
     GtkWidget *entity_name = gtk_entry_new();
     gtk_editable_set_text(GTK_EDITABLE(entity_name), pixio_get_name(world, entity));
     gtk_widget_set_sensitive(entity_name, !(pixio_get_root(world) == entity));
+    g_signal_connect(entity_name, "changed", G_CALLBACK(_entity_name_changed), entityCustom);
     gtk_box_append(GTK_BOX(content), inspectorWidgetCreateFieldRow(size_group, "name", entity_name, GTK_ORIENTATION_HORIZONTAL));
 
     GtkWidget *button = gapp_widget_button_new_icon_with_label_custom("list-add-symbolic", "Add component", GTK_ALIGN_CENTER);
@@ -516,3 +558,4 @@ void inspectorWidgetCreateComponentDefaultEntity(GtkWidget *listbox, GtkWidget *
     gtk_button_set_has_frame(GTK_BUTTON(button), TRUE);
     gtk_box_append(GTK_BOX(content), button);
 }
+
