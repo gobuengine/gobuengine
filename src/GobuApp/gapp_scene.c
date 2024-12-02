@@ -155,7 +155,7 @@ static GListStore *outlinerBuildEntityComponentItem(void)
         {"emblem-photos-symbolic", "Sprite", GAPP_COMPS_SPRITE_RENDER},
         {"emblem-photos-symbolic", "Tiling Sprite", GAPP_COMPS_EMPTY},
         {"emblem-photos-symbolic", "Tilemap", GAPP_COMPS_EMPTY},
-        {"preferences-desktop-wallpaper-symbolic", "Animated Sprite", GAPP_COMPS_EMPTY},
+        {"preferences-desktop-wallpaper-symbolic", "Animated Sprite", GAPP_COMPS_ANIMATED},
         {"microphone-sensitivity-high-symbolic", "Audio Listener", GAPP_COMPS_EMPTY},
         {"audio-volume-medium-symbolic", "Sound", GAPP_COMPS_EMPTY},
         {"camera-photo-symbolic", "Camera", GAPP_COMPS_EMPTY},
@@ -283,7 +283,14 @@ static ecs_entity_t outlinerCreateEntityWithComponent(GappScene *scene, const gc
     ecs_entity_t entity = pixio_entity_new(scene->world, parent, name);
 
     if (strcmp(componentName, "entity.empty") != 0 && strlen(componentName) > 0)
-        pixio_set_component_by_name(scene->world, entity, componentName);
+    {
+        char **components = stringSplit(componentName, " ");
+        for (int i = 0; components[i] != NULL; i++)
+        {
+            pixio_set_component_by_name(scene->world, entity, components[i]);
+        }
+        stringSplitFree(components);
+    }
 
     return entity;
 }
@@ -308,7 +315,7 @@ static void outlinerEcsHookCallback(ecs_iter_t *it)
         }
         else if (event == EcsOnSet)
         {
-            printf("EcsOnSet\n");
+            // printf("EcsOnSet\n");
         }
     }
 }
@@ -551,7 +558,7 @@ static void onSceneRealize(GtkWidget *widget, GappScene *scene)
     // Por el momento cada escena o prefab tiene su propio mundo.
     // En un futuro me gustaria hacer que una escena y prefab sean solo una entidad en un mundo global.
     scene->world = pixio_world_init();
-    ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .ctx = scene});
+    ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .on_set = outlinerEcsHookCallback, .ctx = scene});
     scene->root = pixio_entity_new_root(scene->world);
 
     const char *filename = sceneGetFilename(scene);

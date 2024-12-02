@@ -1,47 +1,53 @@
 #include "pixio_type.h"
 
-ECS_COMPONENT_DECLARE(pixio_entity_t);
-ECS_COMPONENT_DECLARE(pixio_origin_t);
-ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
-ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
+ECS_COMPONENT_DECLARE(pixio_animated_t);
 ECS_COMPONENT_DECLARE(pixio_color_t);
-ECS_COMPONENT_DECLARE(pixio_size_t);
-ECS_COMPONENT_DECLARE(pixio_vector2_t);
+ECS_COMPONENT_DECLARE(pixio_entity_t);
+ECS_COMPONENT_DECLARE(pixio_font_t);
+ECS_COMPONENT_DECLARE(pixio_origin_t);
+ECS_COMPONENT_DECLARE(pixio_rect_t);
 ECS_COMPONENT_DECLARE(pixio_resource_t);
+ECS_COMPONENT_DECLARE(pixio_resource_animated_t);
+ECS_COMPONENT_DECLARE(pixio_resource_audio_t);
 ECS_COMPONENT_DECLARE(pixio_resource_font_t);
 ECS_COMPONENT_DECLARE(pixio_resource_texture_t);
 ECS_COMPONENT_DECLARE(pixio_script_t);
-ECS_COMPONENT_DECLARE(pixio_rect_t);
-ECS_COMPONENT_DECLARE(pixio_font_t);
-ECS_COMPONENT_DECLARE(pixio_texture_t);
-ECS_COMPONENT_DECLARE(pixio_transform_t);
-ECS_COMPONENT_DECLARE(pixio_text_t);
-ECS_COMPONENT_DECLARE(pixio_sprite_t);
 ECS_COMPONENT_DECLARE(pixio_shape_circle_t);
 ECS_COMPONENT_DECLARE(pixio_shape_rec_t);
+ECS_COMPONENT_DECLARE(pixio_size_t);
+ECS_COMPONENT_DECLARE(pixio_sprite_t);
+ECS_COMPONENT_DECLARE(pixio_text_t);
+ECS_COMPONENT_DECLARE(pixio_texture_t);
+ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
+ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
+ECS_COMPONENT_DECLARE(pixio_transform_t);
+ECS_COMPONENT_DECLARE(pixio_vector2_t);
 
 void pixio_type_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, pixio_type_module);
-    ECS_COMPONENT_DEFINE(world, pixio_entity_t);
-    ECS_COMPONENT_DEFINE(world, pixio_origin_t);
-    ECS_COMPONENT_DEFINE(world, pixio_texture_filter_t);
-    ECS_COMPONENT_DEFINE(world, pixio_texture_flip_t);
+    ECS_COMPONENT_DEFINE(world, pixio_animated_t);
     ECS_COMPONENT_DEFINE(world, pixio_color_t);
-    ECS_COMPONENT_DEFINE(world, pixio_size_t);
-    ECS_COMPONENT_DEFINE(world, pixio_vector2_t);
+    ECS_COMPONENT_DEFINE(world, pixio_entity_t);
+    ECS_COMPONENT_DEFINE(world, pixio_font_t);
+    ECS_COMPONENT_DEFINE(world, pixio_origin_t);
+    ECS_COMPONENT_DEFINE(world, pixio_rect_t);
     ECS_COMPONENT_DEFINE(world, pixio_resource_t);
+    ECS_COMPONENT_DEFINE(world, pixio_resource_animated_t);
+    ECS_COMPONENT_DEFINE(world, pixio_resource_audio_t);
     ECS_COMPONENT_DEFINE(world, pixio_resource_font_t);
     ECS_COMPONENT_DEFINE(world, pixio_resource_texture_t);
     ECS_COMPONENT_DEFINE(world, pixio_script_t);
-    ECS_COMPONENT_DEFINE(world, pixio_rect_t);
-    ECS_COMPONENT_DEFINE(world, pixio_font_t);
-    ECS_COMPONENT_DEFINE(world, pixio_texture_t);
-    ECS_COMPONENT_DEFINE(world, pixio_transform_t);
-    ECS_COMPONENT_DEFINE(world, pixio_text_t);
-    ECS_COMPONENT_DEFINE(world, pixio_sprite_t);
     ECS_COMPONENT_DEFINE(world, pixio_shape_circle_t);
     ECS_COMPONENT_DEFINE(world, pixio_shape_rec_t);
+    ECS_COMPONENT_DEFINE(world, pixio_size_t);
+    ECS_COMPONENT_DEFINE(world, pixio_sprite_t);
+    ECS_COMPONENT_DEFINE(world, pixio_text_t);
+    ECS_COMPONENT_DEFINE(world, pixio_texture_t);
+    ECS_COMPONENT_DEFINE(world, pixio_texture_filter_t);
+    ECS_COMPONENT_DEFINE(world, pixio_texture_flip_t);
+    ECS_COMPONENT_DEFINE(world, pixio_transform_t);
+    ECS_COMPONENT_DEFINE(world, pixio_vector2_t);
 
     ecs_enum(world, {
         .entity = ecs_id(pixio_origin_t),
@@ -74,6 +80,48 @@ void pixio_type_moduleImport(ecs_world_t *world)
             {.name = "Vertical", .value = PIXIO_FLIP_VERTICAL},
             {.name = "Horizontal", .value = PIXIO_FLIP_HORIZONTAL},
             {.name = "Both", .value = PIXIO_FLIP_BOTH},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_resource_t),
+        .members = {
+            {.name = "resource", .type = ecs_id(ecs_string_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_resource_font_t),
+        .members = {
+            {.name = "resource", .type = ecs_id(ecs_string_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_resource_texture_t),
+        .members = {
+            {.name = "resource", .type = ecs_id(ecs_string_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_resource_animated_t),
+        .members = {
+            {.name = "resource", .type = ecs_id(ecs_string_t)},
+        },
+    });
+    
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_resource_audio_t),
+        .members = {
+            {.name = "resource", .type = ecs_id(ecs_string_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_script_t),
+        .members = {
+            {.name = "script", .type = ecs_id(ecs_string_t)},
         },
     });
 
@@ -118,34 +166,6 @@ void pixio_type_moduleImport(ecs_world_t *world)
             {.name = "y", .type = ecs_id(ecs_f32_t)},
             {.name = "width", .type = ecs_id(ecs_f32_t)},
             {.name = "height", .type = ecs_id(ecs_f32_t)},
-        },
-    });
-
-    ecs_struct(world, {
-        .entity = ecs_id(pixio_resource_t),
-        .members = {
-            {.name = "resource", .type = ecs_id(ecs_string_t)},
-        },
-    });
-
-    ecs_struct(world, {
-        .entity = ecs_id(pixio_resource_font_t),
-        .members = {
-            {.name = "resource", .type = ecs_id(ecs_string_t)},
-        },
-    });
-
-    ecs_struct(world, {
-        .entity = ecs_id(pixio_resource_texture_t),
-        .members = {
-            {.name = "resource", .type = ecs_id(ecs_string_t)},
-        },
-    });
-
-    ecs_struct(world, {
-        .entity = ecs_id(pixio_script_t),
-        .members = {
-            {.name = "script", .type = ecs_id(ecs_string_t)},
         },
     });
 
@@ -199,6 +219,13 @@ void pixio_type_moduleImport(ecs_world_t *world)
             {.name = "color", .type = ecs_id(pixio_color_t)},
             {.name = "lineWidth", .type = ecs_id(ecs_f32_t), .range = {0, 20}},
             {.name = "lineColor", .type = ecs_id(pixio_color_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(pixio_animated_t),
+        .members = {
+            {.name = "animated", .type = ecs_id(pixio_resource_animated_t)},
         },
     });
 }

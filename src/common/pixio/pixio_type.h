@@ -8,16 +8,18 @@
 extern "C"
 {
 #endif
-    typedef TextureFilter pixio_texture_filter_t;
-    typedef Vector2 pixio_vector2_t;
-    typedef Rectangle pixio_rect_t;
     typedef Color pixio_color_t;
     typedef Font pixio_font_t;
-    typedef Texture2D pixio_texture_t;
     typedef ecs_string_t pixio_resource_t;
+    typedef pixio_resource_t pixio_resource_audio_t;
+    typedef pixio_resource_t pixio_resource_animated_t;
     typedef pixio_resource_t pixio_resource_font_t;
     typedef pixio_resource_t pixio_resource_texture_t;
     typedef pixio_resource_t pixio_script_t;
+    typedef Rectangle pixio_rect_t;
+    typedef Texture2D pixio_texture_t;
+    typedef TextureFilter pixio_texture_filter_t;
+    typedef Vector2 pixio_vector2_t;
 
     typedef enum _pixio_origin_t
     {
@@ -109,25 +111,33 @@ extern "C"
         ecs_f32_t segments;
     } pixio_shape_rec_t;
 
-    extern ECS_COMPONENT_DECLARE(pixio_size_t);
-    extern ECS_COMPONENT_DECLARE(pixio_entity_t);
-    extern ECS_COMPONENT_DECLARE(pixio_origin_t);
-    extern ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
-    extern ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
+    typedef struct _pixio_animated_t
+    {
+        pixio_resource_animated_t animated;
+    } pixio_animated_t;
+
+    extern ECS_COMPONENT_DECLARE(pixio_animated_t);
     extern ECS_COMPONENT_DECLARE(pixio_color_t);
-    extern ECS_COMPONENT_DECLARE(pixio_vector2_t);
+    extern ECS_COMPONENT_DECLARE(pixio_entity_t);
+    extern ECS_COMPONENT_DECLARE(pixio_font_t);
+    extern ECS_COMPONENT_DECLARE(pixio_origin_t);
+    extern ECS_COMPONENT_DECLARE(pixio_rect_t);
     extern ECS_COMPONENT_DECLARE(pixio_resource_t);
+    extern ECS_COMPONENT_DECLARE(pixio_resource_animated_t);
+    extern ECS_COMPONENT_DECLARE(pixio_resource_audio_t);
     extern ECS_COMPONENT_DECLARE(pixio_resource_font_t);
     extern ECS_COMPONENT_DECLARE(pixio_resource_texture_t);
     extern ECS_COMPONENT_DECLARE(pixio_script_t);
-    extern ECS_COMPONENT_DECLARE(pixio_rect_t);
-    extern ECS_COMPONENT_DECLARE(pixio_font_t);
-    extern ECS_COMPONENT_DECLARE(pixio_texture_t);
-    extern ECS_COMPONENT_DECLARE(pixio_transform_t);
-    extern ECS_COMPONENT_DECLARE(pixio_text_t);
-    extern ECS_COMPONENT_DECLARE(pixio_sprite_t);
     extern ECS_COMPONENT_DECLARE(pixio_shape_circle_t);
     extern ECS_COMPONENT_DECLARE(pixio_shape_rec_t);
+    extern ECS_COMPONENT_DECLARE(pixio_size_t);
+    extern ECS_COMPONENT_DECLARE(pixio_sprite_t);
+    extern ECS_COMPONENT_DECLARE(pixio_text_t);
+    extern ECS_COMPONENT_DECLARE(pixio_texture_t);
+    extern ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
+    extern ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
+    extern ECS_COMPONENT_DECLARE(pixio_transform_t);
+    extern ECS_COMPONENT_DECLARE(pixio_vector2_t);
 
     void pixio_type_moduleImport(ecs_world_t *world);
 

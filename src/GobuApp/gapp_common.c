@@ -246,7 +246,7 @@ char **stringSplit(const char *string, const char *delimiter)
  *
  * @param str_array El array de cadenas de caracteres a liberar.
  */
-void StringSplitFree(char **str_array)
+void stringSplitFree(char **str_array)
 {
     g_strfreev(str_array);
 }
@@ -404,7 +404,7 @@ char *fsGetName(const char *filename, bool with_ext)
     {
         gchar **sep_name = stringSplit(basename, ".");
         gchar *name = stringDup(sep_name[0]);
-        StringSplitFree(sep_name);
+        stringSplitFree(sep_name);
         return name;
     }
     return basename;

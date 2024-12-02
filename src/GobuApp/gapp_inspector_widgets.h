@@ -7,7 +7,7 @@
 
 void inspectorWidgetAddComponentToInspector(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component);
 
-GtkWidget *inspectorWidgetCreateGroup(GtkWidget *list, const gchar *title_str, bool buttonRemove);
+GtkWidget *inspectorWidgetCreateGroup(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component);
 
 GtkWidget *inspectorWidgetCreateGroupChild(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation);
 

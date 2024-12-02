@@ -23,7 +23,7 @@
 #define GAPP_COMPS_EMPTY                "entity.empty"
 #define GAPP_COMPS_SPRITE_RENDER        "pixio_type_module.pixio_sprite_t"
 #define GAPP_COMPS_TILINGS_SPRITE       ""
-#define GAPP_COMPS_ANIMATED             ""
+#define GAPP_COMPS_ANIMATED             "pixio_type_module.pixio_sprite_t pixio_type_module.pixio_animated_t"
 #define GAPP_COMPS_AUDIO_LISTENER       ""
 #define GAPP_COMPS_SOUND                ""
 #define GAPP_COMPS_CAMERA               ""

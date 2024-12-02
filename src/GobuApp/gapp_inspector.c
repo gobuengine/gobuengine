@@ -64,7 +64,7 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
         gboolean is_removable = (g_strcmp0(component_name, "pixio_transform_t") != 0 &&
                                  g_strcmp0(component_name, "pixio_entity_t") != 0);
 
-        GtkWidget *expander = inspectorWidgetCreateGroup(self->listbox, component_name, is_removable);
+        GtkWidget *expander = inspectorWidgetCreateGroup(self->listbox, is_removable, component_name, world, entity, e_component);
         g_object_set_data(G_OBJECT(expander), "size-group", self->size_group);
         inspectorWidgetAddComponentToInspector(expander, world, component_ptr, e_component);
     }

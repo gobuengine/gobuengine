@@ -46,7 +46,7 @@ extern "C"
 
     char **stringSplit(const char *string, const char *delimiter);
 
-    void StringSplitFree(char **str_array);
+    void stringSplitFree(char **str_array);
 
     char *stringTrim(char *str);
 
