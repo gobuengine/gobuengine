@@ -109,15 +109,15 @@ GtkWidget *gapp_widget_button_new_icon_svg_with_label(const gchar *icon_name, co
  * @param label      El texto de la etiqueta del botón.
  *
  * @return Un nuevo widget de botón con icono y etiqueta.
- */
-GtkWidget *gapp_widget_button_new_icon_with_label(const gchar *icon_name, const gchar *label)
+ */ 
+GtkWidget *gapp_widget_button_new_icon_with_label_custom(const gchar *icon_name, const gchar *label, GtkAlign align)
 {
     GtkWidget *button = gtk_button_new();
     gtk_button_set_has_frame(GTK_BUTTON(button), FALSE);
     {
         GtkWidget *hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
         gtk_button_set_child(GTK_BUTTON(button), hbox_parent);
-        gtk_widget_set_halign(hbox_parent, GTK_ALIGN_START);
+        gtk_widget_set_halign(hbox_parent, align);
 
         if (icon_name != NULL)
         {

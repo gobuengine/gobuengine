@@ -9,6 +9,8 @@ extern "C"
 {
 #endif
 
+    #define gapp_widget_button_new_icon_with_label(icon_name, label) gapp_widget_button_new_icon_with_label_custom(icon_name, label, GTK_ALIGN_START)
+
     typedef struct
     {
         GtkWidget *window;
@@ -27,8 +29,7 @@ extern "C"
 
     // button
     GtkWidget *gapp_widget_button_new_icon_svg_with_label(const gchar *icon_name, const gchar *label);
-
-    GtkWidget *gapp_widget_button_new_icon_with_label(const gchar *icon_name, const gchar *label);
+    GtkWidget *gapp_widget_button_new_icon_with_label_custom(const gchar *icon_name, const gchar *label, GtkAlign align);
 
     // notebook
     void gapp_widget_notebook_append_page(GtkWidget *notebook, GtkWidget *label, GtkWidget *child, gboolean isButtonClose);

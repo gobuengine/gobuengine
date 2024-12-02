@@ -82,10 +82,8 @@ static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_pt
 static void inspector_widget_signal_component_remove(GtkWidget *button, inspectorEntity *entity)
 {
     GtkWidget *expander = g_object_get_data(G_OBJECT(button), "expander-content");
-
-    gtk_widget_unparent(expander);
+    gtk_widget_set_visible(expander, FALSE);
     ecs_remove_id(entity->world, entity->entity, entity->component);
-
     g_free(entity);
 }
 
@@ -361,7 +359,7 @@ static GtkWidget *inspectorWidgetCreate_ResourceInput(ecs_meta_cursor_t cursor)
     return widget;
 }
 
-GtkWidget *inspectorWidgetCreateGroupChild(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation)
+GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation)
 {
     GtkWidget *label, *box;
 
@@ -387,7 +385,7 @@ GtkWidget *inspectorWidgetCreateGroupChild(GtkWidget *size_group, const char *la
     return box;
 }
 
-GtkWidget *inspectorWidgetCreateGroup(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component)
+GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component)
 {
     GtkWidget *expander = gtk_expander_new(NULL);
     gtk_expander_set_expanded(GTK_EXPANDER(expander), TRUE);
@@ -417,17 +415,17 @@ GtkWidget *inspectorWidgetCreateGroup(GtkWidget *list, bool buttonRemove, const 
             // gtk_widget_set_margin_start(button_off, 0);
             // gtk_widget_set_tooltip_text(button_off, "Remove component");
             // gtk_switch_set_active(GTK_SWITCH(button_off), TRUE);
-            // // g_signal_connect(button_off, "clicked", G_CALLBACK(inspector_widget_signal_component_remove), entity);
+            // g_signal_connect(button_off, "clicked", G_CALLBACK(inspector_widget_signal_component_remove), entity);
 
             GtkWidget *button = gtk_button_new_from_icon_name("user-trash-symbolic");
             gtk_widget_add_css_class(button, "expander_button");
             gtk_widget_set_margin_start(button, 0);
             gtk_widget_set_tooltip_text(button, "Remove component");
-            gtk_box_append(GTK_BOX(title), button);
             g_object_set_data(G_OBJECT(button), "expander-content", expander);
+            gtk_box_append(GTK_BOX(title), button);
             g_signal_connect(button, "clicked", G_CALLBACK(inspector_widget_signal_component_remove), entityCustom);
 
-            // g_free(entity);
+            // g_free(entityCustom);
         }
     }
 
@@ -439,7 +437,7 @@ GtkWidget *inspectorWidgetCreateGroup(GtkWidget *list, bool buttonRemove, const 
     return content;
 }
 
-void inspectorWidgetAddComponentToInspector(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component)
+void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component)
 {
     ecs_meta_cursor_t cursor = ecs_meta_cursor(world, component, ptr);
 
@@ -491,11 +489,30 @@ void inspectorWidgetAddComponentToInspector(GtkWidget *content, ecs_world_t *wor
         if (input)
         {
             GtkWidget *size_group = g_object_get_data(G_OBJECT(content), "size-group");
-            GtkWidget *child = inspectorWidgetCreateGroupChild(size_group, field_name, input, GTK_ORIENTATION_HORIZONTAL);
+            GtkWidget *child = inspectorWidgetCreateFieldRow(size_group, field_name, input, GTK_ORIENTATION_HORIZONTAL);
             gtk_box_append(GTK_BOX(content), child);
         }
 
         ecs_meta_next(&cursor);
     }
     ecs_meta_pop(&cursor);
+}
+
+void inspectorWidgetCreateComponentDefaultEntity(GtkWidget *listbox, GtkWidget *size_group, ecs_world_t *world, ecs_entity_t entity)
+{
+    GtkWidget *content = inspectorWidgetCreateComponentGroup(listbox, FALSE, "pixio_entity_t", NULL, 0, 0);
+
+    GtkWidget *entity_enabled = gtk_check_button_new();
+    gtk_check_button_set_active(GTK_CHECK_BUTTON(entity_enabled), pixio_get_enabled(world, entity));
+    gtk_box_append(GTK_BOX(content), inspectorWidgetCreateFieldRow(size_group, "enabled", entity_enabled, GTK_ORIENTATION_HORIZONTAL));
+
+    GtkWidget *entity_name = gtk_entry_new();
+    gtk_editable_set_text(GTK_EDITABLE(entity_name), pixio_get_name(world, entity));
+    gtk_widget_set_sensitive(entity_name, !(pixio_get_root(world) == entity));
+    gtk_box_append(GTK_BOX(content), inspectorWidgetCreateFieldRow(size_group, "name", entity_name, GTK_ORIENTATION_HORIZONTAL));
+
+    GtkWidget *button = gapp_widget_button_new_icon_with_label_custom("list-add-symbolic", "Add component", GTK_ALIGN_CENTER);
+    gtk_widget_set_tooltip_text(button, "Add component");
+    gtk_button_set_has_frame(GTK_BUTTON(button), TRUE);
+    gtk_box_append(GTK_BOX(content), button);
 }

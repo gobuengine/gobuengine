@@ -5,11 +5,13 @@
 #include "config.h"
 #include "pixio/pixio.h"
 
-void inspectorWidgetAddComponentToInspector(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component);
+void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component);
 
-GtkWidget *inspectorWidgetCreateGroup(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component);
+GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component);
 
-GtkWidget *inspectorWidgetCreateGroupChild(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation);
+GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation);
+
+void inspectorWidgetCreateComponentDefaultEntity(GtkWidget *listbox, GtkWidget *size_group, ecs_world_t *world, ecs_entity_t entity);
 
 #endif // GAPP_INSPECTOR_WIDGETS_H
 
