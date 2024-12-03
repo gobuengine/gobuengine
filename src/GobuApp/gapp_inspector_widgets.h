@@ -11,7 +11,5 @@ GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemov
 
 GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation);
 
-void inspectorWidgetCreateComponentDefaultEntity(GtkWidget *listbox, GtkWidget *size_group, ecs_world_t *world, ecs_entity_t entity);
-
 #endif // GAPP_INSPECTOR_WIDGETS_H
 

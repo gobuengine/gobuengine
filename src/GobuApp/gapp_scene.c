@@ -317,7 +317,7 @@ static void outlinerEcsHookCallback(ecs_iter_t *it)
     }
 }
 
-static void outlinerEcsObserverNameChange(ecs_iter_t *it)
+static void outlinerEcsObserverSceneWithEntity(ecs_iter_t *it)
 {
     ecs_world_t *world = it->world;
     ecs_entity_t event = it->event;
@@ -329,8 +329,9 @@ static void outlinerEcsObserverNameChange(ecs_iter_t *it)
 
         if (event == EcsOnSet)
         {
-            const char *name = ecs_get_name(world, entity);
-            outlinerSetEntityName(scene, entity, name);
+            // cuando actualizamos el nombre de la entidad actualizamos
+            // el nombre de la entidad en el outliner.
+            outlinerSetEntityName(scene, entity, ecs_get_name(world, entity));
         }
     }
 }
@@ -570,27 +571,27 @@ static void onSceneToolbarSave(GtkWidget *widget, GappScene *scene)
 
 static void onSceneRealize(GtkWidget *widget, GappScene *scene)
 {
-    // Por el momento cada escena o prefab tiene su propio mundo.
-    // En un futuro me gustaria hacer que una escena y prefab sean solo una entidad en un mundo global.
     scene->world = pixio_world_init();
+
     ecs_set_hooks(scene->world, pixio_transform_t, {.on_add = outlinerEcsHookCallback, .on_remove = outlinerEcsHookCallback, .ctx = scene});
-    scene->root = pixio_entity_new_root(scene->world);
 
     const char *filename = sceneGetFilename(scene);
 
-    if (strcmp(filename, "Untitle") == 0)
-        return;
-
-    char *buffer_scene = fsRead(filename);
-    if (buffer_scene != NULL)
-    {
-        pixio_world_deserialize(scene->world, buffer_scene);
-        g_free(buffer_scene);
+    if (strcmp(filename, "Untitle") != 0) {
+        char *buffer_scene = fsRead(filename);
+        if (buffer_scene != NULL)
+        {
+            pixio_world_deserialize(scene->world, buffer_scene);
+            scene->root = pixio_get_root(scene->world);
+            g_free(buffer_scene);
+        }
+    }else {
+        scene->root = pixio_entity_new_root(scene->world);
     }
 
     ecs_observer(scene->world, {.query.terms = {{.id = ecs_pair_t(EcsIdentifier, EcsName)}},
                                 .events = {EcsOnSet},
-                                .callback = outlinerEcsObserverNameChange,
+                                .callback = outlinerEcsObserverSceneWithEntity,
                                 .ctx = scene});
 }
 

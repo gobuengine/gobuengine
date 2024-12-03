@@ -146,7 +146,7 @@ void pixio_set_enabled(ecs_world_t *world, ecs_entity_t entity, bool enabled)
 
 bool pixio_get_enabled(ecs_world_t *world, ecs_entity_t entity)
 {
-    return ecs_has_id(world, entity, EcsDisabled) == 0;
+    return !ecs_has_id(world, entity, EcsDisabled);
 }
 
 void pixio_set_component_by_name(ecs_world_t *world, ecs_entity_t entity, const char *component)
