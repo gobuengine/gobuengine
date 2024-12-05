@@ -2,7 +2,7 @@
 #include "pixio_type.h"
 
 // -- -- -- -- -- -- -- -- --
-// MARK: - ENTITY_INFO COMPONENT
+// MARK: - ENTITY_INFO
 // -- -- -- -- -- -- -- -- --
 // static void observe_set_entity_info(ecs_iter_t *it)
 // {
@@ -16,7 +16,7 @@
 // }
 
 // -- -- -- -- -- -- -- -- --
-// MARK: - TEXT COMPONENT
+// MARK: - TEXT-RENDERER
 // -- -- -- -- -- -- -- -- --
 static void observe_set_text_default(ecs_iter_t *it)
 {
@@ -33,11 +33,89 @@ static void observe_set_text_default(ecs_iter_t *it)
 }
 
 // -- -- -- -- -- -- -- -- --
-// MARK: - SPRITE COMPONENT
+// MARK: - SPRITE-RENDERER
 // -- -- -- -- -- -- -- -- --
 
+static void observe_set_sprite_default(ecs_iter_t *it)
+{
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        // sprite[i].texture = gobu_resource(it->world, sprite[i].resource)->texture;
+        sprite[i].srcRect = (Rectangle){0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height};
+        sprite[i].dstRect = (Rectangle){0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height};
+        sprite[i].tint = (sprite[i].tint.a == 0) ? WHITE : sprite[i].tint;
+    }
+}
+
+static void observe_update_sprite_default(ecs_iter_t *it)
+{
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        int textureWidth = sprite[i].texture.width;
+        int textureHeight = sprite[i].texture.height;
+
+        int frameWidth  = textureWidth / sprite[i].hframes;
+        int frameHeight = textureHeight / sprite[i].vframes;
+
+        pixio_rect_t dst = (pixio_rect_t){0, 0, textureWidth, textureHeight};
+        pixio_rect_t src = dst;
+
+        if (frameWidth != textureWidth || frameHeight != textureHeight)
+        {
+            dst.width = src.width = frameWidth;
+            dst.height = src.height = frameHeight;
+            src.x = (sprite[i].frame % (int)(textureWidth/ frameWidth)) * frameWidth;
+            src.y = (sprite[i].frame / (textureWidth/ frameHeight)) * frameHeight;
+        }
+
+        src.width = sprite[i].flip == PIXIO_FLIP_HORIZONTAL ? -src.width : src.width;
+        src.height = sprite[i].flip == PIXIO_FLIP_VERTICAL ? -src.height : src.height;
+        
+        sprite[i].srcRect = (Rectangle){src.x, src.y, src.width, src.height};
+        sprite[i].dstRect = (Rectangle){dst.x, dst.y, dst.width, dst.height};
+    }
+}
+
 // -- -- -- -- -- -- -- -- --
-// MARK: - SHAPE COMPONENT
+// MARK: - ANIMATE-SPRITE 
+// -- -- -- -- -- -- -- -- --
+
+static void system_update_animate_sprite(ecs_iter_t *it)
+{
+    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 0);
+    pixio_animated_t *anim = ecs_field(it, pixio_animated_t, 1);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        if (strlen(anim[i].animated) == 0)
+            continue;
+
+        // if (anim[i].frameCount > 0)
+        // {
+        //     anim[i].frameTime += GetFrameTime();
+        //     if (anim[i].frameTime >= anim[i].frameSpeed)
+        //     {
+        //         anim[i].frame++;
+        //         anim[i].frameTime = 0;
+        //         if (anim[i].frame >= anim[i].frameCount)
+        //             anim[i].frame = 0;
+        //     }
+        //     sprite[i].srcRect.x = (float)anim[i].frame * sprite[i].texture.width / anim[i].frameCount;
+        //     sprite[i].srcRect.y = 0;
+        //     sprite[i].srcRect.width = (float)sprite[i].texture.width / anim[i].frameCount;
+        //     sprite[i].srcRect.height = (float)sprite[i].texture.height;
+        // }
+
+        printf("Animate Sprite: %d\n", i);
+    }
+}
+
+// -- -- -- -- -- -- -- -- --
+// MARK: - SHAPE
 // -- -- -- -- -- -- -- -- --
 static void observe_set_shape_circle_default(ecs_iter_t *it)
 {
@@ -68,19 +146,6 @@ static void observe_set_shape_rect_default(ecs_iter_t *it)
     }
 }
 
-static void observe_set_sprite_default(ecs_iter_t *it)
-{
-    pixio_sprite_t *sprite = ecs_field(it, pixio_sprite_t, 0);
-
-    for (int i = 0; i < it->count; i++)
-    {
-        //sprite[i].texture = gobu_resource(it->world, sprite[i].resource)->texture;
-        sprite[i].srcRect = (Rectangle){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
-        sprite[i].dstRect = (Rectangle){ 0.0f, 0.0f, sprite[i].texture.width, sprite[i].texture.height };
-        sprite[i].tint = (sprite[i].tint.a == 0) ? WHITE : sprite[i].tint;
-    }
-}
-
 // -- -- -- -- -- -- -- -- --
 // MARK: - MODULE IMPORT
 // -- -- -- -- -- -- -- -- --
@@ -89,19 +154,22 @@ void pixio_base_moduleImport(ecs_world_t *world)
     ECS_MODULE(world, pixio_base_module);
     // ECS_IMPORT(world, pixio_type_module);
 
-    ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_text_t)}}},
+    ecs_observer(world, {.query.terms = {{ecs_id(pixio_text_t)}},
                          .events = {EcsOnAdd, EcsOnSet},
                          .callback = observe_set_text_default});
 
-    ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_shape_circle_t)}}},
+    ecs_observer(world, {.query.terms = {{ecs_id(pixio_shape_circle_t)}},
                          .events = {EcsOnAdd, EcsOnSet},
                          .callback = observe_set_shape_circle_default});
 
-    ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_shape_rec_t)}}},
+    ecs_observer(world, {.query.terms = {{ecs_id(pixio_shape_rec_t)}},
                          .events = {EcsOnAdd, EcsOnSet},
                          .callback = observe_set_shape_rect_default});
 
-    ecs_observer(world, {.query = {.terms = {{ecs_id(pixio_sprite_t)}}},
+    ecs_observer(world, {.query.terms = {{ecs_id(pixio_sprite_t)}},
                          .events = {EcsOnAdd, EcsOnSet},
                          .callback = observe_set_sprite_default});
+
+    ecs_system(world, {.query.terms = {{ecs_id(pixio_sprite_t)}, {ecs_id(pixio_animated_t)}},
+                       .callback = system_update_animate_sprite});
 }

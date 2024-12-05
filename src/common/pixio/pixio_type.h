@@ -20,6 +20,7 @@ extern "C"
     typedef Texture2D pixio_texture_t;
     typedef TextureFilter pixio_texture_filter_t;
     typedef Vector2 pixio_vector2_t;
+    // typedef ecs_bool_t pixio_property_ui_title;
 
     typedef enum _pixio_origin_t
     {
@@ -86,6 +87,9 @@ extern "C"
         pixio_texture_filter_t filter;
         pixio_texture_flip_t flip;
         pixio_color_t tint;
+        ecs_u32_t hframes;
+        ecs_u32_t vframes;
+        ecs_u32_t frame;
         pixio_rect_t srcRect;
         pixio_rect_t dstRect;
         pixio_texture_t texture;
@@ -111,9 +115,23 @@ extern "C"
         ecs_f32_t segments;
     } pixio_shape_rec_t;
 
+    // una struct para manejar los datos de las animaciones
+    typedef struct _pixio_animated_data_t
+    {
+        char *name;
+        int frame;
+        int frameCount;
+        float frameTime;
+        float frameSpeed;
+        bool loop;
+    } pixio_animated_data_t;
+
     typedef struct _pixio_animated_t
     {
         pixio_resource_animated_t animated;
+        // ecs_u32_t Hframes;
+        // ecs_u32_t Vframes;
+        // ecs_u32_t frame;
     } pixio_animated_t;
 
     extern ECS_COMPONENT_DECLARE(pixio_animated_t);
@@ -138,6 +156,7 @@ extern "C"
     extern ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
     extern ECS_COMPONENT_DECLARE(pixio_transform_t);
     extern ECS_COMPONENT_DECLARE(pixio_vector2_t);
+    // extern ECS_COMPONENT_DECLARE(pixio_property_ui_title);
 
     void pixio_type_moduleImport(ecs_world_t *world);
 

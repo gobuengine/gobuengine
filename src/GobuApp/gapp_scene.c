@@ -3,6 +3,7 @@
 #include "gapp_widget.h"
 #include "gapp_viewport.h"
 #include "gapp_inspector.h"
+#include "gapp_hierarchy.h"
 
 #include "types/type_outliner_item.h"
 #include "types/type_outliner_popover_item.h"

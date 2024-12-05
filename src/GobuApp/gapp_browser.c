@@ -345,6 +345,13 @@ static void onBrowserCreateScriptInDialog(GtkWidget *button, GappWidgetDialogEnt
         g_file_set_contents(filename, "", -1, NULL);
 }
 
+static void onBrowserCreateAnimateSpriteInDialog(GtkWidget *button, GappWidgetDialogEntry *dialog)
+{
+    const char *filename = browserGetSelectedPathFromDialog(dialog, GAPP_BROWSER_FILE_ANIMATION);
+    if (filename != NULL)
+        g_file_set_contents(filename, "", -1, NULL);
+}
+
 static void onBrowserToolbarCreateDialog(GtkWidget *widget, GappBrowser *self)
 {
     const gchar *title = g_object_get_data(G_OBJECT(widget), "title");
@@ -528,6 +535,8 @@ static GtkWidget *browserToolbarSetupInterfacePopoverMenu(GtkWidget *parent, Gap
         {"document-new-symbolic", "Scene", G_CALLBACK(onBrowserCreateSceneInDialog)},
         {"document-new-symbolic", "Prefab", G_CALLBACK(onBrowserCreatePrefabInDialog)},
         {"document-new-symbolic", "Script", G_CALLBACK(onBrowserCreateScriptInDialog)},
+        {NULL, NULL, NULL},
+        {"document-new-symbolic", "Animate Sprite", G_CALLBACK(onBrowserCreateAnimateSpriteInDialog)},
     };
 
     GtkWidget *popover = gtk_popover_new();

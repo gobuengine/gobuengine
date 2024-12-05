@@ -3,13 +3,6 @@
 #include "gapp_widget.h"
 #include "types/type_enum.h"
 
-typedef struct
-{
-    ecs_entity_t component;
-    ecs_entity_t entity;
-    ecs_world_t *world;
-} inspectorEntity;
-
 static GdkRGBA pixio_color_to_gdk_rgba(const pixio_color_t *pixio_color)
 {
     return (GdkRGBA){
@@ -79,12 +72,15 @@ static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_pt
     *(uint8_t *)field_ptr = object_ienum_get_value(item);
 }
 
-static void inspector_widget_signal_component_remove(GtkWidget *button, inspectorEntity *entity)
+static void inspector_widget_signal_component_remove(GtkWidget *button, gpointer data)
 {
+    ecs_world_t *world = g_object_get_data(G_OBJECT(button), "entity_world");
+    ecs_entity_t component = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(button), "entity_component"));
+    ecs_entity_t entity = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(button), "entity_entity"));
+
     GtkWidget *expander = g_object_get_data(G_OBJECT(button), "expander-content");
     gtk_widget_set_visible(expander, FALSE);
-    ecs_remove_id(entity->world, entity->entity, entity->component);
-    g_free(entity);
+    ecs_remove_id(world, entity, component);
 }
 
 static GtkWidget *inspectorWidgetCreate_StringInput(ecs_meta_cursor_t cursor)
@@ -403,11 +399,6 @@ GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemov
 
         if (buttonRemove)
         {
-            inspectorEntity *entityCustom = g_new(inspectorEntity, 1);
-            entityCustom->world = world;
-            entityCustom->component = component;
-            entityCustom->entity = entity;
-
             // GtkWidget *button_off = gtk_switch_new();
             // gtk_box_append(GTK_BOX(title), button_off);
             // gtk_widget_set_margin_end(button_off, 5);
@@ -423,9 +414,12 @@ GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemov
             gtk_widget_set_tooltip_text(button, "Remove component");
             g_object_set_data(G_OBJECT(button), "expander-content", expander);
             gtk_box_append(GTK_BOX(title), button);
-            g_signal_connect(button, "clicked", G_CALLBACK(inspector_widget_signal_component_remove), entityCustom);
-
-            // g_free(entityCustom);
+            // ECS DATA
+            g_object_set_data(G_OBJECT(button), "entity_world", world);
+            g_object_set_data(G_OBJECT(button), "entity_component", GUINT_TO_POINTER(component));
+            g_object_set_data(G_OBJECT(button), "entity_entity", GUINT_TO_POINTER(entity));
+            //
+            g_signal_connect(button, "clicked", G_CALLBACK(inspector_widget_signal_component_remove), NULL);
         }
     }
 
@@ -492,9 +486,12 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             GtkWidget *child = inspectorWidgetCreateFieldRow(size_group, field_name, input, GTK_ORIENTATION_HORIZONTAL);
             gtk_box_append(GTK_BOX(content), child);
         }
+        // else if (ecs_id(pixio_property_ui_title) == field_type)
+        // {
+        //     gtk_box_append(GTK_BOX(content), gtk_label_new(field_name));
+        // }
 
         ecs_meta_next(&cursor);
     }
     ecs_meta_pop(&cursor);
 }
-

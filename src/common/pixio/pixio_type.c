@@ -22,6 +22,7 @@ ECS_COMPONENT_DECLARE(pixio_texture_filter_t);
 ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
 ECS_COMPONENT_DECLARE(pixio_transform_t);
 ECS_COMPONENT_DECLARE(pixio_vector2_t);
+// ECS_COMPONENT_DECLARE(pixio_property_ui_title);
 
 void pixio_type_moduleImport(ecs_world_t *world)
 {
@@ -48,7 +49,17 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ECS_COMPONENT_DEFINE(world, pixio_texture_flip_t);
     ECS_COMPONENT_DEFINE(world, pixio_transform_t);
     ECS_COMPONENT_DEFINE(world, pixio_vector2_t);
+    // ECS_COMPONENT_DEFINE(world, pixio_property_ui_title);
 
+    // componentes experimentales para el inspector
+    // ecs_struct(world, {
+    //     .entity = ecs_id(pixio_property_ui_title),
+    //     .members = {
+    //         {.name = "property_ui_title", .type = ecs_id(ecs_bool_t)},
+    //     },
+    // });
+
+    // componentes visibles
     ecs_enum(world, {
         .entity = ecs_id(pixio_origin_t),
         .constants = {
@@ -197,6 +208,10 @@ void pixio_type_moduleImport(ecs_world_t *world)
             {.name = "filter", .type = ecs_id(pixio_texture_filter_t)},
             {.name = "flip", .type = ecs_id(pixio_texture_flip_t)},
             {.name = "tint", .type = ecs_id(pixio_color_t)},
+            // {.name = "Controller frame", .type = ecs_id(pixio_property_ui_title)},
+            {.name = "hframes", .type = ecs_id(ecs_u32_t)},
+            {.name = "vframes", .type = ecs_id(ecs_u32_t)},
+            {.name = "frame", .type = ecs_id(ecs_u32_t)},
         },
     });
 

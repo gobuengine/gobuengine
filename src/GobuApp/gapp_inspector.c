@@ -100,6 +100,7 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
     gtk_list_box_remove_all(self->listbox);
     self->size_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
 
+    // ECS DATA
     self->entity = entity;
     self->world = world;
 
