@@ -14,6 +14,7 @@
 #define GAPP_FILE_PROJECTS_NAME         "projects.bin"
 #define GAPP_PROJECT_CONTENT            "Content"
 #define GAPP_SCRIPT_LENGUAGE            "lua"
+#define GAPP_SCRIPT_THEME               "Adwaita-dark"
 #define GAPP_ROOT_STR                   "Root"
 #define GAPP_TOOLBAR_LEFT_ICON_BROWSER  "system-file-manager-symbolic"
 #define GAPP_TOOLBAR_LEFT_ICON_ROOMS    "preferences-desktop-wallpaper-symbolic"

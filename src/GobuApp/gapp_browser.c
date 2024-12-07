@@ -4,6 +4,7 @@
 #include "gapp_widget.h"
 #include "gapp_scene.h"
 #include "gapp_script.h"
+#include "gapp_components.h"
 #include "gapp.h"
 
 struct _GappBrowser
@@ -206,6 +207,8 @@ static void browserSetIconForFileInfo(GtkImage *icon, GFileInfo *fileInfo)
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCRIPT));
     else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_ANIMATION))
         gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_ANIM2D));
+    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_COMPONENT))
+        gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_COMPS));
     else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileInfo));
 }
@@ -398,6 +401,12 @@ static void onBrowserToolbarRemoveFileClicked(GtkWidget *widget, GappBrowser *se
                                           onBrowserRemoveFileInDialog, self);
 }
 
+static void onBrowserToolbarOpenComponentsClicked(GtkWidget *widget, GappBrowser *self)
+{
+    GtkWidget *widget_module = gapp_component_new("C:/Users/hbibl/OneDrive/Documentos/Gobu Projects/Tappyplane/Components/components.component");
+    gapp_append_right_panel(GAPP_RESOURCE_ICON_COMPS, "Components", widget_module, TRUE);
+}
+
 // -- -- --
 // static void gapp_browser_s_file_popup(GtkGesture *gesture, int n_press, double x, double y, GappBrowser *self)
 // {
@@ -426,12 +435,18 @@ static void onBrowserFileActivated(GtkListView *self, guint position, GappBrowse
     char *name = fsGetName(filename, TRUE);
     char *pathFile = g_file_get_path(file);
 
-    if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCRIPT))
-    {
-        widget_module = gapp_script_new(pathFile);
-        icon = GAPP_RESOURCE_ICON_SCRIPT;
-    }
-    else if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCENE))
+    // if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCRIPT))
+    // {
+    //     widget_module = gapp_script_new(pathFile);
+    //     icon = GAPP_RESOURCE_ICON_SCRIPT;
+    // }
+    // else if (fsIsExtension(filename, GAPP_BROWSER_FILE_COMPONENT))
+    // {
+    //     widget_module = gapp_component_new(pathFile);
+    //     icon = GAPP_RESOURCE_ICON_COMPS;
+    // }
+    //else 
+    if (fsIsExtension(filename, GAPP_BROWSER_FILE_SCENE))
     {
         widget_module = gapp_scene_new(pathFile);
     }
@@ -517,7 +532,7 @@ static void onBrowserViewFileBindFactory(GtkListItemFactory *factory, GtkListIte
     browserSetIconForFileInfo(GTK_IMAGE(icon), fileInfo);
 
     const gchar *name = g_file_info_get_name(fileInfo);
-    gtk_label_set_text(GTK_LABEL(label), name);
+    gtk_label_set_text(GTK_LABEL(label), fsGetName(name, TRUE));
 
     // Si es la carpeta Content
     if (browserIsContentFolder(browser, g_file_get_path(browserCreateFileFromFileInfo(fileInfo))))
@@ -534,7 +549,7 @@ static GtkWidget *browserToolbarSetupInterfacePopoverMenu(GtkWidget *parent, Gap
         {NULL, NULL, NULL},
         {"document-new-symbolic", "Scene", G_CALLBACK(onBrowserCreateSceneInDialog)},
         {"document-new-symbolic", "Prefab", G_CALLBACK(onBrowserCreatePrefabInDialog)},
-        {"document-new-symbolic", "Script", G_CALLBACK(onBrowserCreateScriptInDialog)},
+        // {"document-new-symbolic", "Script", G_CALLBACK(onBrowserCreateScriptInDialog)},
         {NULL, NULL, NULL},
         {"document-new-symbolic", "Animate Sprite", G_CALLBACK(onBrowserCreateAnimateSpriteInDialog)},
     };
@@ -603,6 +618,11 @@ static void gappBrowserConfigureInterface(GappBrowser *self)
         gtk_box_append(GTK_BOX(toolbar), item);
         gtk_widget_set_tooltip_text(item, "Delete selected item(s)");
         g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarRemoveFileClicked), self);
+
+        item = gapp_widget_button_new_icon_with_label("applications-science-symbolic", "Components");
+        gtk_box_append(GTK_BOX(toolbar), item);
+        gtk_widget_set_tooltip_text(item, "Administrador de componentes");
+        g_signal_connect(item, "clicked", G_CALLBACK(onBrowserToolbarOpenComponentsClicked), self);
     }
 
     gtk_box_append(self, gapp_widget_separator_h());

@@ -22,6 +22,7 @@ struct _GappMain
     GtkWidget *btn_s;
     GtkWidget *btn_p;
     GtkWidget *btn_b;
+    GtkWidget *btn_c;
     GtkWidget *btn_set;
     GtkWidget *project_manager;
     GtkWidget *browser;
@@ -68,6 +69,7 @@ static void gapp_main_activate(GappMain *app)
     app->ricons[GAPP_RESOURCE_ICON_TILEMAP] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/scene.png");
     app->ricons[GAPP_RESOURCE_ICON_SCRIPT] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/script.png");
     app->ricons[GAPP_RESOURCE_ICON_ANIM2D] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/anim2d.png");
+    app->ricons[GAPP_RESOURCE_ICON_COMPS] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/component.png");
 
     app->title_window = gtk_label_new(GAPP_VERSION_STR);
 
@@ -91,18 +93,21 @@ static void gapp_main_activate(GappMain *app)
 
                 app->btn_b = gapp_widget_button_new_icon_with_label("drive-optical-symbolic", "Build");
                 gtk_box_append(hbox, app->btn_b);
+
+                // app->btn_c = gapp_widget_button_new_icon_with_label("applications-science-symbolic", "Components");
+                // gtk_box_append(hbox, app->btn_c);
             }
         }
 
         { // #setting project, game
-            app->btn_set = gapp_widget_button_new_icon_with_label("preferences-other-symbolic", "Project Settings");
+            app->btn_set = gapp_widget_button_new_icon_with_label("open-menu-symbolic", NULL);
             gtk_header_bar_pack_end(header_bar, app->btn_set);
             g_signal_connect(app->btn_set, "clicked", G_CALLBACK(gapp_signal_project_settings_open), app);
         }
     }
 
     GtkWidget *hpaned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
-    gtk_paned_set_position(GTK_PANED(hpaned), 250);
+    gtk_paned_set_position(GTK_PANED(hpaned), 265);
     // gtk_paned_set_shrink_start_child(GTK_PANED(hpaned), FALSE);
     // gtk_paned_set_wide_handle(GTK_PANED(hpaned), TRUE);
     gtk_paned_set_resize_start_child(GTK_PANED(hpaned), FALSE);
@@ -155,6 +160,7 @@ static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
 static void gapp_set_headerbar_button_sensitives(GappMain *self, gboolean sensitive)
 {
     // gtk_widget_set_visible(self->btn_s, sensitive);
+    // gtk_widget_set_visible(self->btn_c, sensitive);
     gtk_widget_set_visible(self->btn_p, sensitive);
     gtk_widget_set_visible(self->btn_b, sensitive);
     gtk_widget_set_visible(self->btn_set, sensitive);
