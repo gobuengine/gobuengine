@@ -14,7 +14,7 @@ void browserSetFolder(GappBrowser *browser, const gchar *path);
 
 void browserSetFolderContent(GappBrowser *browser);
 
-gchar *browserGetCurrentFolder(GappBrowser *browser);
+gchar *gapp_browser_get_current(GappBrowser *browser);
 
 gchar *browserGetContentPath(GappBrowser *browser);
 

@@ -4,6 +4,7 @@
 #include "pixio/pixio.h"
 
 #define GWORLD gapp_get_world_instance()
+#define GBROWSER gapp_get_browser_instance()
 
 typedef enum GappResourceIcon
 {
@@ -28,15 +29,19 @@ GObject *gapp_get_config_instance(void);
 
 ecs_world_t *gapp_get_world_instance(void);
 
+GtkWidget *gapp_get_browser_instance(void);
+
 GdkPaintable *gapp_get_resource_icon(GappResourceIcon icon);
 
 void gapp_open_project(GappMain *self, const gchar *path);
 
-void gapp_append_right_panel(GappResourceIcon icon, const gchar *title, GtkWidget *module, gboolean is_button_close);
+void gapp_right_panel_append(GappResourceIcon icon, const gchar *title, GtkWidget *module, gboolean is_button_close);
+void gapp_right_panel_set_label(GtkWidget *module, const gchar *title);
 
 void gapp_append_left_panel(const gchar *icon, GtkWidget *module);
 
 const gchar *gapp_get_project_path(void);
+
 void gapp_set_project_path(const gchar *path);
 
 G_END_DECLS

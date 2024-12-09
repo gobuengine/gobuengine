@@ -351,7 +351,7 @@ static void gobu_s_item_factory_bind_item(GtkListItemFactory *factory, GtkListIt
     // Obtener la ruta del proyecto
     GtkStringObject *obj = gtk_list_item_get_item(list_item);
     g_return_if_fail(GTK_IS_STRING_OBJECT(obj));
-    const char *path_project = g_path_get_dirname(gtk_string_object_get_string(obj));
+    const char *path_project = pathDirname(gtk_string_object_get_string(obj));
 
     // Configurar la imagen
     gchar *thumbnail_path = pathJoin(path_project, GAPP_PROJECT_MANAGER_PREVIEW, NULL);
@@ -426,7 +426,7 @@ static void gobu_s_list_project_activated(GtkGridView *grid_view, guint position
     GtkStringObject *obj = g_list_model_get_item(select_model, position);
 
     g_return_if_fail(GTK_IS_STRING_OBJECT(obj));
-    const char *path_project = g_path_get_dirname(gtk_string_object_get_string(obj));
+    const char *path_project = pathDirname(gtk_string_object_get_string(obj));
 
     gobu_fn_open_editor_main(pathJoin(path_project, GAPP_PROJECT_MANAGER_FILE, NULL), self);
 }

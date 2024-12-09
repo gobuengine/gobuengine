@@ -1,4 +1,5 @@
 #include "gapp_widget.h"
+#include "gapp_common.h"
 
 /**
  * Crea un nuevo widget de imagen a partir de un archivo SVG.
@@ -21,7 +22,7 @@ GtkWidget *gapp_widget_icon_svg_new(const gchar *icon_name)
         return NULL;
     }
 
-    icon_file = g_build_filename(g_get_current_dir(), "Content", "icons", g_strdup_printf("%s.svg", icon_name), NULL);
+    icon_file = pathJoin(g_get_current_dir(), "Content", "icons", g_strdup_printf("%s.svg", icon_name), NULL);
 
     if (g_file_test(icon_file, G_FILE_TEST_EXISTS))
     {
@@ -155,11 +156,11 @@ static void s_notebook_close_page(GtkWidget *button, GtkNotebook *notebook)
  * @param child El contenido de la nueva página.
  * @param isButtonClose Si es TRUE, se añade un botón de cierre a la pestaña.
  */
-void gapp_widget_notebook_append_page(GtkWidget *notebook, GtkWidget *label, GtkWidget *child, gboolean isButtonClose)
+int gapp_widget_notebook_append_page(GtkWidget *notebook, GtkWidget *label, GtkWidget *child, gboolean isButtonClose)
 {
-    g_return_if_fail(GTK_IS_NOTEBOOK(notebook));
-    g_return_if_fail(GTK_IS_WIDGET(label));
-    g_return_if_fail(GTK_IS_WIDGET(child));
+    g_return_val_if_fail(GTK_IS_NOTEBOOK(notebook), -1);
+    g_return_val_if_fail(GTK_IS_WIDGET(label), -1);
+    g_return_val_if_fail(GTK_IS_WIDGET(child), -1);
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
     gtk_box_append(GTK_BOX(box), label);
@@ -175,6 +176,16 @@ void gapp_widget_notebook_append_page(GtkWidget *notebook, GtkWidget *label, Gtk
     int page_index = gtk_notebook_append_page(GTK_NOTEBOOK(notebook), child, box);
     gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(notebook), child, TRUE);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), page_index);
+
+    return page_index;
+}
+
+GtkWidget *gapp_widget_notebook_get_label(GtkWidget *notebook, GtkWidget *child)
+{
+    GtkWidget *box_main_label = gtk_notebook_get_tab_label(GTK_NOTEBOOK(notebook), child);
+    GtkWidget *box_label = gtk_widget_get_first_child(box_main_label);
+    GtkWidget *label = gtk_widget_get_last_child(box_label);
+    return label;
 }
 
 //  -- widget dialog base

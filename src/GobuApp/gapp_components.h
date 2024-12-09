@@ -9,7 +9,8 @@ G_BEGIN_DECLS
 #define GAPP_TYPE_COMPONENT (gapp_component_get_type())
 G_DECLARE_FINAL_TYPE(GappComponent, gapp_component, GAPP, COMPONENT, GtkBox)
 
-GappComponent *gapp_component_new(const gchar *filename);
+GappComponent *gapp_component_new(void);
+void gapp_component_load_file(GappComponent *self, const gchar *filename);
 
 G_END_DECLS
 

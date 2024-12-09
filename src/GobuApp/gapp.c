@@ -127,7 +127,7 @@ static void gapp_main_activate(GappMain *app)
         gtk_paned_set_end_child(GTK_PANED(hpaned), app->dnotebook);
         {
             app->project_manager = gobu_project_manager_new();
-            gapp_append_right_panel(GAPP_RESOURCE_ICON_NONE, "Projects", app->project_manager, FALSE);
+            gapp_right_panel_append(GAPP_RESOURCE_ICON_NONE, "Projects", app->project_manager, FALSE);
         }
     }
 
@@ -176,7 +176,7 @@ static GKeyFile *gapp_config_load_from_file(const char *filename)
     GKeyFile *keyfile = g_key_file_new();
     GError *error = NULL;
 
-    gchar *fileconfig = g_build_filename(g_get_current_dir(), "Config", filename, NULL);
+    gchar *fileconfig = pathJoin(g_get_current_dir(), "Config", filename, NULL);
 
     if (!g_key_file_load_from_file(keyfile, fileconfig, G_KEY_FILE_NONE, &error))
     {
@@ -229,6 +229,11 @@ ecs_world_t *gapp_get_world_instance(void)
     return gappMain->world;
 }
 
+GtkWidget *gapp_get_browser_instance(void)
+{
+    return gappMain->browser;
+}
+
 GdkPaintable *gapp_get_resource_icon(GappResourceIcon icon)
 {
     g_return_val_if_fail(gappMain->ricons[icon] != NULL, NULL);
@@ -242,7 +247,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
 
     gapp_set_project_path(pathDirname(path));
 
-    gapp_append_right_panel(GAPP_RESOURCE_ICON_SCENE, "Untitle~", gapp_scene_new("Untitle"), TRUE);
+    gapp_right_panel_append(GAPP_RESOURCE_ICON_SCENE, "Untitle~", gapp_scene_new("Untitle"), TRUE);
     gtk_notebook_remove_page(GTK_NOTEBOOK(self->dnotebook), 0);
     gtk_widget_set_visible(GTK_WIDGET(self->vnotebook), TRUE);
     gapp_set_headerbar_button_sensitives(self, TRUE);
@@ -252,7 +257,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
 
-void gapp_append_right_panel(GappResourceIcon icon, const gchar *title, GtkWidget *module, gboolean is_button_close)
+void gapp_right_panel_append(GappResourceIcon icon, const gchar *title, GtkWidget *module, gboolean is_button_close)
 {
     g_return_if_fail(GAPP_IS_MAIN(gappMain));
     g_return_if_fail(title != NULL);
@@ -261,13 +266,22 @@ void gapp_append_right_panel(GappResourceIcon icon, const gchar *title, GtkWidge
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
     if (icon != GAPP_RESOURCE_ICON_NONE)
         gtk_box_append(GTK_BOX(box), gtk_image_new_from_paintable(gapp_get_resource_icon(icon)));
-
     gtk_box_append(GTK_BOX(box), gtk_label_new(title));
 
-    gapp_widget_notebook_append_page(GTK_NOTEBOOK(gappMain->dnotebook),
-                                     box,
-                                     module,
-                                     is_button_close);
+    int page = gapp_widget_notebook_append_page(GTK_NOTEBOOK(gappMain->dnotebook),box,module,is_button_close);
+    g_object_set_data(G_OBJECT(module), "page", GINT_TO_POINTER(page));
+}
+
+void gapp_right_panel_set_label(GtkWidget *module, const gchar *title)
+{
+    g_return_if_fail(module != NULL && title != NULL);
+    g_return_if_fail(gappMain != NULL);
+
+    gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(module), "page"));
+    g_return_if_fail(page != 0);
+
+    GtkWidget *label = gapp_widget_notebook_get_label(GTK_NOTEBOOK(gappMain->dnotebook), module);
+    gtk_label_set_text(GTK_LABEL(label), title);
 }
 
 void gapp_append_left_panel(const gchar *icon_name, GtkWidget *module)

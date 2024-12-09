@@ -4,6 +4,7 @@
 #include "gapp_viewport.h"
 #include "gapp_inspector.h"
 #include "gapp_hierarchy.h"
+#include "gapp_browser.h"
 
 #include "types/type_outliner_item.h"
 #include "types/type_outliner_popover_item.h"
@@ -337,6 +338,13 @@ static void outlinerEcsObserverSceneWithEntity(ecs_iter_t *it)
     }
 }
 
+static void gapp_scene_save(GappScene *scene)
+{
+    char *json = pixio_world_serialize(scene->world);
+    fsWrite(scene->filename, json);
+    ecs_os_free(json);
+}
+
 // MARK: SIGNAL
 static void onOutlinerPopoverItemActivated(GtkListView *self, guint position, GtkWidget *popover)
 {
@@ -562,12 +570,28 @@ static void onOutlinerBindPopoverMenuItemFactory(GtkSignalListItemFactory *facto
     gtk_label_set_label(GTK_LABEL(label), toutliner_popover_item_get_name(popoverItem));
 }
 
-static void onSceneToolbarSave(GtkWidget *widget, GappScene *scene)
+static void gapp_scene_on_save_untitle_dialog_response(GtkWidget *button, GappWidgetDialogEntry *dialog)
+{
+    const char *name = gapp_widget_entry_get_text(GTK_ENTRY(dialog->entry));
+    GappScene *scene = GAPP_SCENE(dialog->data);
+    scene->filename = pathJoin( gapp_browser_get_current(GBROWSER), stringDups("%s.scene", name), NULL );
+    gapp_scene_save(scene);
+    gapp_right_panel_set_label(scene, name);
+    gapp_widget_dialog_entry_text_destroy(dialog);
+}
+
+static void gapp_scene_on_toolbar_save(GtkWidget *widget, GappScene *scene)
 {
     const gchar *filename = sceneGetFilename(scene);
-    char *json = pixio_world_serialize(scene->world);
-    fsWrite(filename, json);
-    ecs_os_free(json);
+    if (stringIsequal(filename, "Untitle"))
+    {
+        GappWidgetDialogEntry *dialog = gapp_widget_dialog_new_entry_text(gtk_widget_get_root(widget), "New scene", "Name");
+        dialog->data = scene;
+        g_signal_connect(dialog->button_ok, "clicked", gapp_scene_on_save_untitle_dialog_response, dialog);
+        return;
+    }
+
+    gapp_scene_save(scene);
 }
 
 static void onSceneRealize(GtkWidget *widget, GappScene *scene)
@@ -578,7 +602,8 @@ static void onSceneRealize(GtkWidget *widget, GappScene *scene)
 
     const char *filename = sceneGetFilename(scene);
 
-    if (strcmp(filename, "Untitle") != 0) {
+    if (strcmp(filename, "Untitle") != 0)
+    {
         char *buffer_scene = fsRead(filename);
         if (buffer_scene != NULL)
         {
@@ -586,7 +611,9 @@ static void onSceneRealize(GtkWidget *widget, GappScene *scene)
             scene->root = pixio_get_root(scene->world);
             g_free(buffer_scene);
         }
-    }else {
+    }
+    else
+    {
         scene->root = pixio_entity_new_root(scene->world);
     }
 
@@ -729,7 +756,7 @@ static GtkWidget *setupViewportInterface(GappScene *scene)
         item = gapp_widget_button_new_icon_with_label("media-removable-symbolic", "Save");
         gtk_widget_set_tooltip_text(item, "Save");
         gtk_box_append(GTK_BOX(toolbar), item);
-        g_signal_connect(item, "clicked", G_CALLBACK(onSceneToolbarSave), scene);
+        g_signal_connect(item, "clicked", G_CALLBACK(gapp_scene_on_toolbar_save), scene);
     }
 
     GtkWidget *viewport = gapp_viewport_new();

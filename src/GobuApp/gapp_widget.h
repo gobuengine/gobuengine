@@ -32,7 +32,8 @@ extern "C"
     GtkWidget *gapp_widget_button_new_icon_with_label_custom(const gchar *icon_name, const gchar *label, GtkAlign align);
 
     // notebook
-    void gapp_widget_notebook_append_page(GtkWidget *notebook, GtkWidget *label, GtkWidget *child, gboolean isButtonClose);
+    int gapp_widget_notebook_append_page(GtkWidget *notebook, GtkWidget *label, GtkWidget *child, gboolean isButtonClose);
+    GtkWidget *gapp_widget_notebook_get_label(GtkWidget *notebook, GtkWidget *child);
 
     // dialog entry text
     GappWidgetDialogEntry *gapp_widget_dialog_new_entry_text(GtkWidget *parent, const gchar *title, const gchar *label);
