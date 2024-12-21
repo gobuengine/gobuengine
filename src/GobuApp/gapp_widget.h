@@ -43,6 +43,7 @@ extern "C"
     void gapp_widget_dialog_new_confirm_action(GtkWidget *parent, const gchar *title, const gchar *label, GAsyncReadyCallback *result, gpointer data);
 
     // expander button + label
+    // deprecated
     GtkWidget *gapp_widget_expander_new_label_icon(const gchar *label, const gchar *icon_name, gboolean expanded);
     GtkWidget *gapp_widget_expander_get_button(GtkWidget *expander);
 

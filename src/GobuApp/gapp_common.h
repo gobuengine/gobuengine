@@ -58,7 +58,7 @@ extern "C"
 
     bool fsCopy(GFile *src, GFile *dest, GError **error);
 
-    bool fsWrite(const char *filename, const char *contents);
+    bool fsWriteTextFile(const char *filename, const char *contents);
 
     bool fsExist(const char *filename);
 
@@ -70,7 +70,7 @@ extern "C"
 
     bool fsIsExtension(const char *filename, const char *ext);
 
-    char *fsRead(const char *filename);
+    char *fsReadTextFile(const char *filename);
 
 #ifdef __cplusplus
 }

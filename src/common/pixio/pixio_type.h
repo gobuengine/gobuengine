@@ -20,7 +20,6 @@ extern "C"
     typedef Texture2D pixio_texture_t;
     typedef TextureFilter pixio_texture_filter_t;
     typedef Vector2 pixio_vector2_t;
-    // typedef ecs_bool_t pixio_property_ui_title;
 
     typedef enum _pixio_origin_t
     {
@@ -42,6 +41,13 @@ extern "C"
         PIXIO_FLIP_VERTICAL = 1 << 1,                                 // Flip vertically (mirror vertically)
         PIXIO_FLIP_BOTH = PIXIO_FLIP_HORIZONTAL | PIXIO_FLIP_VERTICAL // Flip both horizontally and vertically
     } pixio_texture_flip_t;
+
+    typedef struct _EcsPixioSceneActive
+    {
+        ecs_entity_t entity;
+    } EcsPixioSceneActive;
+
+    typedef EcsPixioSceneActive EcsPixioSceneMain;
 
     typedef struct _pixio_size_t
     {
@@ -134,6 +140,10 @@ extern "C"
         // ecs_u32_t frame;
     } pixio_animated_t;
 
+    extern ECS_TAG_DECLARE(EcsPixioTagScene);
+    extern ECS_COMPONENT_DECLARE(EcsPixioSceneActive);
+    extern ECS_COMPONENT_DECLARE(EcsPixioSceneMain);
+
     extern ECS_COMPONENT_DECLARE(pixio_animated_t);
     extern ECS_COMPONENT_DECLARE(pixio_color_t);
     extern ECS_COMPONENT_DECLARE(pixio_entity_t);
@@ -156,7 +166,6 @@ extern "C"
     extern ECS_COMPONENT_DECLARE(pixio_texture_flip_t);
     extern ECS_COMPONENT_DECLARE(pixio_transform_t);
     extern ECS_COMPONENT_DECLARE(pixio_vector2_t);
-    // extern ECS_COMPONENT_DECLARE(pixio_property_ui_title);
 
     void pixio_type_moduleImport(ecs_world_t *world);
 

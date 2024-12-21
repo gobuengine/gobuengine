@@ -267,6 +267,7 @@ void gapp_widget_dialog_new_confirm_action(GtkWidget *parent, const gchar *title
  * @param expanded A flag indicating whether the expander should be initially expanded or not.
  * @return The created expander widget.
  */
+// deprecated
 GtkWidget *gapp_widget_expander_new_label_icon(const gchar *label, const gchar *icon_name, gboolean expanded)
 {
     GtkWidget *expander = gtk_expander_new(NULL);

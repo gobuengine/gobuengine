@@ -1,5 +1,9 @@
 #include "pixio_type.h"
 
+ECS_TAG_DECLARE(EcsPixioTagScene);
+ECS_COMPONENT_DECLARE(EcsPixioSceneActive);
+ECS_COMPONENT_DECLARE(EcsPixioSceneMain);
+
 ECS_COMPONENT_DECLARE(pixio_animated_t);
 ECS_COMPONENT_DECLARE(pixio_color_t);
 ECS_COMPONENT_DECLARE(pixio_entity_t);
@@ -27,6 +31,10 @@ ECS_COMPONENT_DECLARE(pixio_vector2_t);
 void pixio_type_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, pixio_type_module);
+    ECS_TAG_DEFINE(world, EcsPixioTagScene);
+    
+    ECS_COMPONENT_DEFINE(world, EcsPixioSceneActive);
+    ECS_COMPONENT_DEFINE(world, EcsPixioSceneMain);
     ECS_COMPONENT_DEFINE(world, pixio_animated_t);
     ECS_COMPONENT_DEFINE(world, pixio_color_t);
     ECS_COMPONENT_DEFINE(world, pixio_entity_t);
@@ -49,15 +57,6 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ECS_COMPONENT_DEFINE(world, pixio_texture_flip_t);
     ECS_COMPONENT_DEFINE(world, pixio_transform_t);
     ECS_COMPONENT_DEFINE(world, pixio_vector2_t);
-    // ECS_COMPONENT_DEFINE(world, pixio_property_ui_title);
-
-    // componentes experimentales para el inspector
-    // ecs_struct(world, {
-    //     .entity = ecs_id(pixio_property_ui_title),
-    //     .members = {
-    //         {.name = "property_ui_title", .type = ecs_id(ecs_bool_t)},
-    //     },
-    // });
 
     // componentes visibles
     ecs_enum(world, {
@@ -91,6 +90,20 @@ void pixio_type_moduleImport(ecs_world_t *world)
             {.name = "Vertical", .value = PIXIO_FLIP_VERTICAL},
             {.name = "Horizontal", .value = PIXIO_FLIP_HORIZONTAL},
             {.name = "Both", .value = PIXIO_FLIP_BOTH},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(EcsPixioSceneActive),
+        .members = {
+            {.name = "entity", .type = ecs_id(ecs_entity_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(EcsPixioSceneMain),
+        .members = {
+            {.name = "entity", .type = ecs_id(ecs_entity_t)},
         },
     });
 

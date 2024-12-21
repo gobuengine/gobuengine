@@ -2,13 +2,17 @@
 #include "pixio_type.h"
 #include "pixio_render.h"
 
+// CONFIGS
 static ecs_entity_to_json_desc_t desc_entity_json_init = ECS_ENTITY_TO_JSON_INIT;
 
+// World
 ecs_world_t *pixio_world_init(void)
 {
     ecs_world_t *ecs = ecs_init();
     ECS_IMPORT(ecs, pixio_rendering_module);
+
     ecs_singleton_set(ecs, pixio_render_t, {.viewport = {800, 600}, .clear_color = WHITE, .viewport_lineColor = SKYBLUE, .grid_size = 64, .grid_enabled = true});
+
     return ecs;
 }
 
@@ -32,6 +36,52 @@ void pixio_world_deserialize(ecs_world_t *world, const char *json)
     ecs_world_from_json(world, json, NULL);
 }
 
+bool pixio_world_deserialize_filename(ecs_world_t *world, const char *filename)
+{
+    return ecs_world_from_json_file(world, filename, NULL) == NULL ? false : true;
+}
+
+// ---------------------
+// SceneEntity
+// ---------------------
+ecs_entity_t pixio_scene_new(ecs_world_t *world, const char *name)
+{
+    ecs_entity_t scene = ecs_entity(world, {.name = name, .add = ecs_ids(EcsPixioTagScene)});
+    return scene;
+}
+
+ecs_entity_t pixio_scene_find_by_name(ecs_world_t *world, const char *name)
+{
+    return ecs_lookup(world, name);
+}
+
+void pixio_scene_set_active(ecs_world_t *world, ecs_entity_t entity)
+{
+    ecs_entity_t active = pixio_scene_get_active(world);
+    if (active > 0)
+        ecs_enable(world, active, FALSE);
+
+    ecs_singleton_set(world, EcsPixioSceneActive, {.entity = entity});
+    ecs_enable(world, entity, TRUE);
+}
+
+ecs_entity_t pixio_scene_get_active(ecs_world_t *world)
+{
+    const EcsPixioSceneActive *active = ecs_singleton_get(world, EcsPixioSceneActive);
+    printf("active: %s\n", active);
+    return active ? active->entity : 0;
+}
+
+void pixio_scene_set_main(ecs_world_t *world, ecs_entity_t entity)
+{
+}
+
+ecs_entity_t pixio_scene_get_main(ecs_world_t *world)
+{
+    return 0;
+}
+
+// Entity
 char *pixio_entity_stringify(ecs_world_t *world, ecs_entity_t entity)
 {
     desc_entity_json_init.serialize_doc = true;
@@ -56,7 +106,7 @@ ecs_entity_t pixio_entity_new_low(ecs_world_t *world, ecs_entity_t parent)
 ecs_entity_t pixio_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name)
 {
     ecs_entity_t entity = pixio_entity_new_low(world, parent);
-    gchar *name_entity = strcmp(name, PIXIO_ENTITY_ROOT_NAME)!=0 ? g_strdup_printf("%s%ld", name, entity) : g_strdup(name);
+    gchar *name_entity = strcmp(name, PIXIO_ENTITY_ROOT_NAME) != 0 ? g_strdup_printf("%s%ld", name, entity) : g_strdup(name);
     pixio_set_name(world, entity, name_entity);
     ecs_set(world, entity, pixio_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = PIXIO_CENTER});
 

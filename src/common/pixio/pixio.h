@@ -16,6 +16,14 @@ void pixio_world_process(ecs_world_t *ecs, float deltaTime);
 
 char *pixio_world_serialize(ecs_world_t *world);
 void pixio_world_deserialize(ecs_world_t *world, const char *json);
+bool pixio_world_deserialize_filename(ecs_world_t *world, const char *filename);
+
+ecs_entity_t pixio_scene_new(ecs_world_t *world, const char *name);
+ecs_entity_t pixio_scene_find_by_name(ecs_world_t *world, const char *name);
+void pixio_scene_set_active(ecs_world_t *world, ecs_entity_t entity);
+ecs_entity_t pixio_scene_get_active(ecs_world_t *world);
+void pixio_scene_set_main(ecs_world_t *world, ecs_entity_t entity);
+ecs_entity_t pixio_scene_get_main(ecs_world_t *world);
 
 char *pixio_entity_stringify(ecs_world_t *world, ecs_entity_t entity);
 void pixio_entity_parse(ecs_world_t *world, ecs_entity_t entity, const char *json);

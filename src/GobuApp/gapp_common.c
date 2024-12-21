@@ -339,7 +339,7 @@ bool fsCopy(GFile *src, GFile *dest, GError **error)
  * @param contents El contenido que se va a escribir en el archivo.
  * @return true si se pudo escribir el archivo correctamente, false en caso contrario.
  */
-bool fsWrite(const char *filename, const char *contents)
+bool fsWriteTextFile(const char *filename, const char *contents)
 {
     return g_file_set_contents(filename, contents, strlen(contents), NULL);
 }
@@ -431,7 +431,7 @@ bool fsIsExtension(const char *filename, const char *ext)
  * @param length La longitud máxima del contenido a leer.
  * @return Un puntero a la cadena de caracteres que contiene el contenido del archivo.
  */
-char *fsRead(const char *filename)
+char *fsReadTextFile(const char *filename)
 {
     GError *error = NULL;
     gchar *contents = NULL;
