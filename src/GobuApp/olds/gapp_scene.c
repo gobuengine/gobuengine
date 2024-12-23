@@ -725,8 +725,12 @@ static GtkWidget *setupOutlinerInterface(GappScene *scene)
     g_signal_connect(factory, "setup", G_CALLBACK(onOutlinerSetupItemFactory), scene);
     g_signal_connect(factory, "bind", G_CALLBACK(onOutlinerBindItemFactory), scene);
 
+    GtkWidget *scroll = gtk_scrolled_window_new();
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroll), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_widget_set_vexpand(scroll, TRUE);
+    
     list_view = gtk_list_view_new(scene->outliner.selection, factory);
-    // gtk_list_view_set_single_click_activate(GTK_LIST_VIEW(list_view), TRUE);
+    gtk_list_view_set_single_click_activate(GTK_LIST_VIEW(list_view), TRUE);
     gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scroll), list_view);
 
     GtkDropTarget *drop = gtk_drop_target_new(G_TYPE_FILE_INFO, GDK_ACTION_MOVE);

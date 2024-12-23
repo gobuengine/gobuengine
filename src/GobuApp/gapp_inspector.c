@@ -71,7 +71,7 @@ static void _entity_name_changed(GtkEditable *widget, GappInspector *self)
 static void inspectorWidgetCreateComponentDefaultEntity(GappInspector *self, GtkWidget *size_group)
 {
     bool enabled = pixio_get_enabled(self->world, self->entity);
-    bool is_root = pixio_get_root(self->world) == self->entity;
+    // bool is_root = pixio_get_root(self->world) == self->entity;
     const char *name = pixio_get_name(self->world, self->entity);
 
     GtkWidget *content = inspectorWidgetCreateComponentGroup(self->listbox, FALSE, "pixio_entity_t", NULL, 0, 0);
@@ -83,7 +83,7 @@ static void inspectorWidgetCreateComponentDefaultEntity(GappInspector *self, Gtk
 
     GtkWidget *entity_name = gtk_entry_new();
     gtk_editable_set_text(GTK_EDITABLE(entity_name), name);
-    gtk_widget_set_sensitive(entity_name, !is_root);
+    // gtk_widget_set_sensitive(entity_name, !is_root);
     g_signal_connect(entity_name, "changed", G_CALLBACK(_entity_name_changed), self);
     gtk_box_append(GTK_BOX(content), inspectorWidgetCreateFieldRow(size_group, "name", entity_name, GTK_ORIENTATION_HORIZONTAL));
 

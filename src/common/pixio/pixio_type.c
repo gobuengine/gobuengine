@@ -1,9 +1,11 @@
 #include "pixio_type.h"
 
 ECS_TAG_DECLARE(EcsPixioTagScene);
+ECS_TAG_DECLARE(EcsPixioOnOpenScene);
+ECS_TAG_DECLARE(EcsPixioOnCreateScene);
+
 ECS_COMPONENT_DECLARE(EcsPixioSceneActive);
 ECS_COMPONENT_DECLARE(EcsPixioSceneMain);
-
 ECS_COMPONENT_DECLARE(pixio_animated_t);
 ECS_COMPONENT_DECLARE(pixio_color_t);
 ECS_COMPONENT_DECLARE(pixio_entity_t);
@@ -32,6 +34,8 @@ void pixio_type_moduleImport(ecs_world_t *world)
 {
     ECS_MODULE(world, pixio_type_module);
     ECS_TAG_DEFINE(world, EcsPixioTagScene);
+    ECS_TAG_DEFINE(world, EcsPixioOnOpenScene);
+    ECS_TAG_DEFINE(world, EcsPixioOnCreateScene);
     
     ECS_COMPONENT_DEFINE(world, EcsPixioSceneActive);
     ECS_COMPONENT_DEFINE(world, EcsPixioSceneMain);

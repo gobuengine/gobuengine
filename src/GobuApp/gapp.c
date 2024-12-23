@@ -322,6 +322,8 @@ void gapp_open_project(GappMain *self, const gchar *path)
     {
         g_warning("Failed to load project world");
     }
+
+    pixio_scene_reload(self->world);
 }
 
 const gchar *gapp_get_project_path(void)

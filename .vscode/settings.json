@@ -84,7 +84,8 @@
         "type_outliner_item.h": "c",
         "gapp_viewport.h": "c",
         "gapp_inspector.h": "c",
-        "gapp_hierarchy.h": "c"
+        "gapp_hierarchy.h": "c",
+        "gapp_scene.h": "c"
     },
     "mesonbuild.configureOnOpen": false
 }

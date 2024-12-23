@@ -141,6 +141,8 @@ extern "C"
     } pixio_animated_t;
 
     extern ECS_TAG_DECLARE(EcsPixioTagScene);
+    extern ECS_TAG_DECLARE(EcsPixioOnOpenScene);
+    extern ECS_TAG_DECLARE(EcsPixioOnCreateScene);
     extern ECS_COMPONENT_DECLARE(EcsPixioSceneActive);
     extern ECS_COMPONENT_DECLARE(EcsPixioSceneMain);
 
