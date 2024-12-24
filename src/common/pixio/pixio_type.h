@@ -143,6 +143,7 @@ extern "C"
     extern ECS_TAG_DECLARE(EcsPixioTagScene);
     extern ECS_TAG_DECLARE(EcsPixioOnOpenScene);
     extern ECS_TAG_DECLARE(EcsPixioOnCreateScene);
+    extern ECS_TAG_DECLARE(EcsPixioOnDeleteScene);
     extern ECS_COMPONENT_DECLARE(EcsPixioSceneActive);
     extern ECS_COMPONENT_DECLARE(EcsPixioSceneMain);
 

@@ -21,15 +21,18 @@ bool pixio_world_deserialize_filename(ecs_world_t *world, const char *filename);
 // SceneEntity
 // ---------------------
 ecs_entity_t pixio_scene_new(ecs_world_t *world, const char *name);
+ecs_entity_t pixio_scene_clone(ecs_world_t *world, ecs_entity_t entity);
 void pixio_scene_open(ecs_world_t *world, ecs_entity_t entity);
+void pixio_scene_delete(ecs_world_t *world, ecs_entity_t entity);
 ecs_entity_t pixio_scene_get_open(ecs_world_t *world);
 void pixio_scene_reload(ecs_world_t *world);
 ecs_entity_t pixio_scene_get(ecs_world_t *world, const char *name);
+int pixio_scene_count(ecs_world_t *world);
 
 // ---------------------
 // EventEntity
 // ---------------------
-void pixio_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_action_t callback, void *ctx);
+ecs_entity_t pixio_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_action_t callback, void *ctx);
 void pixio_emit(ecs_world_t *world, ecs_entity_t event, ecs_entity_t entity);
 
 // ---------------------
@@ -44,8 +47,8 @@ ecs_entity_t pixio_clone(ecs_world_t *world, ecs_entity_t entity);
 void pixio_set_name(ecs_world_t *world, ecs_entity_t entity, const char *name);
 const char *pixio_get_name(ecs_world_t *world, ecs_entity_t entity);
 ecs_entity_t pixio_find_by_name(ecs_world_t *world, const char *name);
-void pixio_set_enabled(ecs_world_t *world, ecs_entity_t entity, bool enabled);
-bool pixio_get_enabled(ecs_world_t *world, ecs_entity_t entity);
+void pixio_enable(ecs_world_t *world, ecs_entity_t entity, bool enabled);
+bool pixio_is_enabled(ecs_world_t *world, ecs_entity_t entity);
 bool pixio_is_alive(ecs_world_t *world, ecs_entity_t entity);
 void pixio_delete(ecs_world_t *world, ecs_entity_t entity);
 void pixio_set_component_by_name(ecs_world_t *world, ecs_entity_t entity, const char *component);

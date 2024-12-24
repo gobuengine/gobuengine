@@ -96,17 +96,22 @@ struct _GappSceneManager
     GtkBox parent_instance;
     GtkWidget *flowbox;
     GListStore *store;
+    ecs_entity_t event_observer1;
 };
 
+static GListStore *gapp_scene_manager_get_scene_list(void);
 static int g_list_store_sort_by_name(TSceneItem *item_a, TSceneItem *item_b, gpointer user_data);
+static void gapp_scene_manager_append(GListStore *store, ecs_entity_t clone);
 
 static void signal_grid_view_activated(GtkGridView *view, guint position, GappSceneManager *self);
-static void signal_factory_setup_item(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data);
-static void signal_factory_bind_item(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data);
+static void signal_factory_setup_item(GtkListItemFactory *factory, GtkListItem *list_item, GappSceneManager *self);
+static void signal_factory_bind_item(GtkListItemFactory *factory, GtkListItem *list_item, GtkSingleSelection* selection);
 static void signal_create_scene(GtkWidget *widget, GappSceneManager *self);
 static void signal_observer_scene_create(ecs_iter_t *it);
+static void signal_gesture_menu_context_list_item(GtkGesture *gesture, guint n_press, double x, double y, GtkListItem *list_item);
+static void signal_duplicate_scene(GtkWidget *button, GtkListItem *list_item);
+static void signal_delete_scene(GtkWidget *button, GtkListItem *list_item);
 
-static GListStore *gapp_scene_manager_get_scene_list(void);
 
 // MARK: CLASS
 G_DEFINE_TYPE(GappSceneManager, gapp_scene_manager, GTK_TYPE_WINDOW)
@@ -114,6 +119,9 @@ G_DEFINE_TYPE(GappSceneManager, gapp_scene_manager, GTK_TYPE_WINDOW)
 static void object_class_dispose(GObject *object)
 {
     GappSceneManager *self = GAPP_SCENE_MANAGER(object);
+
+    ecs_delete(GWORLD, self->event_observer1);
+
     G_OBJECT_CLASS(gapp_scene_manager_parent_class)->dispose(object);
 }
 
@@ -162,18 +170,22 @@ static void gapp_scene_manager_init(GappSceneManager *self)
             gtk_filter_list_model_set_incremental(filter_model, TRUE);
             g_object_bind_property(search_scene, "text", filter, "search", 0);
 
-            GtkListItemFactory *factory = gtk_signal_list_item_factory_new();
-            g_signal_connect(factory, "setup", G_CALLBACK(signal_factory_setup_item), NULL);
-            g_signal_connect(factory, "bind", G_CALLBACK(signal_factory_bind_item), NULL);
+            GtkSingleSelection* selection = gtk_single_selection_new(G_LIST_MODEL(filter_model));
+            gtk_single_selection_set_can_unselect(selection, TRUE);
+            gtk_single_selection_set_autoselect(selection, FALSE);
 
-            GtkWidget *grid = gtk_grid_view_new(GTK_SELECTION_MODEL(gtk_single_selection_new(G_LIST_MODEL(filter_model))), factory);
+            GtkListItemFactory *factory = gtk_signal_list_item_factory_new();
+            g_signal_connect(factory, "setup", G_CALLBACK(signal_factory_setup_item), self);
+            g_signal_connect(factory, "bind", G_CALLBACK(signal_factory_bind_item), selection);
+
+            GtkWidget *grid = gtk_grid_view_new(GTK_SELECTION_MODEL(selection), factory);
             gtk_widget_set_vexpand(grid, TRUE);
             gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrolled), grid);
             g_signal_connect(grid, "activate", G_CALLBACK(signal_grid_view_activated), self);
         }
     }
 
-    pixio_observer(GWORLD, EcsPixioOnCreateScene, signal_observer_scene_create, self);
+    self->event_observer1 = pixio_observer(GWORLD, EcsPixioOnCreateScene, signal_observer_scene_create, self);
 }
 
 // -----------------
@@ -195,9 +207,7 @@ static GListStore *gapp_scene_manager_get_scene_list(void)
         for (int i = 0; i < it.count; i++)
         {
             ecs_entity_t entity = it.entities[i];
-            const gchar *name = ecs_get_name(GWORLD, entity);
-            TSceneItem *item = tscene_item_new(entity, name);
-            g_list_store_append(store, item);
+            gapp_scene_manager_append(store, entity);
         }
     }
 
@@ -211,6 +221,13 @@ static int g_list_store_sort_by_name(TSceneItem *item_a, TSceneItem *item_b, gpo
     return item_a->entity - item_b->entity;
 }
 
+static void gapp_scene_manager_append(GListStore *store, ecs_entity_t clone)
+{
+    const gchar *name = ecs_get_name(GWORLD, clone);
+    TSceneItem *item_clone = tscene_item_new(clone, name);
+    g_list_store_append(store, item_clone);
+}
+
 // -----------------
 // MARK:SIGNAL
 // -----------------
@@ -221,41 +238,44 @@ static void signal_grid_view_activated(GtkGridView *view, guint position, GappSc
     TSceneItem *item = TSCENEITEM_ITEM(g_object_ref(g_list_model_get_item(G_LIST_MODEL(selection), position)));
 
     pixio_scene_open(GWORLD, item->entity);
+    gtk_window_close(GTK_WINDOW(self));
 }
 
-static void signal_factory_setup_item(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data)
+static void signal_factory_setup_item(GtkListItemFactory *factory, GtkListItem *list_item, GappSceneManager *self)
 {
     g_return_if_fail(GTK_IS_LIST_ITEM_FACTORY(factory));
     g_return_if_fail(GTK_IS_LIST_ITEM(list_item));
+    g_object_set_data(G_OBJECT(list_item), "GappSceneManager", self);
 
     GtkWidget *box, *imagen, *label;
 
-    // Crear y configurar la caja contenedora
     box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_list_item_set_child(list_item, box);
     gtk_widget_set_size_request(box, 80, 80);
 
-    // Crear y configurar la imagen
     imagen = gtk_image_new_from_icon_name(GAPP_PROJECT_MANAGER_ICON);
     gtk_image_set_icon_size(GTK_IMAGE(imagen), GTK_ICON_SIZE_LARGE);
     gtk_widget_set_vexpand(imagen, TRUE);
     gtk_box_append(GTK_BOX(box), imagen);
 
-    // Crear y configurar la etiqueta
     label = gtk_label_new(NULL);
     gtk_label_set_wrap_mode(GTK_LABEL(label), PANGO_WRAP_CHAR);
     gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
     gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_END);
     gtk_box_append(GTK_BOX(box), label);
+
+    GtkGesture *gesture = gtk_gesture_click_new();
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(gesture), GDK_BUTTON_SECONDARY);
+    gtk_widget_add_controller(box, GTK_EVENT_CONTROLLER(gesture));
+    g_signal_connect(gesture, "pressed", G_CALLBACK(signal_gesture_menu_context_list_item), list_item);
 }
 
-static void signal_factory_bind_item(GtkListItemFactory *factory, GtkListItem *list_item, gpointer user_data)
+static void signal_factory_bind_item(GtkListItemFactory *factory, GtkListItem *list_item, GtkSingleSelection* selection)
 {
     g_return_if_fail(GTK_IS_LIST_ITEM(list_item));
 
     GtkWidget *box, *image, *label;
 
-    // Obtener los widgets del ítem
     box = gtk_list_item_get_child(list_item);
     g_return_if_fail(GTK_IS_BOX(box));
 
@@ -265,23 +285,28 @@ static void signal_factory_bind_item(GtkListItemFactory *factory, GtkListItem *l
     label = gtk_widget_get_next_sibling(image);
     g_return_if_fail(GTK_IS_LABEL(label));
 
-    // Obtener la ruta del proyecto
     TSceneItem *item = gtk_list_item_get_item(list_item);
     g_return_if_fail(TSCENEITEM_IS_ITEM(item));
 
-    // Configurar la imagen
-    gchar *thumbnail_path = pathJoin(gapp_get_project_path(), "saved", stringDups("scene_thumbnail_%s.jpg", item->name), NULL);
+    g_autofree gchar *thumbnail_path = pathJoin(gapp_get_project_path(), "saved", stringDups("scene_thumbnail_%s.jpg", item->name), NULL);
     if (fsExist(thumbnail_path))
         gtk_image_set_from_file(image, thumbnail_path);
-    g_free(thumbnail_path);
+    // g_free(thumbnail_path);
 
     gtk_label_set_text(GTK_LABEL(label), item->name);
+
+    // Seleccionamos el item si esta activo
+    if (pixio_is_enabled(GWORLD, item->entity))
+    {
+        guint position = gtk_list_item_get_position(list_item);
+        gtk_single_selection_set_selected(selection, position);
+    }
 }
 
 static void signal_create_scene_response(GtkWidget *button, GappWidgetDialogEntry *dialog)
 {
     const char *name = gapp_widget_entry_get_text(GTK_ENTRY(dialog->entry));
-    if(pixio_scene_new(GWORLD, name) == 0)
+    if (pixio_scene_new(GWORLD, name) == 0)
         gtk_widget_add_css_class(dialog->entry, "error");
     else
         gapp_widget_dialog_entry_text_destroy(dialog);
@@ -300,12 +325,68 @@ static void signal_observer_scene_create(ecs_iter_t *it)
 {
     GappSceneManager *self = it->ctx;
 
-    ecs_entity_t entity = it->entities[0];
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t entity = it->entities[i];
+        gapp_scene_manager_append(self->store, entity);
+    }
+}
 
-    const gchar *name = ecs_get_name(it->world, entity);
-    TSceneItem *item = tscene_item_new(entity, name);
+static void signal_gesture_menu_context_list_item(GtkGesture *gesture, guint n_press, double x, double y, GtkListItem *list_item)
+{
+    GtkWidget *widget = gtk_event_controller_get_widget(GTK_EVENT_CONTROLLER(gesture));
+    GtkWidget *child = gtk_widget_pick(widget, x, y, GTK_PICK_DEFAULT);
+    child = gtk_widget_get_ancestor(child, GTK_TYPE_BOX);
 
-    g_list_store_append(self->store, item);
+    if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) == GDK_BUTTON_SECONDARY)
+    {
+        GtkWidget *menu = gtk_popover_new();
+        gtk_widget_set_parent(menu, widget);
+        gtk_popover_set_has_arrow(GTK_POPOVER(menu), FALSE);
+        gtk_popover_set_pointing_to(GTK_POPOVER(menu), &(GdkRectangle){x, y, 1, 1});
+        gtk_popover_set_cascade_popdown(GTK_POPOVER(menu), TRUE);
+
+        GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+        gtk_popover_set_child(GTK_POPOVER(menu), vbox);
+        {
+            GtkWidget *btn_duplicate = gapp_widget_button_new_icon_with_label("edit-copy-symbolic", "Duplicate");
+            gtk_box_append(GTK_BOX(vbox), btn_duplicate);
+            g_signal_connect(btn_duplicate, "clicked", G_CALLBACK(signal_duplicate_scene), list_item);
+
+            GtkWidget *btn_rename = gapp_widget_button_new_icon_with_label("preferences-desktop-keyboard-symbolic", "Rename");
+            gtk_box_append(GTK_BOX(vbox), btn_rename);
+            // g_signal_connect(btn_rename, "clicked", G_CALLBACK(signal_rename_scene), item);
+
+            gtk_box_append(GTK_BOX(vbox), gapp_widget_separator_h());
+
+            GtkWidget *btn_delete = gapp_widget_button_new_icon_with_label("user-trash-full-symbolic", "Delete");
+            gtk_box_append(GTK_BOX(vbox), btn_delete);
+            g_signal_connect(btn_delete, "clicked", G_CALLBACK(signal_delete_scene), list_item);
+        }
+
+        gtk_popover_popup(GTK_POPOVER(menu));
+    }
+}
+
+static void signal_duplicate_scene(GtkWidget *button, GtkListItem *list_item)
+{
+    TSceneItem *item = gtk_list_item_get_item(list_item);
+    GappSceneManager *self = g_object_get_data(G_OBJECT(list_item), "GappSceneManager");
+
+    ecs_entity_t clone = pixio_scene_clone(GWORLD, item->entity);
+    gapp_scene_manager_append(self->store, clone);
+    gtk_popover_popdown(GTK_POPOVER(gtk_widget_get_ancestor(button, GTK_TYPE_POPOVER)));
+}
+
+static void signal_delete_scene(GtkWidget *button, GtkListItem *list_item)
+{
+    TSceneItem *item = gtk_list_item_get_item(list_item);
+    GappSceneManager *self = g_object_get_data(G_OBJECT(list_item), "GappSceneManager");
+    guint position = gtk_list_item_get_position(list_item);
+
+    pixio_scene_delete(GWORLD, item->entity);
+    g_list_store_remove(self->store, position);
+    gtk_popover_popdown(GTK_POPOVER(gtk_widget_get_ancestor(button, GTK_TYPE_POPOVER)));
 }
 
 // -----------------

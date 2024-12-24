@@ -46,14 +46,36 @@ bool pixio_world_deserialize_filename(ecs_world_t *world, const char *filename)
 // ---------------------
 ecs_entity_t pixio_scene_new(ecs_world_t *world, const char *name)
 {
-    const gchar *new_name = g_strdup_printf("pixioScene.%s", name);
+    g_autofree gchar *new_name = g_strdup_printf("pixioScene.%s", name);
     if (ecs_lookup(world, new_name) > 0)
         return 0;
  
     ecs_entity_t scene = ecs_entity(world, {.name = g_strdup(new_name), .add = ecs_ids(EcsPixioTagScene)});
+    pixio_enable(world, scene, FALSE);
     pixio_emit(world, EcsPixioOnCreateScene, scene);
 
     return scene;
+}
+
+ecs_entity_t pixio_scene_clone(ecs_world_t *world, ecs_entity_t entity)
+{
+    // int count = pixio_scene_count(world);
+    const char *namee = pixio_get_name(world, entity);
+    g_autofree gchar *name = g_strdup_printf("%s", namee);
+    ecs_entity_t parent = pixio_get_parent(world, entity);
+
+    // Le agregamos un numero al final si ya existe
+    for(int i = 1;; i++) {
+        if (ecs_lookup_child(world, parent, name) > 0) {
+            name = g_strdup_printf("%s%d", namee, i);
+        }else break;
+    }
+
+    ecs_entity_t scene_clone = pixio_clone(world, entity);
+    pixio_set_name(world, scene_clone, name);
+    pixio_enable(world, scene_clone, FALSE);
+
+    return scene_clone;
 }
 
 void pixio_scene_open(ecs_world_t *world, ecs_entity_t entity)
@@ -71,8 +93,14 @@ void pixio_scene_open(ecs_world_t *world, ecs_entity_t entity)
     }
     ecs_query_fini(q);
 
-    ecs_enable(world, entity, TRUE);
+    pixio_enable(world, entity, TRUE);
     pixio_emit(world, EcsPixioOnOpenScene, entity);
+}
+
+void pixio_scene_delete(ecs_world_t *world, ecs_entity_t entity)
+{
+    ecs_delete(world, entity);
+    pixio_emit(world, EcsPixioOnDeleteScene, entity);
 }
 
 ecs_entity_t pixio_scene_get_open(ecs_world_t *world)
@@ -81,6 +109,7 @@ ecs_entity_t pixio_scene_get_open(ecs_world_t *world)
 
     ecs_query_t *q = ecs_query(world, { .terms = {{.id = ecs_id(EcsPixioTagScene)}} });
     ecs_iter_t it = ecs_query_iter(world, q);
+
     while (ecs_query_next(&it))
     {
         for (int i = 0; i < it.count; i++)
@@ -89,6 +118,7 @@ ecs_entity_t pixio_scene_get_open(ecs_world_t *world)
         }
     }
     ecs_query_fini(q);
+
     return scene_active;
 }
 
@@ -101,6 +131,11 @@ void pixio_scene_reload(ecs_world_t *world)
     }
 }
 
+int pixio_scene_count(ecs_world_t *world)
+{
+    return ecs_count(world, EcsPixioTagScene);
+}
+
 ecs_entity_t pixio_scene_get(ecs_world_t *world, const char *name)
 {
     return 0;
@@ -109,10 +144,10 @@ ecs_entity_t pixio_scene_get(ecs_world_t *world, const char *name)
 // ---------------------
 // EventEntity
 // ---------------------
-void pixio_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_action_t callback, void *ctx)
+ecs_entity_t pixio_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_action_t callback, void *ctx)
 {
-    ecs_observer(world, {
-        .query.terms = {{.id = EcsAny}},
+    return ecs_observer(world, {
+        .query.terms = {{.id = EcsAny}, {EcsDisabled, .oper = EcsOptional}},
         .events = {event},
         .callback = callback,
         .ctx = ctx,
@@ -200,12 +235,12 @@ ecs_entity_t pixio_find_by_name(ecs_world_t *world, const char *name)
     return 0;//ecs_lookup_path_w_sep(world, pixio_get_root(world), name, ".", ".", true);
 }
 
-void pixio_set_enabled(ecs_world_t *world, ecs_entity_t entity, bool enabled)
+void pixio_enable(ecs_world_t *world, ecs_entity_t entity, bool enabled)
 {
     ecs_enable(world, entity, enabled);
 }
 
-bool pixio_get_enabled(ecs_world_t *world, ecs_entity_t entity)
+bool pixio_is_enabled(ecs_world_t *world, ecs_entity_t entity)
 {
     return !ecs_has_id(world, entity, EcsDisabled);
 }

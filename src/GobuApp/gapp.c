@@ -7,7 +7,7 @@
 #include "gapp_project_setting.h"
 #include "gapp_project_config.h"
 
-#include "gapp_scene.h"
+#include "gapp_scene_viewport.h"
 #include "gapp_scene_hierarchy.h"
 #include "gapp_prefab.h"
 #include "gapp_inspector.h"
@@ -138,7 +138,7 @@ static GtkWidget *gapp_module_editor(GappMain *app)
         gtk_paned_set_shrink_end_child(GTK_PANED(cpaned), FALSE);
         gtk_paned_set_end_child(hpaned, cpaned);
         {
-            GtkWidget *viewport = gapp_scene_new();
+            GtkWidget *viewport = gapp_scene_viewport_new();
             gtk_paned_set_start_child(cpaned, viewport);
         }
 

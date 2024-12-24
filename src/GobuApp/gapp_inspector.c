@@ -48,7 +48,7 @@ GappInspector *gapp_inspector_new(void)
 static void _entity_enabled_toggled(GtkWidget *widget, GappInspector *self)
 {
     gboolean enabled = gtk_check_button_get_active(GTK_CHECK_BUTTON(widget));
-    pixio_set_enabled(self->world, self->entity, enabled);
+    pixio_enable(self->world, self->entity, enabled);
     inspectorSetEntity(self, self->world, self->entity);
 }
 
@@ -70,7 +70,7 @@ static void _entity_name_changed(GtkEditable *widget, GappInspector *self)
 
 static void inspectorWidgetCreateComponentDefaultEntity(GappInspector *self, GtkWidget *size_group)
 {
-    bool enabled = pixio_get_enabled(self->world, self->entity);
+    bool enabled = pixio_is_enabled(self->world, self->entity);
     // bool is_root = pixio_get_root(self->world) == self->entity;
     const char *name = pixio_get_name(self->world, self->entity);
 
@@ -106,7 +106,7 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
 
     inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);
 
-    if (!pixio_get_enabled(world, entity))
+    if (!pixio_is_enabled(world, entity))
         return;
 
     const ecs_type_t *type = ecs_get_type(world, entity);
