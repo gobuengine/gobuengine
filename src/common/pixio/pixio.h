@@ -26,8 +26,9 @@ void pixio_scene_open(ecs_world_t *world, ecs_entity_t entity);
 void pixio_scene_delete(ecs_world_t *world, ecs_entity_t entity);
 ecs_entity_t pixio_scene_get_open(ecs_world_t *world);
 void pixio_scene_reload(ecs_world_t *world);
-ecs_entity_t pixio_scene_get(ecs_world_t *world, const char *name);
+ecs_entity_t pixio_scene_get_by_name(ecs_world_t *world, const char *name);
 int pixio_scene_count(ecs_world_t *world);
+void pixio_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name);
 
 // ---------------------
 // EventEntity

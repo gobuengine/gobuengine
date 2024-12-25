@@ -4,6 +4,7 @@ ECS_TAG_DECLARE(EcsPixioTagScene);
 ECS_TAG_DECLARE(EcsPixioOnOpenScene);
 ECS_TAG_DECLARE(EcsPixioOnCreateScene);
 ECS_TAG_DECLARE(EcsPixioOnDeleteScene);
+ECS_TAG_DECLARE(EcsPixioOnRenameScene);
 
 ECS_COMPONENT_DECLARE(EcsPixioSceneActive);
 ECS_COMPONENT_DECLARE(EcsPixioSceneMain);
@@ -38,6 +39,7 @@ void pixio_type_moduleImport(ecs_world_t *world)
     ECS_TAG_DEFINE(world, EcsPixioOnOpenScene);
     ECS_TAG_DEFINE(world, EcsPixioOnCreateScene);
     ECS_TAG_DEFINE(world, EcsPixioOnDeleteScene);
+    ECS_TAG_DEFINE(world, EcsPixioOnRenameScene);
     
     ECS_COMPONENT_DEFINE(world, EcsPixioSceneActive);
     ECS_COMPONENT_DEFINE(world, EcsPixioSceneMain);

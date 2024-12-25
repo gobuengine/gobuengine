@@ -247,10 +247,7 @@ void gapp_widget_dialog_new_confirm_action(GtkWidget *parent, const gchar *title
 {
     GtkAlertDialog *dialog1 = gtk_alert_dialog_new(title, NULL);
     gtk_alert_dialog_set_detail(dialog1, label);
-    gtk_alert_dialog_set_modal(dialog1, TRUE);
     gtk_alert_dialog_set_buttons(dialog1, (const char *const[]){"Cancel", "Confirm", NULL});
-    gtk_alert_dialog_set_cancel_button(dialog1, 0);
-    gtk_alert_dialog_set_default_button(dialog1, 1);
     gtk_alert_dialog_choose(dialog1, parent, NULL, result, data);
 }
 

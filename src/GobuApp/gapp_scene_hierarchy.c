@@ -72,6 +72,7 @@ static void gapp_scene_hierarchy_init(GappSceneHierarchy *self)
         gtk_box_append(GTK_BOX(self), box_hierarchy);
 
         GtkWidget *search = gtk_search_entry_new();
+        gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search");
         gtk_widget_set_margin_start(GTK_WIDGET(search), 5);
         gtk_widget_set_margin_end(GTK_WIDGET(search), 5);
         gtk_widget_set_hexpand(search, TRUE);
@@ -96,6 +97,7 @@ static void gapp_scene_hierarchy_init(GappSceneHierarchy *self)
     }
 
     pixio_observer(GWORLD, EcsPixioOnOpenScene, signal_observer_scene_changed, self);
+    pixio_observer(GWORLD, EcsPixioOnRenameScene, signal_observer_scene_changed, self);
 }
 
 // -----------------
@@ -122,10 +124,12 @@ static void signal_observer_scene_changed(ecs_iter_t *it)
     for (int i = 0; i < it->count; i++)
     {
         ecs_entity_t entity = it->entities[i];
-        const gchar *name = ecs_get_name(it->world, entity);
-
-        gtk_label_set_text(GTK_LABEL(self->scene_label), g_strdup_printf("<b>Scene</b> (%s)", name));
-        gtk_label_set_use_markup(GTK_LABEL(self->scene_label), TRUE);
+        if (pixio_is_enabled(it->world, entity))
+        {
+            const gchar *name = ecs_get_name(it->world, entity);
+            gtk_label_set_text(GTK_LABEL(self->scene_label), g_strdup_printf("<b>Scene</b> (%s)", name));
+            gtk_label_set_use_markup(GTK_LABEL(self->scene_label), TRUE);
+        }
     }
 }
 
