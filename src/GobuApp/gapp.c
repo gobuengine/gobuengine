@@ -21,6 +21,7 @@ static GappMain *gappMain;
 struct _GappMain
 {
     GtkApplicationWindow parent_instance;
+    GtkWidget *btn_prefab;
     GtkWidget *btn_save_game;
     GtkWidget *btn_preview;
     GtkWidget *btn_build;
@@ -81,6 +82,9 @@ static void gapp_window_set_headerbar(GappMain *app)
         GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
         gtk_header_bar_set_title_widget(header_bar, hbox);
         {
+            // app->btn_prefab = gapp_widget_button_new_icon_with_label("list-add-symbolic", "");
+            // gtk_box_append(hbox, app->btn_prefab);
+
             app->btn_save_game = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save all");
             g_signal_connect(app->btn_save_game, "clicked", G_CALLBACK(gapp_signal_project_save), app);
             gtk_box_append(hbox, app->btn_save_game);
@@ -88,8 +92,8 @@ static void gapp_window_set_headerbar(GappMain *app)
             app->btn_preview = gapp_widget_button_new_icon_with_label("applications-games-symbolic", "Preview");
             gtk_box_append(hbox, app->btn_preview);
 
-            app->btn_build = gapp_widget_button_new_icon_with_label("drive-optical-symbolic", "Build");
-            gtk_box_append(hbox, app->btn_build);
+            // app->btn_build = gapp_widget_button_new_icon_with_label("drive-optical-symbolic", "Build");
+            // gtk_box_append(hbox, app->btn_build);
 
             // app->btn_events = gapp_widget_button_new_icon_with_label("applications-science-symbolic", "Components");
             // gtk_box_append(hbox, app->btn_events);
@@ -144,6 +148,7 @@ static GtkWidget *gapp_module_editor(GappMain *app)
 
         // right modulo
         app->inspector = gapp_inspector_new();
+        inspectorSetEmpty(app->inspector, "Select an entity to inspect");
         gtk_widget_set_size_request(app->inspector, 300, -1);
         gtk_paned_set_end_child(cpaned, app->inspector);
     }
@@ -219,10 +224,11 @@ static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
 
 static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive)
 {
+    // gtk_widget_set_visible(self->btn_prefab, sensitive);
     gtk_widget_set_visible(self->btn_save_game, sensitive);
     // gtk_widget_set_visible(self->btn_events, sensitive);
     gtk_widget_set_visible(self->btn_preview, sensitive);
-    gtk_widget_set_visible(self->btn_build, sensitive);
+    // gtk_widget_set_visible(self->btn_build, sensitive);
     gtk_widget_set_visible(self->btn_setting, sensitive);
 }
 

@@ -34,6 +34,8 @@ static void gapp_inspector_init(GappInspector *self)
     self->listbox = gtk_list_box_new();
     gtk_widget_add_css_class(self->listbox, "inspector_list");
     gtk_list_box_set_selection_mode(self->listbox, GTK_SELECTION_NONE);
+    gtk_widget_set_vexpand(self->listbox, TRUE);
+    gtk_widget_set_hexpand(self->listbox, TRUE);
     gtk_box_append(GTK_BOX(self), self->listbox);
 }
 
@@ -135,8 +137,8 @@ void inspectorSetEmpty(GappInspector *self, const gchar *message)
     gtk_list_box_remove_all(self->listbox);
 
     GtkWidget *label = gtk_label_new(message);
-    gtk_widget_set_halign(label, GTK_ALIGN_CENTER);
-    gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
+    gtk_widget_set_vexpand(label, TRUE);
+    gtk_widget_set_hexpand(label, TRUE);
     gtk_list_box_append(self->listbox, label);
 }
 
