@@ -1,42 +1,6 @@
 #include "gapp_widget.h"
 #include "gapp_common.h"
 
-/**
- * Crea un nuevo widget de imagen a partir de un archivo SVG.
- *
- * Esta función construye la ruta al archivo SVG basándose en el nombre del icono proporcionado,
- * asumiendo que los iconos se encuentran en el directorio "Content/icons" relativo al directorio actual.
- * Luego crea un widget GtkImage a partir de este archivo.
- *
- * @param icon_name El nombre del archivo SVG sin la extensión.
- * @return GtkWidget* Un puntero al nuevo GtkWidget de imagen creado, o NULL si hubo un error.
- */
-GtkWidget *gapp_widget_icon_svg_new(const gchar *icon_name)
-{
-    GtkWidget *image = NULL;
-    gchar *icon_file = NULL;
-
-    if (icon_name == NULL)
-    {
-        g_warning("gapp_widget_icon_svg_new: icon_name is NULL");
-        return NULL;
-    }
-
-    icon_file = pathJoin(g_get_current_dir(), "Content", "icons", g_strdup_printf("%s.svg", icon_name), NULL);
-
-    if (g_file_test(icon_file, G_FILE_TEST_EXISTS))
-    {
-        image = gtk_image_new_from_file(icon_file);
-    }
-    else
-    {
-        g_warning("gapp_widget_icon_svg_new: Icon file not found: %s", icon_file);
-    }
-
-    g_free(icon_file);
-
-    return image;
-}
 
 /**
  * Establece el margen de un widget en Gobu.
@@ -75,32 +39,6 @@ GtkWidget *gapp_widget_toolbar_new(void)
     // gapp_widget_set_margin(box, 1);
 
     return box;
-}
-
-/**
- * Crea un nuevo widget de botón con icono y etiqueta en Gobu.
- *
- * @param icon_name  El nombre del icono a mostrar en el botón.
- * @param label      El texto de la etiqueta del botón.
- *
- * @return Un nuevo widget de botón con icono y etiqueta.
- */
-GtkWidget *gapp_widget_button_new_icon_svg_with_label(const gchar *icon_name, const gchar *label)
-{
-    GtkWidget *button = gtk_button_new();
-    gtk_button_set_has_frame(GTK_BUTTON(button), FALSE);
-    {
-        GtkWidget *hbox_parent = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-        gtk_button_set_child(GTK_BUTTON(button), hbox_parent);
-
-        GtkWidget *icon = gapp_widget_icon_svg_new(icon_name);
-        gtk_box_append(GTK_BOX(hbox_parent), icon);
-
-        if (label != NULL)
-            gtk_box_append(GTK_BOX(hbox_parent), gtk_label_new(label));
-    }
-
-    return button;
 }
 
 /**

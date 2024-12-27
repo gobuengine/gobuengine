@@ -43,6 +43,7 @@ static void gapp_prefab_init(GappPrefab *self)
     gtk_box_append(GTK_BOX(self), gapp_widget_separator_h());
 
     GtkWidget *search = gtk_search_entry_new();
+    gtk_search_entry_set_placeholder_text(GTK_SEARCH_ENTRY(search), "Search");
     gtk_widget_set_hexpand(search, TRUE);
     gtk_box_append(GTK_BOX(self), search);
 }

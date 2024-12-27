@@ -19,16 +19,12 @@ extern "C"
         gpointer data;
     } GappWidgetDialogEntry;
 
-    GtkWidget *gapp_widget_icon_svg_new(const gchar *icon_name);
-
     void gapp_widget_set_margin(GtkWidget *widget, gint margin);
 
     GtkWidget *gapp_widget_separator_h(void);
-
     GtkWidget *gapp_widget_toolbar_new(void);
 
     // button
-    GtkWidget *gapp_widget_button_new_icon_svg_with_label(const gchar *icon_name, const gchar *label);
     GtkWidget *gapp_widget_button_new_icon_with_label_custom(const gchar *icon_name, const gchar *label, GtkAlign align);
 
     // notebook
