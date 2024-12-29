@@ -50,7 +50,7 @@ G_DEFINE_TYPE(GappMain, gapp_main, GTK_TYPE_APPLICATION)
 
 static void gapp_main_activate(GappMain *app);
 static void gapp_main_open(GappMain *app, GFile **files, gint n_files, const gchar *hint);
-// static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive);
+static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive);
 static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self);
 static void gapp_signal_project_save(GtkWidget *widget, GappMain *self);
 static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self);
@@ -162,22 +162,22 @@ static GtkWidget *gapp_module_editor(GappMain *app)
 
                     gtk_box_append(toolbar, gapp_widget_separator_h());
 
-                    btn_item = gapp_widget_button_new_icon_with_label("edit-delete-symbolic", NULL);
+                    btn_item = gapp_widget_button_new_icon_with_label("square-outline-thick-symbolic", NULL);
                     gtk_box_append(toolbar, btn_item);
 
-                    btn_item = gapp_widget_button_new_icon_with_label("edit-delete-symbolic", NULL);
+                    btn_item = gapp_widget_button_new_icon_with_label("circle-outline-thick-symbolic", NULL);
                     gtk_box_append(toolbar, btn_item);
 
-                    btn_item = gapp_widget_button_new_icon_with_label("edit-delete-symbolic", NULL);
+                    btn_item = gapp_widget_button_new_icon_with_label("draw-text-symbolic", NULL);
                     gtk_box_append(toolbar, btn_item);
 
                     gtk_box_append(toolbar, gapp_widget_separator_h());
                     
-                    app->btn_save_game = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save all");
-                    g_signal_connect(app->btn_save_game, "clicked", G_CALLBACK(gapp_signal_project_save), app);
-                    gtk_box_append(toolbar, app->btn_save_game);
+                    // app->btn_save_game = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", NULL);
+                    // g_signal_connect(app->btn_save_game, "clicked", G_CALLBACK(gapp_signal_project_save), app);
+                    // gtk_box_append(toolbar, app->btn_save_game);
 
-                    app->btn_preview = gapp_widget_button_new_icon_with_label("applications-games-symbolic", "Preview");
+                    app->btn_preview = gapp_widget_button_new_icon_with_label("media-playback-start-symbolic", NULL);
                     g_signal_connect(app->btn_preview, "clicked", G_CALLBACK(gapp_signal_project_preview), app);
                     gtk_box_append(toolbar, app->btn_preview);
                 }
@@ -209,13 +209,6 @@ static void gapp_main_activate(GappMain *app)
 
     app->world = pixio_world_init();
 
-    app->ricons[GAPP_RESOURCE_ICON_SCENE] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/scene.png");
-    app->ricons[GAPP_RESOURCE_ICON_PREFAB] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/prefab.png");
-    app->ricons[GAPP_RESOURCE_ICON_TILEMAP] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/scene.png");
-    app->ricons[GAPP_RESOURCE_ICON_SCRIPT] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/script.png");
-    app->ricons[GAPP_RESOURCE_ICON_ANIM2D] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/anim2d.png");
-    app->ricons[GAPP_RESOURCE_ICON_COMPS] = gtk_image_new_from_file("D:/software/Gobu/gobu/bin/Content/icons/component.png");
-
     app->window = gtk_window_new();
     gtk_window_set_application(GTK_WINDOW(app->window), GTK_APPLICATION(app));
     gtk_window_set_default_size(GTK_WINDOW(app->window), 1280, 800);
@@ -229,7 +222,7 @@ static void gapp_main_activate(GappMain *app)
     gtk_stack_add_named(GTK_STACK(app->stack), gapp_module_project_manager(app), "project_manager");
     gtk_stack_add_named(GTK_STACK(app->stack), gapp_module_editor(app), "editor");
 
-    // gapp_headerbar_set_button_visible(app, FALSE);
+    gapp_headerbar_set_button_visible(app, FALSE);
     gtk_window_present(GTK_WINDOW(app->window));
 }
 
@@ -269,15 +262,15 @@ static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self)
 // MARK: PRIVATE API
 // -----------------
 
-// static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive)
-// {
-//     // gtk_widget_set_visible(self->btn_prefab, sensitive);
-//     gtk_widget_set_visible(self->btn_save_game, sensitive);
-//     // gtk_widget_set_visible(self->btn_events, sensitive);
-//     gtk_widget_set_visible(self->btn_preview, sensitive);
-//     // gtk_widget_set_visible(self->btn_build, sensitive);
-//     gtk_widget_set_visible(self->btn_setting, sensitive);
-// }
+static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive)
+{
+    // gtk_widget_set_visible(self->btn_prefab, sensitive);
+    // gtk_widget_set_visible(self->btn_save_game, sensitive);
+    // gtk_widget_set_visible(self->btn_events, sensitive);
+    // gtk_widget_set_visible(self->btn_preview, sensitive);
+    // gtk_widget_set_visible(self->btn_build, sensitive);
+    gtk_widget_set_visible(self->btn_setting, sensitive);
+}
 
 static GappMain *gapp_new(void)
 {
@@ -309,6 +302,9 @@ static bool gapp_config_init(void)
     GKeyFile *keyfile = gapp_config_load_from_file("editor.config.ini");
     if (keyfile == NULL)
         return FALSE;
+
+    GtkIconTheme *theme = gtk_icon_theme_get_for_display(gdk_display_get_default());
+    gtk_icon_theme_add_search_path(theme, "Content/icons/svg/");
 
     // load config file properties
     bool darkmode = g_key_file_get_boolean(keyfile, "Editor", "darkMode", NULL);
@@ -365,7 +361,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
     gapp_set_project_path(pathDirname(path));
 
     gtk_stack_set_visible_child_name(GTK_STACK(self->stack), "editor");
-    // gapp_headerbar_set_button_visible(self, TRUE);
+    gapp_headerbar_set_button_visible(self, TRUE);
 
     g_autofree gchar *title = g_strdup_printf("%s - %s", GAPP_VERSION_STR, gapp_project_config_get_name(gappMain->config));
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
