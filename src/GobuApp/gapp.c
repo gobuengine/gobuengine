@@ -21,12 +21,7 @@ static GappMain *gappMain;
 struct _GappMain
 {
     GtkApplicationWindow parent_instance;
-    GtkWidget *btn_prefab;
-    GtkWidget *btn_save_game;
-    GtkWidget *btn_preview;
-    GtkWidget *btn_build;
-    GtkWidget *btn_events;
-    GtkWidget *btn_setting;
+    GtkWidget *headerbar_btn_setting;
     GtkWidget *project_manager;
     GtkWidget *config;
     GtkWidget *window;
@@ -49,11 +44,11 @@ struct _GappMain
 G_DEFINE_TYPE(GappMain, gapp_main, GTK_TYPE_APPLICATION)
 
 static void gapp_main_activate(GappMain *app);
-static void gapp_main_open(GappMain *app, GFile **files, gint n_files, const gchar *hint);
 static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive);
 static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self);
 static void gapp_signal_project_save(GtkWidget *widget, GappMain *self);
 static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self);
+static void gapp_signal_open_popover_create_entity(GtkWidget *widget, GappMain *self);
 
 static bool gapp_config_init(void);
 
@@ -84,28 +79,14 @@ static void gapp_window_set_headerbar(GappMain *app)
         GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
         gtk_header_bar_set_title_widget(header_bar, hbox);
         {
-            // app->btn_prefab = gapp_widget_button_new_icon_with_label("list-add-symbolic", "");
-            // gtk_box_append(hbox, app->btn_prefab);
-
-            // app->btn_save_game = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", "Save all");
-            // g_signal_connect(app->btn_save_game, "clicked", G_CALLBACK(gapp_signal_project_save), app);
-            // gtk_box_append(hbox, app->btn_save_game);
-
-            // app->btn_preview = gapp_widget_button_new_icon_with_label("applications-games-symbolic", "Preview");
-            // gtk_box_append(hbox, app->btn_preview);
-
-            // app->btn_build = gapp_widget_button_new_icon_with_label("drive-optical-symbolic", "Build");
-            // gtk_box_append(hbox, app->btn_build);
-
-            // app->btn_events = gapp_widget_button_new_icon_with_label("applications-science-symbolic", "Components");
-            // gtk_box_append(hbox, app->btn_events);
+            // botones de la barra de herramientas
         }
     }
 
     { // #setting project, game
-        app->btn_setting = gapp_widget_button_new_icon_with_label("open-menu-symbolic", NULL);
-        gtk_header_bar_pack_end(header_bar, app->btn_setting);
-        g_signal_connect(app->btn_setting, "clicked", G_CALLBACK(gapp_signal_project_settings_open), app);
+        app->headerbar_btn_setting = gapp_widget_button_new_icon_with_label("open-menu-symbolic", NULL);
+        gtk_header_bar_pack_end(header_bar, app->headerbar_btn_setting);
+        g_signal_connect(app->headerbar_btn_setting, "clicked", G_CALLBACK(gapp_signal_project_settings_open), app);
     }
 }
 
@@ -129,8 +110,8 @@ static GtkWidget *gapp_module_editor(GappMain *app)
             adw_view_switcher_set_stack(switcher, stack);
             gtk_box_append(box, switcher);
             {
-                GtkWidget *hierarchy = gapp_scene_hierarchy_new();
-                adw_view_stack_add_titled_with_icon((stack), hierarchy, "hierarchy", "Hierarchy", "edit-select-all-symbolic");
+                app->hierarchy = gapp_scene_hierarchy_new();
+                adw_view_stack_add_titled_with_icon((stack), app->hierarchy, "hierarchy", "Hierarchy", "edit-select-all-symbolic");
 
                 app->prefab = gapp_prefab_new();
                 adw_view_stack_add_titled_with_icon((stack), app->prefab, "prefab", "Prefabs", "application-x-addon-symbolic");
@@ -159,6 +140,7 @@ static GtkWidget *gapp_module_editor(GappMain *app)
 
                     btn_item = gapp_widget_button_new_icon_with_label("list-add-symbolic", NULL);
                     gtk_box_append(toolbar, btn_item);
+                    g_signal_connect(btn_item, "clicked", G_CALLBACK(gapp_signal_open_popover_create_entity), app);
 
                     gtk_box_append(toolbar, gapp_widget_separator_h());
 
@@ -172,18 +154,14 @@ static GtkWidget *gapp_module_editor(GappMain *app)
                     gtk_box_append(toolbar, btn_item);
 
                     gtk_box_append(toolbar, gapp_widget_separator_h());
-                    
-                    // app->btn_save_game = gapp_widget_button_new_icon_with_label("media-floppy-symbolic", NULL);
-                    // g_signal_connect(app->btn_save_game, "clicked", G_CALLBACK(gapp_signal_project_save), app);
-                    // gtk_box_append(toolbar, app->btn_save_game);
 
-                    app->btn_preview = gapp_widget_button_new_icon_with_label("media-playback-start-symbolic", NULL);
-                    g_signal_connect(app->btn_preview, "clicked", G_CALLBACK(gapp_signal_project_preview), app);
-                    gtk_box_append(toolbar, app->btn_preview);
+                    btn_item = gapp_widget_button_new_icon_with_label("media-playback-start-symbolic", NULL);
+                    g_signal_connect(btn_item, "clicked", G_CALLBACK(gapp_signal_project_preview), app);
+                    gtk_box_append(toolbar, btn_item);
                 }
 
-                GtkWidget *viewport = gapp_scene_viewport_new();
-                gtk_overlay_set_child(GTK_OVERLAY(overlay), viewport);
+                app->viewport = gapp_scene_viewport_new();
+                gtk_overlay_set_child(GTK_OVERLAY(overlay), app->viewport);
             }
         }
 
@@ -227,49 +205,12 @@ static void gapp_main_activate(GappMain *app)
 }
 
 // -----------------
-// MARK:SIGNAL
-// -----------------
-
-static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
-{
-    g_return_if_fail(self != NULL);
-
-    GtkWidget *setting = gobu_project_setting_new();
-    if (setting == NULL)
-    {
-        g_warning("Failed to create project settings window");
-        return;
-    }
-
-    gobu_project_setting_show(setting, self->window);
-}
-
-static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
-{
-    g_return_if_fail(self != NULL);
-
-    g_autofree gchar *path_world = pathJoin(gapp_get_project_path(), "resources", "world.json", NULL);
-    fsWriteTextFile(path_world, pixio_world_serialize(self->world));
-}
-
-static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self)
-{
-    g_return_if_fail(self != NULL);
-    printf("Preview\n");
-}
-
-// -----------------
 // MARK: PRIVATE API
 // -----------------
 
 static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive)
 {
-    // gtk_widget_set_visible(self->btn_prefab, sensitive);
-    // gtk_widget_set_visible(self->btn_save_game, sensitive);
-    // gtk_widget_set_visible(self->btn_events, sensitive);
-    // gtk_widget_set_visible(self->btn_preview, sensitive);
-    // gtk_widget_set_visible(self->btn_build, sensitive);
-    gtk_widget_set_visible(self->btn_setting, sensitive);
+    gtk_widget_set_visible(self->headerbar_btn_setting, sensitive);
 }
 
 static GappMain *gapp_new(void)
@@ -321,6 +262,70 @@ static bool gapp_config_init(void)
     g_key_file_free(keyfile);
 
     return TRUE;
+}
+
+// -----------------
+// MARK:SIGNAL
+// -----------------
+
+static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
+{
+    g_return_if_fail(self != NULL);
+
+    GtkWidget *setting = gobu_project_setting_new();
+    if (setting == NULL)
+    {
+        g_warning("Failed to create project settings window");
+        return;
+    }
+
+    gobu_project_setting_show(setting, self->window);
+}
+
+static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
+{
+    g_return_if_fail(self != NULL);
+
+    g_autofree gchar *path_world = pathJoin(gapp_get_project_path(), "resources", "world.json", NULL);
+    fsWriteTextFile(path_world, pixio_world_serialize(self->world));
+}
+
+static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self)
+{
+    g_return_if_fail(self != NULL);
+    printf("Preview\n");
+}
+
+static void gapp_signal_open_popover_create_entity(GtkWidget *widget, GappMain *self)
+{
+    GtkWidget *popover = gtk_popover_new();
+    gtk_widget_set_parent(popover, widget);
+    gtk_popover_set_cascade_popdown(GTK_POPOVER(popover), FALSE);
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    gtk_popover_set_child(GTK_POPOVER(popover), vbox);
+    {
+        GtkWidget *btn_item;
+
+        btn_item = gapp_widget_button_new_icon_with_label("background-app-ghost-symbolic", "Sprite");
+        gtk_box_append(GTK_BOX(vbox), btn_item);
+
+        btn_item = gapp_widget_button_new_icon_with_label("image-symbolic", "Tiled Sprite");
+        gtk_box_append(GTK_BOX(vbox), btn_item);
+
+        gtk_box_append(vbox, gapp_widget_separator_h());
+
+        btn_item = gapp_widget_button_new_icon_with_label("square-outline-thick-symbolic", "Shape Square");
+        gtk_box_append(vbox, btn_item);
+
+        btn_item = gapp_widget_button_new_icon_with_label("circle-outline-thick-symbolic", "Shape Circle");
+        gtk_box_append(vbox, btn_item);
+
+        btn_item = gapp_widget_button_new_icon_with_label("draw-text-symbolic", "Text");
+        gtk_box_append(vbox, btn_item);
+    }
+
+    gtk_popover_popup(GTK_POPOVER(popover));
 }
 
 // -----------------
