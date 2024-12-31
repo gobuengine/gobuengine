@@ -1,5 +1,4 @@
 #include "gapp_project_config.h"
-// #include "binn/binn_json.h"
 
 // --------------------
 // MARK:BASE CLASS
@@ -474,7 +473,7 @@ gboolean gapp_project_config_create_file_default(GappProjectConfig *self, const 
 /**
  * Carga la configuración del proyecto desde un archivo.
  *
- * Esta función lee un archivo de configuración en formato binn y establece
+ * Esta función lee un archivo de configuración en formato .ini y establece
  * las propiedades correspondientes en el objeto GappProjectConfig utilizando g_object_set_data().
  *
  * @param self El objeto GappProjectConfig que se va a configurar.
@@ -556,7 +555,7 @@ gboolean gapp_project_config_load(GappProjectConfig *self, const gchar *filename
  * Guarda la configuración del proyecto en un archivo.
  *
  * Esta función escribe la configuración actual del proyecto en un archivo
- * utilizando el formato binn.
+ * utilizando el formato .ini.
  *
  * @param self El objeto GappProjectConfig que contiene la configuración a guardar.
  * @param filename El nombre del archivo donde se guardará la configuración.
