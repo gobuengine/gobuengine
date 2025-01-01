@@ -1,5 +1,5 @@
 #include "gapp_scene_hierarchy.h"
-#include "pixio/pixio.h"
+#include "gobu/gobu.h"
 #include "gapp_common.h"
 #include "gapp_scene_manager.h"
 #include "gapp_whierarchy.h"
@@ -96,8 +96,8 @@ static void gapp_scene_hierarchy_init(GappSceneHierarchy *self)
         }
     }
 
-    pixio_observer(GWORLD, EcsPixioOnOpenScene, signal_observer_scene_changed, self);
-    pixio_observer(GWORLD, EcsPixioOnRenameScene, signal_observer_scene_changed, self);
+    gobu_ecs_observer(GWORLD, gbOnSceneOpen, signal_observer_scene_changed, self);
+    gobu_ecs_observer(GWORLD, gbOnSceneRename, signal_observer_scene_changed, self);
 }
 
 // -----------------
@@ -124,7 +124,7 @@ static void signal_observer_scene_changed(ecs_iter_t *it)
     for (int i = 0; i < it->count; i++)
     {
         ecs_entity_t entity = it->entities[i];
-        if (pixio_is_enabled(it->world, entity))
+        if (gobu_ecs_is_enabled(it->world, entity))
         {
             const gchar *name = ecs_get_name(it->world, entity);
             gtk_label_set_text(GTK_LABEL(self->scene_label), g_strdup_printf("<b>Scene</b> (%s)", name));

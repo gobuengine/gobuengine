@@ -3,7 +3,6 @@
 #define GAPP_SCENE_VIEWPORT_H
 
 #include "config.h"
-#include "pixio/pixio.h"
 
 G_BEGIN_DECLS
 

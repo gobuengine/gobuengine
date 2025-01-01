@@ -8,7 +8,7 @@
 
 #include "types/type_outliner_item.h"
 #include "types/type_outliner_popover_item.h"
-#include "pixio/pixio.h"
+#include "gobu/gobu.h"
 #include "gapp.h"
 
 enum

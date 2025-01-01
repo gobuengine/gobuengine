@@ -25,7 +25,7 @@ char *gobu_util_path_normalize(const char *path)
     return gobu_util_string_replace(path, "\\", "/");
 }
 
-char *gobu_util_path_build(const char *first_path, ...)
+char *gobu_util_path_build_(const char *first_path, ...)
 {
     gchar *buffer;
     va_list args;
@@ -54,7 +54,7 @@ char *gobu_util_path_current_dir(void)
 
 bool gobu_util_path_exist(const char *filename)
 {
-    return gobu_util_test_file(filename, G_FILE_TEST_IS_DIR);
+    return gobu_util_test_file(filename, G_FILE_TEST_EXISTS);
 }
 
 char *gobu_util_string_format(const char *format, ...)
@@ -97,12 +97,12 @@ bool gobu_util_string_isequal(const char *text1, const char *text2)
     return result;
 }
 
-char **gobu_util_split(const char *string, const char *delimiter)
+char **gobu_util_string_split(const char *string, const char *delimiter)
 {
     return g_strsplit(string, delimiter, -1);
 }
 
-void gobu_util_splitFree(char **str_array)
+void gobu_util_string_split_free(char **str_array)
 {
     g_strfreev(str_array);
 }
@@ -143,7 +143,7 @@ bool gobu_util_copy_file(const char *src, const char *dest)
             while ((file_info = g_file_enumerator_next_file(enumerator, NULL, NULL)) != NULL)
             {
                 const gchar *file_name = g_file_info_get_name(file_info);
-                gobu_util_copy_file(gobu_util_path_build(src, file_name, NULL), gobu_util_path_build(dest, file_name, NULL));
+                gobu_util_copy_file(gobu_util_path_build(src, file_name), gobu_util_path_build(dest, file_name));
             }
         }
         return TRUE;
@@ -182,9 +182,9 @@ char *gobu_util_name(const char *filename, bool with_ext)
     gchar *basename = gobu_util_path_basename(filename);
     if (with_ext)
     {
-        gchar **sep_name = gobu_util_split(basename, ".");
+        gchar **sep_name = gobu_util_string_split(basename, ".");
         gchar *name = gobu_util_string(sep_name[0]);
-        gobu_util_splitFree(sep_name);
+        gobu_util_string_split_free(sep_name);
         return name;
     }
     return basename;
@@ -192,7 +192,7 @@ char *gobu_util_name(const char *filename, bool with_ext)
 
 bool gobu_util_is_extension(const char *filename, const char *ext)
 {
-    return (g_strcmp0(gobu_util_get_extname(filename), ext) == 0);
+    return (g_strcmp0(gobu_util_extname(filename), ext) == 0);
 }
 
 char *gobu_util_read_text_file(const char *filename)

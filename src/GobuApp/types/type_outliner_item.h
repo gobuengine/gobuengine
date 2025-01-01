@@ -3,7 +3,7 @@
 #define TYPE_OUTLINER_ITEM_H
 
 #include "../config.h"
-#include "pixio/pixio.h"
+#include "gobu/gobu.h"
 
 G_BEGIN_DECLS
 

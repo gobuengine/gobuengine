@@ -88,7 +88,10 @@
         "gapp_scene.h": "c",
         "sokol_gl.h": "c",
         "sokol_gfx.h": "c",
-        "stb_image.h": "c"
+        "stb_image.h": "c",
+        "gapp_scene_hierarchy.h": "c",
+        "gapp_scene_viewport.h": "c",
+        "gapp_wviewport.h": "c"
     },
     "mesonbuild.configureOnOpen": false
 }

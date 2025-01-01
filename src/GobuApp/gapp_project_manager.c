@@ -1,6 +1,6 @@
 #include "gapp_project_manager.h"
 #include "binn/binn_json.h"
-#include "gapp_common.h"
+#include "gobu/gobu.h"
 #include "gapp_widget.h"
 #include "gapp_editor.h"
 #include "gapp.h"
@@ -68,8 +68,8 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
         const char *item_path = binn_object_str(&value, "path");
         if (item_path != NULL)
         {
-            g_autofree gchar *project_file = pathJoin(item_path, GAPP_PROJECT_MANAGER_FILE, NULL);
-            if (project_file != NULL && fsExist(project_file))
+            g_autofree gchar *project_file = gobu_util_path_build(item_path, GAPP_PROJECT_MANAGER_FILE);
+            if (project_file != NULL && gobu_util_path_exist(project_file))
             {
                 if (binn_list_add_object(list_new, &value) == FALSE)
                 {
@@ -83,7 +83,7 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
         }
     }
 
-    gchar *config_file = pathJoin(g_get_user_config_dir(), "GOBU", GAPP_FILE_PROJECTS_NAME, NULL);
+    gchar *config_file = gobu_util_path_build(gobu_util_path_user(), "GOBU", GAPP_FILE_PROJECTS_NAME);
     binn_save_to_file(list_new, config_file);
 
     return list_new;
@@ -92,9 +92,9 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
 static binn *gobu_fn_register_load_projects(void)
 {
     binn *list = NULL;
-    gchar *config_file = pathJoin(g_get_user_config_dir(), "GOBU", GAPP_FILE_PROJECTS_NAME, NULL);
+    gchar *config_file = gobu_util_path_build(gobu_util_path_user(), "GOBU", GAPP_FILE_PROJECTS_NAME);
 
-    if (fsExist(config_file))
+    if (gobu_util_path_exist(config_file))
     {
         list = binn_load_from_file(config_file);
         if (list == NULL)
@@ -122,18 +122,18 @@ static gboolean gobu_fn_register_project(const gchar *path)
 
     binn *list = binn_list();
     gboolean success = FALSE;
-    gchar *config_dir = pathJoin(g_get_user_config_dir(), "GOBU", NULL);
-    gchar *config_file = pathJoin(config_dir, GAPP_FILE_PROJECTS_NAME, NULL);
+    gchar *config_dir = gobu_util_path_build(gobu_util_path_user(), "GOBU");
+    gchar *config_file = gobu_util_path_build(config_dir, GAPP_FILE_PROJECTS_NAME);
 
     // Asegurar que el directorio de configuración existe
-    if (!pathCreateNew(config_dir))
+    if (!gobu_util_path_create(config_dir))
     {
         g_warning("No se pudo crear el directorio de configuración: %s", config_dir);
         goto cleanup;
     }
 
     // Cargar proyectos existentes si el archivo existe
-    if (fsExist(config_file))
+    if (gobu_util_path_exist(config_file))
     {
         list = binn_load_from_file(config_file);
         if (list == NULL)
@@ -173,19 +173,24 @@ static gboolean gobu_fn_create_project(const gchar *name, const gchar *path)
     gboolean is_created = FALSE;
     g_autoptr(GError) error = NULL;
 
-    g_autofree gchar *project_dir = pathJoin(path, name, NULL);
+    g_autofree gchar *project_dir = gobu_util_path_build(path, name);
 
-    if (!fsExist(project_dir))
+    if (!gobu_util_path_exist(project_dir))
     {
-        g_autofree gchar *content_dir = pathJoin(project_dir, "Game", "Content", NULL);
-        g_autofree gchar *project_file = pathJoin(project_dir, GAPP_PROJECT_MANAGER_FILE, NULL);
+        g_autofree gchar *content_dir = gobu_util_path_build(project_dir, "resources");
+        g_autofree gchar *project_file = gobu_util_path_build(project_dir, GAPP_PROJECT_MANAGER_FILE);
 
         // Crear directorios
-        if (pathCreateNew(project_dir) &&
-            pathCreateNew(content_dir))
+        if (gobu_util_path_create(project_dir) &&
+            gobu_util_path_create(content_dir))
         {
             // Crear archivo de configuración
             is_created = gapp_project_config_create_file_default(gapp_get_config_instance(), project_file, name);
+            // WORLD + SCENE INIT
+            ecs_world_t *world = gobu_ecs_init();
+            gobu_scene_open(world, gobu_scene_new(world, "Main"));
+            gobu_ecs_save_to_file(world, gobu_util_path_build(content_dir, "world.json"));
+            gobu_ecs_free(world);
         }
         else
         {
@@ -269,7 +274,7 @@ static void gobu_fn_open_dialog_response(GObject *source, GAsyncResult *result, 
         g_autofree gchar *filename = g_file_get_path(file);
         if (gobu_fn_open_editor_main(filename, self))
         {
-            gobu_fn_register_project(pathDirname(filename));
+            gobu_fn_register_project(gobu_util_path_dirname(filename));
         }
 
         // g_free(filename);
@@ -291,8 +296,8 @@ static GtkStringList *gobu_fn_grid_view_list_project_model(void)
             const char *item_path = binn_object_str(&value, "path");
             if (item_path != NULL)
             {
-                g_autofree gchar *content_path = pathJoin(item_path, "Content", NULL);
-                // g_autofree gchar *project_file = pathJoin(item_path, GAPP_PROJECT_MANAGER_FILE, NULL);
+                g_autofree gchar *content_path = gobu_util_path_build(item_path, "Content");
+                // g_autofree gchar *project_file = gobu_util_path_build(item_path, GAPP_PROJECT_MANAGER_FILE);
 
                 gtk_string_list_append(sl, content_path);
                 // g_free(content_path);
@@ -351,11 +356,11 @@ static void gobu_s_item_factory_bind_item(GtkListItemFactory *factory, GtkListIt
     // Obtener la ruta del proyecto
     GtkStringObject *obj = gtk_list_item_get_item(list_item);
     g_return_if_fail(GTK_IS_STRING_OBJECT(obj));
-    const char *path_project = pathDirname(gtk_string_object_get_string(obj));
+    const char *path_project = gobu_util_path_dirname(gtk_string_object_get_string(obj));
 
     // Configurar la imagen
-    gchar *thumbnail_path = pathJoin(path_project, GAPP_PROJECT_MANAGER_PREVIEW, NULL);
-    if (fsExist(thumbnail_path))
+    gchar *thumbnail_path = gobu_util_path_build(path_project, GAPP_PROJECT_MANAGER_PREVIEW);
+    if (gobu_util_path_exist(thumbnail_path))
     {
         gtk_image_set_from_file(GTK_IMAGE(image), thumbnail_path);
     }
@@ -366,7 +371,7 @@ static void gobu_s_item_factory_bind_item(GtkListItemFactory *factory, GtkListIt
     g_free(thumbnail_path);
 
     // Configurar la etiqueta y el tooltip
-    gtk_label_set_text(GTK_LABEL(label), pathBasename(path_project));
+    gtk_label_set_text(GTK_LABEL(label), gobu_util_path_basename(path_project));
     gtk_widget_set_tooltip_text(box, path_project);
 }
 
@@ -407,7 +412,7 @@ static void gobu_s_create_project_clicked(GtkWidget *button, GobuProjectManager 
     if (is_created)
     {
         g_debug("Proyecto creado exitosamente");
-        gobu_fn_open_editor_main(pathJoin(path, name, GAPP_PROJECT_MANAGER_FILE, NULL), self);
+        gobu_fn_open_editor_main(gobu_util_path_build(path, name, GAPP_PROJECT_MANAGER_FILE), self);
     }
     else
     {
@@ -426,9 +431,9 @@ static void gobu_s_list_project_activated(GtkGridView *grid_view, guint position
     GtkStringObject *obj = g_list_model_get_item(select_model, position);
 
     g_return_if_fail(GTK_IS_STRING_OBJECT(obj));
-    const char *path_project = pathDirname(gtk_string_object_get_string(obj));
+    const char *path_project = gobu_util_path_dirname(gtk_string_object_get_string(obj));
 
-    gobu_fn_open_editor_main(pathJoin(path_project, GAPP_PROJECT_MANAGER_FILE, NULL), self);
+    gobu_fn_open_editor_main(gobu_util_path_build(path_project, GAPP_PROJECT_MANAGER_FILE), self);
 }
 
 static void gobu_s_open_other_project_clicked(GtkWidget *button, GobuProjectManager *self)
@@ -456,10 +461,10 @@ static void gobu_s_entry_name_changed(GtkWidget *entry, GobuProjectManager *self
 
     const char *name = gtk_editable_get_text(GTK_EDITABLE(self->entry_name));
     const char *path = gtk_button_get_label(GTK_BUTTON(self->btn_file_chooser));
-    g_autofree char *project_dir = pathJoin(path, name, NULL);
+    g_autofree char *project_dir = gobu_util_path_build(path, name);
 
     gboolean name_is_valid = gobu_fn_validate_project_name(name);
-    gboolean dir_not_exists = !fsExist(project_dir);
+    gboolean dir_not_exists = !gobu_util_path_exist(project_dir);
     gboolean is_valid = name_is_valid && dir_not_exists;
 
     gtk_widget_set_sensitive(self->dialog_btn_create, is_valid);
@@ -495,7 +500,7 @@ static void gobu_ui_dialog_new_project(GobuProjectManager *self)
 {
     GtkWidget *win, *vbox, *hbox, *label, *btn_create;
 
-    g_autofree gchar *pathProjects = pathJoin(g_get_user_special_dir(G_USER_DIRECTORY_DOCUMENTS), "Gobu Projects", NULL);
+    g_autofree gchar *pathProjects = gobu_util_path_build(g_get_user_special_dir(G_USER_DIRECTORY_DOCUMENTS), "GobuProjects");
 
     GtkWidget *parent = gtk_widget_get_root(self);
 
@@ -572,17 +577,10 @@ static void gobu_project_manager_ui_setup(GobuProjectManager *self)
     }
 
     GtkWidget *search = gtk_search_entry_new();
-    gtk_widget_set_margin_start(search, 5);
-    gtk_widget_set_margin_end(search, 5);
-    gtk_widget_set_margin_top(search, 5);
-    gtk_widget_set_margin_bottom(search, 5);
+    gapp_widget_set_margin(search, 5);
     gtk_box_append(GTK_BOX(self), search);
     { // GRID LIST ITEM PROJECTS
         GtkWidget *scroll = gtk_scrolled_window_new();
-        gtk_widget_set_margin_start(scroll, 5);
-        gtk_widget_set_margin_end(scroll, 5);
-        gtk_widget_set_margin_top(scroll, 5);
-        gtk_widget_set_margin_bottom(scroll, 5);
         gtk_box_append(GTK_BOX(self), scroll);
         {
             GtkStringList *sl = gobu_fn_grid_view_list_project_model();

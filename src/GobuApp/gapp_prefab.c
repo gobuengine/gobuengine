@@ -1,6 +1,4 @@
 #include "gapp_prefab.h"
-#include "pixio/pixio_type.h"
-#include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp.h"
 

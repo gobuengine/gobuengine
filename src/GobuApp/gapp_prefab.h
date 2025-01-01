@@ -3,7 +3,6 @@
 #define GAPP_PREFAB_H
 
 #include "config.h"
-#include "pixio/pixio.h"
 
 G_BEGIN_DECLS
 

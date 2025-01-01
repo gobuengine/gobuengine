@@ -4,7 +4,7 @@ project('gobuengine', 'c',
   
 base_dir = meson.current_source_dir()
 
-add_project_arguments('-DGRAPHICS_API_OPENGL_33', language: 'c')
+add_project_arguments('-Dbrender=glcore', language: 'c')
 add_project_arguments('-Wno-incompatible-pointer-types', language: 'c')
 
 subdir('src')

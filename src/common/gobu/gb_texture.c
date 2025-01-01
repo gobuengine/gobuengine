@@ -1,36 +1,37 @@
+
 #include "gobu.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "externs/stb_image.h"
 
-gobu_texture_t gobu_load_texture(const char *filename)
+gb_texture_t gobu_load_texture(const char *filename)
 {
     int width, height, channels;
     unsigned char *data = stbi_load(filename, &width, &height, &channels, STBI_rgb_alpha);
     if (!data)
     {
         printf("Failed to load texture: %s", filename);
-        return (gobu_texture_t){0};
+        return (gb_texture_t){0};
     }
 
-    gobu_texture_t texture = gfxb_create_texture(data, width, height);
+    gb_texture_t texture = gfxb_create_texture(data, width, height);
 
     stbi_image_free(data);
 
     return texture;
 }
 
-bool gobu_texture_is_valid(gobu_texture_t texture)
+bool gobu_texture_is_valid(gb_texture_t texture)
 {
     return texture.id != 0;
 }
 
-void gobu_free_texture(gobu_texture_t texture)
+void gobu_free_texture(gb_texture_t texture)
 {
     gfxb_destroy_texture(texture);
 }
 
-void gobu_draw_texture_pro(gobu_texture_t texture, gobu_rect_t src, gobu_rect_t dst, gobu_vec2_t scale, gobu_vec2_t origin, float angle, gobu_color_t tint, int layer_index)
+void gobu_draw_texture_pro(gb_texture_t texture, gb_rect_t src, gb_rect_t dst, gb_vec2_t scale, gb_vec2_t origin, float angle, gb_color_t tint, int layer_index)
 {
     src.w = (src.w == 0) ? texture.width : src.w;
     src.h = (src.h == 0) ? texture.height : src.h;
@@ -66,17 +67,17 @@ void gobu_draw_texture_pro(gobu_texture_t texture, gobu_rect_t src, gobu_rect_t 
     gfxb_disable_texture();
 }
 
-void gobu_draw_texture_rect(gobu_texture_t texture, gobu_rect_t src, gobu_vec2_t position, gobu_color_t tint, int layer_index)
+void gobu_draw_texture_rect(gb_texture_t texture, gb_rect_t src, gb_vec2_t position, gb_color_t tint, int layer_index)
 {
-    gobu_rect_t dst = {position.x, position.y, fabsf(src.w), fabsf(src.h)};
-    gobu_vec2_t scale = {1.0f, 1.0f};
-    gobu_vec2_t origin = {0.0f, 0.0f};
+    gb_rect_t dst = {position.x, position.y, fabsf(src.w), fabsf(src.h)};
+    gb_vec2_t scale = {1.0f, 1.0f};
+    gb_vec2_t origin = {0.0f, 0.0f};
     gobu_draw_texture_pro(texture, src, dst, scale, origin, 0.0f, tint, layer_index);
 }
 
-void gobu_draw_texture(gobu_texture_t texture, gobu_vec2_t position, gobu_color_t tint, int layer_index)
+void gobu_draw_texture(gb_texture_t texture, gb_vec2_t position, gb_color_t tint, int layer_index)
 {
-    gobu_rect_t src = {0.0f, 0.0f, texture.width, texture.height};
+    gb_rect_t src = {0.0f, 0.0f, texture.width, texture.height};
     gobu_draw_texture_rect(texture, src, position, tint, layer_index);
 }
 

@@ -1,12 +1,12 @@
 #include "gapp.h"
-#include "binn/binn_json.h"
-#include "gapp_common.h"
+#include "gobu/gobu.h"
 #include "gapp_widget.h"
 
 #include "gapp_project_manager.h"
 #include "gapp_project_setting.h"
 #include "gapp_project_config.h"
 
+#include "gapp_wviewport.h"
 #include "gapp_scene_viewport.h"
 #include "gapp_scene_hierarchy.h"
 #include "gapp_prefab.h"
@@ -60,7 +60,131 @@ static void gapp_main_class_init(GappMainClass *klass)
 static void gapp_main_init(GappMain *self)
 {
     self->config = gapp_project_config_new();
-    self->world = pixio_world_init();
+    self->world = gobu_ecs_init();
+}
+
+// -----------------
+// MARK: PRIVATE API
+// -----------------
+
+static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive)
+{
+    gtk_widget_set_visible(self->headerbar_btn_setting, sensitive);
+}
+
+static GappMain *gapp_new(void)
+{
+    return g_object_new(GAPP_TYPE_MAIN, "application-id", APPLICATION_ID, "flags", G_APPLICATION_HANDLES_OPEN, NULL);
+}
+
+static GKeyFile *gapp_config_load_from_file(const char *filename)
+{
+    GKeyFile *keyfile = g_key_file_new();
+    GError *error = NULL;
+
+    gchar *fileconfig = gobu_util_path_build(g_get_current_dir(), "Config", filename);
+
+    if (!g_key_file_load_from_file(keyfile, fileconfig, G_KEY_FILE_NONE, &error))
+    {
+        g_error("Error loading key file: %s\n", error->message);
+        g_error_free(error);
+        g_key_file_free(keyfile);
+        return NULL;
+    }
+
+    g_free(fileconfig);
+
+    return keyfile;
+}
+
+static bool gapp_config_init(void)
+{
+    GKeyFile *keyfile = gapp_config_load_from_file("editor.config.ini");
+    if (keyfile == NULL)
+        return FALSE;
+
+    GtkIconTheme *theme = gtk_icon_theme_get_for_display(gdk_display_get_default());
+    gtk_icon_theme_add_search_path(theme, "Content/icons/svg/");
+
+    // load config file properties
+    bool darkmode = g_key_file_get_boolean(keyfile, "Editor", "darkMode", NULL);
+    // g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", darkmode, NULL);
+
+    AdwStyleManager *style_manager = adw_style_manager_get_default();
+    adw_style_manager_set_color_scheme(style_manager, darkmode ? ADW_COLOR_SCHEME_PREFER_DARK : ADW_COLOR_SCHEME_FORCE_LIGHT);
+
+    // css provider
+    GtkCssProvider *css_provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_path(css_provider, "Content/theme/default.css");
+    gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+
+    g_key_file_free(keyfile);
+
+    return TRUE;
+}
+
+// -----------------
+// MARK:SIGNAL
+// -----------------
+
+static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
+{
+    g_return_if_fail(self != NULL);
+
+    GtkWidget *setting = gobu_project_setting_new();
+    if (setting == NULL)
+    {
+        g_warning("Failed to create project settings window");
+        return;
+    }
+
+    gobu_project_setting_show(setting, self->window);
+}
+
+static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
+{
+    g_return_if_fail(self != NULL);
+
+    g_autofree gchar *path_world = gobu_util_path_build(gapp_get_project_path(), "resources", "world.json");
+    gobu_ecs_save_to_file(self->world, path_world);
+}
+
+static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self)
+{
+    g_return_if_fail(self != NULL);
+    printf("Preview\n");
+}
+
+static void gapp_signal_open_popover_create_entity(GtkWidget *widget, GappMain *self)
+{
+    GtkWidget *popover = gtk_popover_new();
+    gtk_widget_set_parent(popover, widget);
+    gtk_popover_set_cascade_popdown(GTK_POPOVER(popover), FALSE);
+
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
+    gtk_popover_set_child(GTK_POPOVER(popover), vbox);
+    {
+        GtkWidget *btn_item;
+
+        btn_item = gapp_widget_button_new_icon_with_label("background-app-ghost-symbolic", "Sprite");
+        gtk_box_append(GTK_BOX(vbox), btn_item);
+
+        btn_item = gapp_widget_button_new_icon_with_label("image-symbolic", "Tiled Sprite");
+        gtk_box_append(GTK_BOX(vbox), btn_item);
+
+        gtk_box_append(vbox, gapp_widget_separator_h());
+
+        btn_item = gapp_widget_button_new_icon_with_label("square-outline-thick-symbolic", "Shape Square");
+        gtk_box_append(vbox, btn_item);
+
+        btn_item = gapp_widget_button_new_icon_with_label("circle-outline-thick-symbolic", "Shape Circle");
+        gtk_box_append(vbox, btn_item);
+
+        btn_item = gapp_widget_button_new_icon_with_label("draw-text-symbolic", "Text");
+        gtk_box_append(vbox, btn_item);
+    }
+
+    gtk_popover_popup(GTK_POPOVER(popover));
 }
 
 // -----------------
@@ -146,12 +270,15 @@ static GtkWidget *gapp_module_editor(GappMain *app)
 
                     btn_item = gapp_widget_button_new_icon_with_label("square-outline-thick-symbolic", NULL);
                     gtk_box_append(toolbar, btn_item);
+                    // g_signal_connect(btn_item, "clicked", G_CALLBACK(gapp_signal_project_preview), app);
 
                     btn_item = gapp_widget_button_new_icon_with_label("circle-outline-thick-symbolic", NULL);
                     gtk_box_append(toolbar, btn_item);
+                    // g_signal_connect(btn_item, "clicked", G_CALLBACK(gapp_signal_project_preview), app);
 
                     btn_item = gapp_widget_button_new_icon_with_label("draw-text-symbolic", NULL);
                     gtk_box_append(toolbar, btn_item);
+                    // g_signal_connect(btn_item, "clicked", G_CALLBACK(gapp_signal_project_preview), app);
 
                     gtk_box_append(toolbar, gapp_widget_separator_h());
 
@@ -185,7 +312,7 @@ static void gapp_main_activate(GappMain *app)
 {
     gapp_config_init();
 
-    app->world = pixio_world_init();
+    app->world = gobu_ecs_init();
 
     app->window = gtk_window_new();
     gtk_window_set_application(GTK_WINDOW(app->window), GTK_APPLICATION(app));
@@ -202,130 +329,6 @@ static void gapp_main_activate(GappMain *app)
 
     gapp_headerbar_set_button_visible(app, FALSE);
     gtk_window_present(GTK_WINDOW(app->window));
-}
-
-// -----------------
-// MARK: PRIVATE API
-// -----------------
-
-static void gapp_headerbar_set_button_visible(GappMain *self, gboolean sensitive)
-{
-    gtk_widget_set_visible(self->headerbar_btn_setting, sensitive);
-}
-
-static GappMain *gapp_new(void)
-{
-    return g_object_new(GAPP_TYPE_MAIN, "application-id", APPLICATION_ID, "flags", G_APPLICATION_HANDLES_OPEN, NULL);
-}
-
-static GKeyFile *gapp_config_load_from_file(const char *filename)
-{
-    GKeyFile *keyfile = g_key_file_new();
-    GError *error = NULL;
-
-    gchar *fileconfig = pathJoin(g_get_current_dir(), "Config", filename, NULL);
-
-    if (!g_key_file_load_from_file(keyfile, fileconfig, G_KEY_FILE_NONE, &error))
-    {
-        g_error("Error loading key file: %s\n", error->message);
-        g_error_free(error);
-        g_key_file_free(keyfile);
-        return NULL;
-    }
-
-    g_free(fileconfig);
-
-    return keyfile;
-}
-
-static bool gapp_config_init(void)
-{
-    GKeyFile *keyfile = gapp_config_load_from_file("editor.config.ini");
-    if (keyfile == NULL)
-        return FALSE;
-
-    GtkIconTheme *theme = gtk_icon_theme_get_for_display(gdk_display_get_default());
-    gtk_icon_theme_add_search_path(theme, "Content/icons/svg/");
-
-    // load config file properties
-    bool darkmode = g_key_file_get_boolean(keyfile, "Editor", "darkMode", NULL);
-    // g_object_set(gtk_settings_get_default(), "gtk-application-prefer-dark-theme", darkmode, NULL);
-
-    AdwStyleManager *style_manager = adw_style_manager_get_default();
-    adw_style_manager_set_color_scheme(style_manager, darkmode ? ADW_COLOR_SCHEME_PREFER_DARK : ADW_COLOR_SCHEME_FORCE_LIGHT);
-
-    // css provider
-    GtkCssProvider *css_provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_path(css_provider, "Content/theme/default.css");
-    gtk_style_context_add_provider_for_display(gdk_display_get_default(), GTK_STYLE_PROVIDER(css_provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-
-    g_key_file_free(keyfile);
-
-    return TRUE;
-}
-
-// -----------------
-// MARK:SIGNAL
-// -----------------
-
-static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
-{
-    g_return_if_fail(self != NULL);
-
-    GtkWidget *setting = gobu_project_setting_new();
-    if (setting == NULL)
-    {
-        g_warning("Failed to create project settings window");
-        return;
-    }
-
-    gobu_project_setting_show(setting, self->window);
-}
-
-static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
-{
-    g_return_if_fail(self != NULL);
-
-    g_autofree gchar *path_world = pathJoin(gapp_get_project_path(), "resources", "world.json", NULL);
-    fsWriteTextFile(path_world, pixio_world_serialize(self->world));
-}
-
-static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self)
-{
-    g_return_if_fail(self != NULL);
-    printf("Preview\n");
-}
-
-static void gapp_signal_open_popover_create_entity(GtkWidget *widget, GappMain *self)
-{
-    GtkWidget *popover = gtk_popover_new();
-    gtk_widget_set_parent(popover, widget);
-    gtk_popover_set_cascade_popdown(GTK_POPOVER(popover), FALSE);
-
-    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 2);
-    gtk_popover_set_child(GTK_POPOVER(popover), vbox);
-    {
-        GtkWidget *btn_item;
-
-        btn_item = gapp_widget_button_new_icon_with_label("background-app-ghost-symbolic", "Sprite");
-        gtk_box_append(GTK_BOX(vbox), btn_item);
-
-        btn_item = gapp_widget_button_new_icon_with_label("image-symbolic", "Tiled Sprite");
-        gtk_box_append(GTK_BOX(vbox), btn_item);
-
-        gtk_box_append(vbox, gapp_widget_separator_h());
-
-        btn_item = gapp_widget_button_new_icon_with_label("square-outline-thick-symbolic", "Shape Square");
-        gtk_box_append(vbox, btn_item);
-
-        btn_item = gapp_widget_button_new_icon_with_label("circle-outline-thick-symbolic", "Shape Circle");
-        gtk_box_append(vbox, btn_item);
-
-        btn_item = gapp_widget_button_new_icon_with_label("draw-text-symbolic", "Text");
-        gtk_box_append(vbox, btn_item);
-    }
-
-    gtk_popover_popup(GTK_POPOVER(popover));
 }
 
 // -----------------
@@ -363,32 +366,32 @@ void gapp_open_project(GappMain *self, const gchar *path)
     g_return_if_fail(GAPP_IS_MAIN(self));
     g_return_if_fail(path != NULL && *path != '\0');
 
-    gapp_set_project_path(pathDirname(path));
+    gapp_set_project_path(gobu_util_path_dirname(path));
 
     gtk_stack_set_visible_child_name(GTK_STACK(self->stack), "editor");
     gapp_headerbar_set_button_visible(self, TRUE);
 
-    g_autofree gchar *title = g_strdup_printf("%s - %s", GAPP_VERSION_STR, gapp_project_config_get_name(gappMain->config));
+    g_autofree gchar *title = gobu_util_string_format("%s - %s", GAPP_VERSION_STR, gapp_project_config_get_name(gappMain->config));
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 
     // cargamos el world del proyecto
-    if (!pixio_world_deserialize_filename(self->world, pathJoin(gapp_get_project_path(), "resources", "world.json", NULL)))
+    if (!gobu_ecs_load_from_file(self->world, gobu_util_path_build(gapp_get_project_path(), "resources", "world.json")))
     {
         g_warning("Failed to load project world");
     }
 
-    pixio_scene_reload(self->world);
+    gobu_scene_reload(self->world);
 }
 
 const gchar *gapp_get_project_path(void)
 {
-    return g_strdup(gappMain->path_project);
+    return gobu_util_string(gappMain->path_project);
 }
 
 void gapp_set_project_path(const gchar *path)
 {
     g_return_if_fail(path != NULL && *path != '\0');
-    gappMain->path_project = g_strdup(path);
+    gappMain->path_project = gobu_util_string(path);
 }
 
 // -----------------

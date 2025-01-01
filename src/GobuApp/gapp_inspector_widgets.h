@@ -3,7 +3,7 @@
 #define GAPP_INSPECTOR_WIDGETS_H
 
 #include "config.h"
-#include "pixio/pixio.h"
+#include "gobu/gobu.h"
 
 void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component);
 

@@ -1,7 +1,5 @@
 #include "gapp_inspector.h"
 #include "gapp_inspector_widgets.h"
-#include "pixio/pixio_type.h"
-#include "gapp_common.h"
 #include "gapp_widget.h"
 #include "gapp.h"
 
@@ -50,7 +48,7 @@ GappInspector *gapp_inspector_new(void)
 static void _entity_enabled_toggled(GtkWidget *widget, GappInspector *self)
 {
     gboolean enabled = gtk_check_button_get_active(GTK_CHECK_BUTTON(widget));
-    pixio_enable(self->world, self->entity, enabled);
+    ecs_enable(self->world, self->entity, enabled);
     inspectorSetEntity(self, self->world, self->entity);
 }
 
@@ -60,9 +58,9 @@ static void _entity_name_changed(GtkEditable *widget, GappInspector *self)
 
     const gchar *name = gtk_editable_get_text(widget);
 
-    if (pixio_find_by_name(self->world, name) == 0)
+    if (ecs_lookup(self->world, name) == 0)
     {
-        pixio_set_name(self->world, self->entity, name);
+        ecs_set_name(self->world, self->entity, name);
     }
     else
     {
@@ -72,11 +70,10 @@ static void _entity_name_changed(GtkEditable *widget, GappInspector *self)
 
 static void inspectorWidgetCreateComponentDefaultEntity(GappInspector *self, GtkWidget *size_group)
 {
-    bool enabled = pixio_is_enabled(self->world, self->entity);
-    // bool is_root = pixio_get_root(self->world) == self->entity;
-    const char *name = pixio_get_name(self->world, self->entity);
+    bool enabled = gobu_ecs_is_enabled(self->world, self->entity);
+    const char *name = ecs_get_name(self->world, self->entity);
 
-    GtkWidget *content = inspectorWidgetCreateComponentGroup(self->listbox, FALSE, "pixio_entity_t", NULL, 0, 0);
+    GtkWidget *content = inspectorWidgetCreateComponentGroup(self->listbox, FALSE, "gb_entity_t", NULL, 0, 0);
 
     GtkWidget *entity_enabled = gtk_check_button_new();
     gtk_check_button_set_active(GTK_CHECK_BUTTON(entity_enabled), enabled);
@@ -85,7 +82,6 @@ static void inspectorWidgetCreateComponentDefaultEntity(GappInspector *self, Gtk
 
     GtkWidget *entity_name = gtk_entry_new();
     gtk_editable_set_text(GTK_EDITABLE(entity_name), name);
-    // gtk_widget_set_sensitive(entity_name, !is_root);
     g_signal_connect(entity_name, "changed", G_CALLBACK(_entity_name_changed), self);
     gtk_box_append(GTK_BOX(content), inspectorWidgetCreateFieldRow(size_group, "name", entity_name, GTK_ORIENTATION_HORIZONTAL));
 
@@ -108,7 +104,7 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
 
     inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);
 
-    if (!pixio_is_enabled(world, entity))
+    if (!gobu_ecs_is_enabled(world, entity))
         return;
 
     const ecs_type_t *type = ecs_get_type(world, entity);
@@ -123,8 +119,8 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
 
         const char *component_name = ecs_get_name(world, e_component);
 
-        gboolean is_removable = (g_strcmp0(component_name, "pixio_transform_t") != 0 &&
-                                 g_strcmp0(component_name, "pixio_entity_t") != 0);
+        gboolean is_removable = (gobu_util_string_isequal(component_name, "gb_transform_t") &&
+                                 gobu_util_string_isequal(component_name, "gb_entity_t"));
 
         GtkWidget *expander = inspectorWidgetCreateComponentGroup(self->listbox, is_removable, component_name, world, entity, e_component);
         g_object_set_data(G_OBJECT(expander), "size-group", self->size_group);

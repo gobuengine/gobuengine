@@ -1,20 +1,19 @@
 #include "gapp_inspector_widgets.h"
-#include "gapp_common.h"
 #include "gapp_widget.h"
 #include "types/type_enum.h"
 
-static GdkRGBA pixio_color_to_gdk_rgba(const pixio_color_t *pixio_color)
+static GdkRGBA gb_color_to_gdk_rgba(const gb_color_t *color)
 {
     return (GdkRGBA){
-        .red = (gdouble)pixio_color->r / 255.0,
-        .green = (gdouble)pixio_color->g / 255.0,
-        .blue = (gdouble)pixio_color->b / 255.0,
-        .alpha = (gdouble)pixio_color->a / 255.0};
+        .red = (gdouble)color->r / 255.0,
+        .green = (gdouble)color->g / 255.0,
+        .blue = (gdouble)color->b / 255.0,
+        .alpha = (gdouble)color->a / 255.0};
 }
 
-static pixio_color_t gdk_rgba_to_pixio_color(const GdkRGBA *gdk_color)
+static gb_color_t gdk_rgba_to_color(const GdkRGBA *gdk_color)
 {
-    return (pixio_color_t){
+    return (gb_color_t){
         .r = (uint8_t)(gdk_color->red * 255.0),
         .g = (uint8_t)(gdk_color->green * 255.0),
         .b = (uint8_t)(gdk_color->blue * 255.0),
@@ -50,18 +49,18 @@ static void signal_input_f32(GtkSpinButton *self, ecs_f32_t *field)
     *field = gtk_spin_button_get_value(self);
 }
 
-static void signal_input_color(GtkColorDialogButton *self, GParamSpec *ignored, pixio_color_t *field)
+static void signal_input_color(GtkColorDialogButton *self, GParamSpec *ignored, gb_color_t *field)
 {
     const GdkRGBA *color = gtk_color_dialog_button_get_rgba(self);
-    *field = gdk_rgba_to_pixio_color(color);
+    *field = gdk_rgba_to_color(color);
 }
 
-static void signal_input_vect2_x(GtkSpinButton *self, pixio_vector2_t *field)
+static void signal_input_vect2_x(GtkSpinButton *self, gb_vec2_t *field)
 {
     field->x = (float)gtk_spin_button_get_value(self);
 }
 
-static void signal_input_vect2_y(GtkSpinButton *self, pixio_vector2_t *field)
+static void signal_input_vect2_y(GtkSpinButton *self, gb_vec2_t *field)
 {
     field->y = (float)gtk_spin_button_get_value(self);
 }
@@ -163,8 +162,8 @@ static GtkWidget *inspectorWidgetCreate_NumberF32Input(ecs_meta_cursor_t cursor,
 
 static GtkWidget *inspectorWidgetCreate_ColorInput(ecs_meta_cursor_t cursor)
 {
-    pixio_color_t *field = (pixio_color_t *)ecs_meta_get_ptr(&cursor);
-    GdkRGBA color = pixio_color_to_gdk_rgba(field);
+    gb_color_t *field = (gb_color_t *)ecs_meta_get_ptr(&cursor);
+    GdkRGBA color = gb_color_to_gdk_rgba(field);
 
     GtkWidget *color_button = gtk_color_dialog_button_new(gtk_color_dialog_new());
     gtk_color_dialog_button_set_rgba(GTK_COLOR_DIALOG_BUTTON(color_button), &color);
@@ -176,7 +175,7 @@ static GtkWidget *inspectorWidgetCreate_ColorInput(ecs_meta_cursor_t cursor)
 
 static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
 {
-    pixio_vector2_t *field = (pixio_vector2_t *)ecs_meta_get_ptr(&cursor);
+    gb_vec2_t *field = (gb_vec2_t *)ecs_meta_get_ptr(&cursor);
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
 
@@ -286,7 +285,7 @@ static void bind_listitem(GtkListItemFactory *factory, GtkListItem *list_item, g
 
     // TODO: Una func para obtener el icono de los archivos...
     const char *ext_file = g_file_info_get_name(fileinfo);
-    if (fsIsExtension(ext_file, ".png") || fsIsExtension(ext_file, ".jpg"))
+    if (gobu_util_is_extension(ext_file, ".png") || gobu_util_is_extension(ext_file, ".jpg"))
         gtk_image_set_from_file(icon, g_file_get_path(file));
     else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileinfo));
@@ -297,7 +296,7 @@ static void bind_listitem(GtkListItemFactory *factory, GtkListItem *list_item, g
 
 static GtkWidget *_input_resource(GtkFileFilter *filter, ecs_meta_cursor_t cursor)
 {
-    const char *content_path = "C:/Users/hbibl/OneDrive/Documentos/Gobu Projects/Tappyplane/Game/Content/assets";
+    const char *content_path = "";
     GFile *content_dir = g_file_new_for_path(content_path);
     GtkDirectoryList *dir_list = gtk_directory_list_new("standard::*", content_dir);
 
@@ -320,32 +319,37 @@ static GtkWidget *_input_resource(GtkFileFilter *filter, ecs_meta_cursor_t curso
     return box;
 }
 
-static GtkWidget *inspectorWidgetCreate_ResourceInput(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_ResourceInput(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     GtkFileFilter *file_filter = gtk_file_filter_new();
 
     ecs_entity_t ftype = ecs_meta_get_type(&cursor);
-    if (ftype == ecs_id(pixio_resource_t))
+    const char *field_name = ecs_meta_get_member(&cursor);
+    const char **types = gobu_util_string_split(field_name, "#");
+    const char *type = gobu_util_string(types[1]);
+    gobu_util_string_split_free(types);
+
+    if (type == NULL)
     {
         gtk_file_filter_add_pattern(file_filter, "*");
     }
-    else if (ftype == ecs_id(pixio_resource_font_t))
+    else if (gobu_util_string_isequal(type,"font"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.ttf");
     }
-    else if (ftype == ecs_id(pixio_resource_audio_t))
+    else if (gobu_util_string_isequal(type,"audio"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.wav");
         gtk_file_filter_add_pattern(file_filter, "*.mp3");
         gtk_file_filter_add_pattern(file_filter, "*.ogg");
     }
-    else if (ftype == ecs_id(pixio_resource_texture_t))
+    else if (gobu_util_string_isequal(type,"texture"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.png");
         gtk_file_filter_add_pattern(file_filter, "*.jpg");
         gtk_file_filter_add_pattern(file_filter, "*.jpeg");
     }
-    else if (ftype == ecs_id(pixio_resource_animated_t))
+    else if (gobu_util_string_isequal(type,"anim"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.anim");
     }
@@ -455,15 +459,12 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             {ecs_id(ecs_u32_t), inspectorWidgetCreate_NumberU32Input},
             {ecs_id(ecs_f64_t), inspectorWidgetCreate_NumberF64Input},
             {ecs_id(ecs_f32_t), inspectorWidgetCreate_NumberF32Input},
-            {ecs_id(pixio_vector2_t), inspectorWidgetCreate_Vector2Input},
-            {ecs_id(pixio_color_t), inspectorWidgetCreate_ColorInput},
-            {ecs_id(pixio_texture_filter_t), inspectorWidgetCreate_EnumInput},
-            {ecs_id(pixio_texture_flip_t), inspectorWidgetCreate_EnumInput},
-            {ecs_id(pixio_origin_t), inspectorWidgetCreate_EnumInput},
-            {ecs_id(pixio_resource_t), inspectorWidgetCreate_ResourceInput},
-            {ecs_id(pixio_resource_font_t), inspectorWidgetCreate_ResourceInput},
-            {ecs_id(pixio_resource_texture_t), inspectorWidgetCreate_ResourceInput},
-            {ecs_id(pixio_resource_animated_t), inspectorWidgetCreate_ResourceInput},
+            {ecs_id(gb_vec2_t), inspectorWidgetCreate_Vector2Input},
+            {ecs_id(gb_color_t), inspectorWidgetCreate_ColorInput},
+            {ecs_id(gb_texture_filter_t), inspectorWidgetCreate_EnumInput},
+            {ecs_id(gb_texture_flip_t), inspectorWidgetCreate_EnumInput},
+            {ecs_id(gb_origin_t), inspectorWidgetCreate_EnumInput},
+            {ecs_id(gb_resource_t), inspectorWidgetCreate_ResourceInput},
             {0, NULL} // Marca de fin
             // Agregar más tipos según sea necesario
         };
@@ -486,7 +487,7 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             GtkWidget *child = inspectorWidgetCreateFieldRow(size_group, field_name, input, GTK_ORIENTATION_HORIZONTAL);
             gtk_box_append(GTK_BOX(content), child);
         }
-        // else if (ecs_id(pixio_property_ui_title) == field_type)
+        // else if (ecs_id(gb_property_ui_title) == field_type)
         // {
         //     gtk_box_append(GTK_BOX(content), gtk_label_new(field_name));
         // }

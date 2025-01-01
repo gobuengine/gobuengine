@@ -1,7 +1,7 @@
 #ifndef GAPP_H
 #define GAPP_H
 #include "config.h"
-#include "pixio/pixio.h"
+#include "gobu/gobu.h"
 
 #define GWORLD gapp_get_world_instance()
 

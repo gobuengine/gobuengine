@@ -10,9 +10,10 @@ deps += dependency('glib-2.0')
 deps += dependency('epoxy')
 deps += dependency('gtksourceview-5')
 deps += dependency('libadwaita-1')
+deps += declare_dependency(link_with: libgobu)
 deps += declare_dependency(link_with: libgobu_binn)
-deps += declare_dependency(link_with: libgobu_pixi)
-deps += declare_dependency(link_with: libgobu_pixio)
+# deps += declare_dependency(link_with: libgobu_pixi)
+# deps += declare_dependency(link_with: libgobu_pixio)
 # deps += declare_dependency(link_with: libgobu_gbase)
 
 # Fuentes
@@ -30,7 +31,6 @@ sources = [
   'gapp_project_manager.c',
   'gapp_project_setting.c',
   'gapp_project_config.c',
-  'gapp_common.c',
   'gapp_widget.c',
   'gapp_wviewport.c',
   'gapp_whierarchy.c',
@@ -53,7 +53,6 @@ headers = [
   'gapp_project_manager.h',
   'gapp_project_setting.h',
   'gapp_project_config.h',
-  'gapp_common.h',
   'gapp_widget.h',
   'gapp_wviewport.h',
   'gapp_whierarchy.h',
