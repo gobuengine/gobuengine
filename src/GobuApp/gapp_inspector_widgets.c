@@ -194,6 +194,7 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
     gtk_widget_set_hexpand(number_spinx, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinx), field->x);
     gtk_widget_set_tooltip_text(number_spinx, "X");
+    gtk_editable_set_width_chars(GTK_EDITABLE(number_spinx), 0);
     gtk_box_append(GTK_BOX(box), number_spinx);
 
     GtkWidget *number_spiny = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
@@ -201,6 +202,7 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
     gtk_widget_set_hexpand(number_spiny, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spiny), field->y);
     gtk_widget_set_tooltip_text(number_spiny, "Y");
+    gtk_editable_set_width_chars(GTK_EDITABLE(number_spiny), 0);
     gtk_box_append(GTK_BOX(box), number_spiny);
 
     g_signal_connect(number_spinx, "value-changed", G_CALLBACK(signal_input_vect2_x), field);
@@ -220,6 +222,7 @@ static GtkWidget *inspectorWidgetCreate_SizeInput(ecs_meta_cursor_t cursor)
     gtk_widget_set_hexpand(number_spinw, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinw), field->width);
     gtk_widget_set_tooltip_text(number_spinw, "Size Width");
+    gtk_editable_set_width_chars(GTK_EDITABLE(number_spinw), 0);
     gtk_box_append(GTK_BOX(box), number_spinw);
 
     GtkWidget *number_spinh = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
@@ -227,6 +230,7 @@ static GtkWidget *inspectorWidgetCreate_SizeInput(ecs_meta_cursor_t cursor)
     gtk_widget_set_hexpand(number_spinh, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinh), field->height);
     gtk_widget_set_tooltip_text(number_spinh, "Size Height");
+    gtk_editable_set_width_chars(GTK_EDITABLE(number_spinh), 0);
     gtk_box_append(GTK_BOX(box), number_spinh);
 
     g_signal_connect(number_spinw, "value-changed", G_CALLBACK(signal_input_size_width), field);
@@ -414,7 +418,7 @@ GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *labe
     }
 
     gtk_widget_set_hexpand(input, TRUE);
-    gtk_size_group_add_widget(size_group, input);
+    // gtk_size_group_add_widget(size_group, input);
     gtk_box_append(box, input);
 
     return box;
