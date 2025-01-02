@@ -2,6 +2,7 @@
 #include <glib.h>
 
 static void gobucoreImport(ecs_world_t *world);
+static gb_core_scene_phases_t gbCoreScenePhases;
 
 ECS_TAG_DECLARE(gbTagScene);
 ECS_TAG_DECLARE(gbOnSceneOpen);
@@ -12,6 +13,9 @@ ECS_TAG_DECLARE(gbOnSceneReload);
 ECS_TAG_DECLARE(gbOnSceneRename);
 ECS_TAG_DECLARE(gbOnSceneDelete);
 ECS_TAG_DECLARE(gbOnSceneCreate);
+
+ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
+ECS_COMPONENT_DECLARE(gb_core_scene_t);
 
 // ECS_COMPONENT_DECLARE(gbSceneActive);
 ECS_COMPONENT_DECLARE(gb_origin_t);
@@ -33,10 +37,15 @@ ECS_COMPONENT_DECLARE(gb_sprite_frame_t);
 ECS_COMPONENT_DECLARE(gb_shape_circle_t);
 ECS_COMPONENT_DECLARE(gb_shape_rec_t);
 
+// -----------------
+// NOTE MARK: WORLD
+// -----------------
+
 ecs_world_t *gobu_ecs_init(void)
 {
     ecs_world_t *ecs = ecs_init();
     ECS_IMPORT(ecs, gobucore);
+
     return ecs;
 }
 
@@ -60,7 +69,9 @@ bool gobu_ecs_load_from_file(ecs_world_t *world, const char *filename)
     return ecs_world_from_json_file(world, filename, NULL) == NULL ? false : true;
 }
 
-// enity
+// -----------------
+// NOTE MARK: Entity
+// -----------------
 ecs_entity_t gobu_ecs_entity_new_low(ecs_world_t *world, ecs_entity_t parent)
 {
     ecs_entity_t entity = ecs_new_low_id(world);
@@ -120,15 +131,17 @@ void gobu_ecs_add_component_name(ecs_world_t *world, ecs_entity_t entity, const 
     ecs_add_id(world, entity, ecs_lookup(world, component));
 }
 
-// entity events
+// -----------------
+// NOTE MARK: Entity Events
+// -----------------
 ecs_entity_t gobu_ecs_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_action_t callback, void *ctx)
 {
     return ecs_observer(world, {
-                                   .query.terms = {{.id = EcsAny}, {EcsDisabled, .oper = EcsOptional}},
-                                   .events = {event},
-                                   .callback = callback,
-                                   .ctx = ctx,
-                               });
+        .query.terms = {{.id = EcsAny}, {EcsDisabled, .oper = EcsOptional}},
+        .events = {event},
+        .callback = callback,
+        .ctx = ctx,
+    });
 }
 
 void gobu_ecs_emit(ecs_world_t *world, ecs_entity_t event, ecs_entity_t entity)
@@ -136,8 +149,9 @@ void gobu_ecs_emit(ecs_world_t *world, ecs_entity_t event, ecs_entity_t entity)
     ecs_emit(world, &(ecs_event_desc_t){.entity = entity, .event = event});
 }
 
-// entity scene
-
+// -----------------
+// NOTE MARK: Entity SCENE
+// -----------------
 ecs_entity_t gobu_scene_new(ecs_world_t *world, const char *name)
 {
     g_autofree gchar *new_name = gobu_util_string_format("WorldScene.%s", name);
@@ -148,6 +162,7 @@ ecs_entity_t gobu_scene_new(ecs_world_t *world, const char *name)
         new_name = gobu_util_string_format("WorldScene.%s%d", name, counter++);
 
     ecs_entity_t scene = ecs_entity(world, {.name = gobu_util_string(new_name), .add = ecs_ids(gbTagScene)});
+    ecs_set(world, scene, gb_core_scene_t, {.color = GOBUWHITE, .gridSize = 32, .gridEnabled = TRUE, .size = {800, 600} });
     ecs_enable(world, scene, FALSE);
     gobu_ecs_emit(world, gbOnSceneCreate, scene);
 
@@ -224,7 +239,89 @@ void gobu_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name
     gobu_ecs_emit(world, gbOnSceneRename, entity);
 }
 
-// ECS MODULE BASE
+bool gobu_scene_has(ecs_world_t *world, ecs_entity_t entity)
+{
+    return ecs_has(world, entity, gbTagScene);
+}
+
+void gobu_scene_process(ecs_world_t *world, ecs_entity_t root, float delta)
+{
+    // // process
+    // gb_transform_t *transform = ecs_get(world, root, gb_transform_t);
+    // if (transform)
+    // {
+    //     float px = transform->position.x;
+    //     float py = transform->position.y;
+    //     float sx = transform->scale.x;
+    //     float sy = transform->scale.y;
+    //     float angle = transform->rotation;
+    //     gb_origin_t origin = transform->origin;
+
+    //     gb_shape_rec_t *shape = ecs_get(world, root, gb_shape_rec_t);
+    //     if (shape)
+    //         gobu_draw_rect(px, py, shape->width, shape->height, shape->color, shape->lineColor, shape->lineWidth, 0);
+    // }
+    // // children root
+    // ecs_iter_t it = ecs_children(world, root);
+    // while (ecs_children_next(&it))
+    // {
+    //     for (int i = 0; i < it.count; i++)
+    //     {
+    //         ecs_entity_t entity = it.entities[i];
+    //         gobu_scene_process(world, entity, delta);
+    //     }
+    // }
+}
+
+// -----------------
+// NOTE MARK: MODULE BASE
+// -----------------
+static void gobu_core_scene_pre_update(ecs_iter_t *it)
+{
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t e = it->entities[i];
+    }
+}
+
+static void gobu_core_scene_render_draw(ecs_iter_t *it)
+{
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t e = it->entities[i];
+    }
+}
+
+static void gobu_core_scene_render_pre_draw(ecs_iter_t *it)
+{
+    gb_core_scene_t *scene = ecs_field(it, gb_core_scene_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t e = it->entities[i];
+
+        // gfxb_viewport_begin(scene[i].context);
+        // gfxb_viewport_color(scene[i].context, scene[i].clear_color.r, scene[i].clear_color.g, scene[i].clear_color.b);
+
+        if (scene[i].gridEnabled)
+            gobu_draw_grid(1280, 768, scene[i].gridSize, GRIDMODEDARK, 0);
+
+        gobu_draw_rect(0, 0, scene[i].size.width, scene[i].size.height, BLANK, scene[i].color, 2.0f, 0);
+    }
+}
+
+static void gobu_core_scene_render_post_draw(ecs_iter_t *it)
+{
+    gb_core_scene_t *scene = ecs_field(it, gb_core_scene_t, 0);
+
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t e = it->entities[i];
+
+        // gfxb_viewport_end(scene[i].context);
+    }
+}
+
 static void gobucoreImport(ecs_world_t *world)
 {
     ECS_MODULE(world, gobucore);
@@ -238,6 +335,9 @@ static void gobucoreImport(ecs_world_t *world)
     ECS_TAG_DEFINE(world, gbOnSceneRename);
     ECS_TAG_DEFINE(world, gbOnSceneDelete);
     ECS_TAG_DEFINE(world, gbOnSceneCreate);
+
+    ECS_COMPONENT_DEFINE(world, gb_core_scene_phases_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_scene_t);
 
     // ECS_COMPONENT_DEFINE(world, gbSceneActive);
     ECS_COMPONENT_DEFINE(world, gb_origin_t);
@@ -396,5 +496,67 @@ static void gobucoreImport(ecs_world_t *world)
             {.name = "lineWidth", .type = ecs_id(ecs_f32_t), .range = {0, 20}},
             {.name = "lineColor", .type = ecs_id(gb_color_t)},
         },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(gb_core_scene_t),
+        .members = {
+            {.name = "size", .type = ecs_id(gb_size_t)},
+            {.name = "color", .type = ecs_id(gb_color_t)},
+            {.name = "gridSize", .type = ecs_id(ecs_u32_t)},
+            {.name = "gridEnabled", .type = ecs_id(ecs_bool_t)},
+            {.name = "debugBoundingBox", .type = ecs_id(ecs_bool_t)},
+        },
+    });
+
+    // system and pipelines
+    gbCoreScenePhases.PreDraw = ecs_new_w_id(world, EcsPhase);
+    gbCoreScenePhases.Background = ecs_new_w_id(world, EcsPhase);
+    gbCoreScenePhases.Draw = ecs_new_w_id(world, EcsPhase);
+    gbCoreScenePhases.PostDraw = ecs_new_w_id(world, EcsPhase);
+
+    ecs_add_pair(world, gbCoreScenePhases.PreDraw, EcsDependsOn, EcsOnStore);
+    ecs_add_pair(world, gbCoreScenePhases.Background, EcsDependsOn, gbCoreScenePhases.PreDraw);
+    ecs_add_pair(world, gbCoreScenePhases.Draw, EcsDependsOn, gbCoreScenePhases.Background);
+    ecs_add_pair(world, gbCoreScenePhases.PostDraw, EcsDependsOn, gbCoreScenePhases.Draw);
+
+    ecs_system(world, {
+        .entity = ecs_entity(world, { .add = ecs_ids(ecs_dependson(EcsPreUpdate)) }),
+        .query.terms = {
+            {ecs_id(gb_transform_t)}, 
+            {ecs_id(gb_text_t), .oper = EcsOptional},
+            {ecs_id(gb_shape_circle_t), .oper = EcsOptional},
+            {ecs_id(gb_shape_rec_t), .oper = EcsOptional},
+            {ecs_id(gb_sprite_t), .oper = EcsOptional},
+        },
+        .callback = gobu_core_scene_pre_update,
+    });
+
+    ecs_system(world, {
+        .entity = ecs_entity(world, { .add = ecs_ids(ecs_dependson(gbCoreScenePhases.Draw)) }),
+        .query.terms = {
+            {ecs_id(gb_transform_t)}, 
+            {ecs_id(gb_text_t), .oper = EcsOptional},
+            {ecs_id(gb_shape_circle_t), .oper = EcsOptional},
+            {ecs_id(gb_shape_rec_t), .oper = EcsOptional},
+            {ecs_id(gb_sprite_t), .oper = EcsOptional},
+        },
+        .callback = gobu_core_scene_render_draw,
+    });
+
+    ecs_system(world, {
+        .entity = ecs_entity(world, { .add = ecs_ids(ecs_dependson(gbCoreScenePhases.PreDraw)) }),
+        .query.terms = {
+            {ecs_id(gb_core_scene_t)}, 
+        },
+        .callback = gobu_core_scene_render_pre_draw,
+    });
+
+    ecs_system(world, {
+        .entity = ecs_entity(world, { .add = ecs_ids(ecs_dependson(gbCoreScenePhases.PostDraw)) }),
+        .query.terms = {
+            {ecs_id(gb_core_scene_t)}, 
+        },
+        .callback = gobu_core_scene_render_post_draw,
     });
 }

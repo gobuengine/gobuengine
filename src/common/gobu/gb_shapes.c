@@ -14,6 +14,7 @@ void gobu_draw_triangle(float x0, float y0, float x1, float y1, float x2, float 
     gfxb_end();
 }
 
+
 void gobu_draw_rect(float x, float y, float w, float h, gb_color_t fill_color, gb_color_t outline_color, float outline_thickness, int layer_index)
 {
     gfxb_layer(layer_index);

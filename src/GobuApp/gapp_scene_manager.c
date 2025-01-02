@@ -157,10 +157,10 @@ static void gapp_scene_manager_init(GappSceneManager *self)
     gtk_window_set_resizable(GTK_WINDOW(self), FALSE);
 
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-    gapp_widget_set_margin(vbox, 5);
     gtk_window_set_child(GTK_WINDOW(self), vbox);
     {
         GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+        gapp_widget_set_margin(hbox, 5);
         gtk_box_append(GTK_BOX(vbox), hbox);
         {
             search_scene = gtk_search_entry_new();

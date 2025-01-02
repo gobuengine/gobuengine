@@ -65,6 +65,16 @@ static void signal_input_vect2_y(GtkSpinButton *self, gb_vec2_t *field)
     field->y = (float)gtk_spin_button_get_value(self);
 }
 
+static void signal_input_size_width(GtkSpinButton *self, gb_size_t *field)
+{
+    field->width = (float)gtk_spin_button_get_value(self);
+}
+
+static void signal_input_size_height(GtkSpinButton *self, gb_size_t *field)
+{
+    field->height = (float)gtk_spin_button_get_value(self);
+}
+
 static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_ptr)
 {
     GObject *item = gtk_drop_down_get_selected_item(self);
@@ -195,6 +205,32 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
 
     g_signal_connect(number_spinx, "value-changed", G_CALLBACK(signal_input_vect2_x), field);
     g_signal_connect(number_spiny, "value-changed", G_CALLBACK(signal_input_vect2_y), field);
+
+    return box;
+}
+
+static GtkWidget *inspectorWidgetCreate_SizeInput(ecs_meta_cursor_t cursor)
+{
+    gb_size_t *field = (gb_size_t *)ecs_meta_get_ptr(&cursor);
+
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
+
+    GtkWidget *number_spinw = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
+    gtk_widget_set_valign(number_spinw, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(number_spinw, TRUE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinw), field->width);
+    gtk_widget_set_tooltip_text(number_spinw, "Size Width");
+    gtk_box_append(GTK_BOX(box), number_spinw);
+
+    GtkWidget *number_spinh = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
+    gtk_widget_set_valign(number_spinh, GTK_ALIGN_CENTER);
+    gtk_widget_set_hexpand(number_spinh, TRUE);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinh), field->height);
+    gtk_widget_set_tooltip_text(number_spinh, "Size Height");
+    gtk_box_append(GTK_BOX(box), number_spinh);
+
+    g_signal_connect(number_spinw, "value-changed", G_CALLBACK(signal_input_size_width), field);
+    g_signal_connect(number_spinh, "value-changed", G_CALLBACK(signal_input_size_height), field);
 
     return box;
 }
@@ -363,7 +399,7 @@ GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *labe
 {
     GtkWidget *label, *box;
 
-    box = gtk_box_new(orientation, 1);
+    box = gtk_box_new(orientation, 4);
 
     if (label_str != NULL)
     {
@@ -371,16 +407,15 @@ GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *labe
         gtk_label_set_xalign(label, 0);
         gtk_widget_set_halign(label, GTK_ALIGN_START);
         gtk_widget_set_valign(label, GTK_ALIGN_CENTER);
-        gtk_widget_set_hexpand(label, TRUE);
-        gtk_widget_set_size_request(label, 80, -1);
         gtk_widget_add_css_class(label, "title-4");
+        gtk_widget_add_css_class(label, "inspector-label");
+        gtk_size_group_add_widget(size_group, label);
         gtk_box_append(box, label);
     }
 
     gtk_widget_set_hexpand(input, TRUE);
-    gtk_widget_set_size_request(input, 240, -1);
-    gtk_box_append(box, input);
     gtk_size_group_add_widget(size_group, input);
+    gtk_box_append(box, input);
 
     return box;
 }
@@ -460,6 +495,7 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             {ecs_id(ecs_f64_t), inspectorWidgetCreate_NumberF64Input},
             {ecs_id(ecs_f32_t), inspectorWidgetCreate_NumberF32Input},
             {ecs_id(gb_vec2_t), inspectorWidgetCreate_Vector2Input},
+            {ecs_id(gb_size_t), inspectorWidgetCreate_SizeInput},
             {ecs_id(gb_color_t), inspectorWidgetCreate_ColorInput},
             {ecs_id(gb_texture_filter_t), inspectorWidgetCreate_EnumInput},
             {ecs_id(gb_texture_flip_t), inspectorWidgetCreate_EnumInput},

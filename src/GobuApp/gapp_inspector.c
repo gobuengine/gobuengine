@@ -102,7 +102,9 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
     self->entity = entity;
     self->world = world;
 
-    inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);
+    // ENTITY
+    if (!gobu_scene_has(world, entity))
+        inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);
 
     if (!gobu_ecs_is_enabled(world, entity))
         return;
@@ -111,8 +113,12 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
 
     for (uint32_t i = type->count - 1; i < type->count; i--)
     {
-        ecs_id_t id = type->array[i];
-        ecs_entity_t e_component = ecs_pair_second(world, id);
+        ecs_entity_t e_component = ecs_pair_second(world, type->array[i]);
+
+        // verificamos que sea un componente
+        if (!ecs_has(world, e_component, EcsComponent))
+            continue;
+
         const void *component_ptr = ecs_get_id(world, entity, e_component);
         if (!component_ptr)
             continue;

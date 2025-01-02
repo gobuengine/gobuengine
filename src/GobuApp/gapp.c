@@ -49,6 +49,7 @@ static void gapp_signal_project_settings_open(GtkWidget *widget, GappMain *self)
 static void gapp_signal_project_save(GtkWidget *widget, GappMain *self);
 static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self);
 static void gapp_signal_open_popover_create_entity(GtkWidget *widget, GappMain *self);
+static void gapp_signal_observer_scene_open(ecs_iter_t *it);
 
 static bool gapp_config_init(void);
 
@@ -152,7 +153,8 @@ static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
 static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self)
 {
     g_return_if_fail(self != NULL);
-    printf("Preview\n");
+    printf("Preview load && save project\n");
+    gapp_signal_project_save(widget, self);
 }
 
 static void gapp_signal_open_popover_create_entity(GtkWidget *widget, GappMain *self)
@@ -185,6 +187,16 @@ static void gapp_signal_open_popover_create_entity(GtkWidget *widget, GappMain *
     }
 
     gtk_popover_popup(GTK_POPOVER(popover));
+}
+
+static void gapp_signal_observer_scene_open(ecs_iter_t *it)
+{
+    GappMain *self = it->ctx;
+    for (int i = 0; i < it->count; i++)
+    {
+        ecs_entity_t entity = it->entities[i];
+        inspectorSetEntity(self->inspector, it->world, gobu_scene_get_open(it->world));
+    }
 }
 
 // -----------------
@@ -298,6 +310,8 @@ static GtkWidget *gapp_module_editor(GappMain *app)
         gtk_widget_set_size_request(app->inspector, 300, -1);
         gtk_paned_set_end_child(cpaned, app->inspector);
     }
+
+    gobu_ecs_observer(app->world, gbOnSceneOpen, gapp_signal_observer_scene_open, app);
 
     return hpaned;
 }

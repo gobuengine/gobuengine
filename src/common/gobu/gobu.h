@@ -87,7 +87,7 @@
 
 #define MAGENTA \
     (gb_color_t) { 255, 0, 255, 255 }
-#define BUDEWHITE \
+#define GOBUWHITE \
     (gb_color_t) { 240, 240, 240, 255 }
 
 typedef enum
@@ -185,6 +185,24 @@ typedef struct gb_font_t
 
 typedef struct
 {
+    ecs_entity_t PreDraw;
+    ecs_entity_t Background;
+    ecs_entity_t Draw;
+    ecs_entity_t PostDraw;
+    ecs_entity_t ClearDraw;
+} gb_core_scene_phases_t;
+
+typedef struct
+{
+    gb_size_t size;
+    gb_color_t color;
+    ecs_u32_t gridSize;
+    bool gridEnabled;
+    bool debugBoundingBox;
+} gb_core_scene_t;
+
+typedef struct
+{
     ecs_string_t text;
     ecs_u32_t fontSize;
     ecs_f32_t spacing;
@@ -230,36 +248,6 @@ typedef struct
     gb_color_t lineColor;
     ecs_f32_t segments;
 } gb_shape_rec_t;
-
-extern ECS_TAG_DECLARE(gbTagScene);
-extern ECS_TAG_DECLARE(gbOnSceneOpen);
-extern ECS_TAG_DECLARE(gbOnSceneClose);
-extern ECS_TAG_DECLARE(gbOnSceneLoad);
-// extern ECS_TAG_DECLARE(gbOnSceneSave);
-extern ECS_TAG_DECLARE(gbOnSceneReload);
-extern ECS_TAG_DECLARE(gbOnSceneRename);
-extern ECS_TAG_DECLARE(gbOnSceneDelete);
-extern ECS_TAG_DECLARE(gbOnSceneCreate);
-
-// extern ECS_COMPONENT_DECLARE(gbSceneActive);
-extern ECS_COMPONENT_DECLARE(gb_origin_t);
-extern ECS_COMPONENT_DECLARE(gb_texture_flip_t);
-extern ECS_COMPONENT_DECLARE(gb_texture_filter_t);
-extern ECS_COMPONENT_DECLARE(gb_resource_t);
-extern ECS_COMPONENT_DECLARE(gb_color_t);
-extern ECS_COMPONENT_DECLARE(gb_rect_t);
-extern ECS_COMPONENT_DECLARE(gb_vec2_t);
-extern ECS_COMPONENT_DECLARE(gb_size_t);
-extern ECS_COMPONENT_DECLARE(gb_boundingbox_t);
-extern ECS_COMPONENT_DECLARE(gb_transform_t);
-extern ECS_COMPONENT_DECLARE(gb_image_t);
-extern ECS_COMPONENT_DECLARE(gb_texture_t);
-extern ECS_COMPONENT_DECLARE(gb_font_t);
-extern ECS_COMPONENT_DECLARE(gb_text_t);
-extern ECS_COMPONENT_DECLARE(gb_sprite_t);
-extern ECS_COMPONENT_DECLARE(gb_sprite_frame_t);
-extern ECS_COMPONENT_DECLARE(gb_shape_circle_t);
-extern ECS_COMPONENT_DECLARE(gb_shape_rec_t);
 
 // GFXBACKEND
 gfx_backend_t *gfxb_viewport_create(void);
@@ -307,6 +295,39 @@ void bdr_draw_circle(float x, float y, float radius, gb_color_t fill_color, gb_c
 void gobu_draw_grid(int width, int height, int cell_size, gb_color_t color, int layer_index);
 
 // ECS
+extern ECS_TAG_DECLARE(gbTagScene);
+extern ECS_TAG_DECLARE(gbOnSceneOpen);
+extern ECS_TAG_DECLARE(gbOnSceneClose);
+extern ECS_TAG_DECLARE(gbOnSceneLoad);
+// extern ECS_TAG_DECLARE(gbOnSceneSave);
+extern ECS_TAG_DECLARE(gbOnSceneReload);
+extern ECS_TAG_DECLARE(gbOnSceneRename);
+extern ECS_TAG_DECLARE(gbOnSceneDelete);
+extern ECS_TAG_DECLARE(gbOnSceneCreate);
+
+extern ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
+extern ECS_COMPONENT_DECLARE(gb_core_scene_t);
+
+// extern ECS_COMPONENT_DECLARE(gbSceneActive);
+extern ECS_COMPONENT_DECLARE(gb_origin_t);
+extern ECS_COMPONENT_DECLARE(gb_texture_flip_t);
+extern ECS_COMPONENT_DECLARE(gb_texture_filter_t);
+extern ECS_COMPONENT_DECLARE(gb_resource_t);
+extern ECS_COMPONENT_DECLARE(gb_color_t);
+extern ECS_COMPONENT_DECLARE(gb_rect_t);
+extern ECS_COMPONENT_DECLARE(gb_vec2_t);
+extern ECS_COMPONENT_DECLARE(gb_size_t);
+extern ECS_COMPONENT_DECLARE(gb_boundingbox_t);
+extern ECS_COMPONENT_DECLARE(gb_transform_t);
+extern ECS_COMPONENT_DECLARE(gb_image_t);
+extern ECS_COMPONENT_DECLARE(gb_texture_t);
+extern ECS_COMPONENT_DECLARE(gb_font_t);
+extern ECS_COMPONENT_DECLARE(gb_text_t);
+extern ECS_COMPONENT_DECLARE(gb_sprite_t);
+extern ECS_COMPONENT_DECLARE(gb_sprite_frame_t);
+extern ECS_COMPONENT_DECLARE(gb_shape_circle_t);
+extern ECS_COMPONENT_DECLARE(gb_shape_rec_t);
+
 ecs_world_t *gobu_ecs_init(void);
 void gobu_ecs_free(ecs_world_t *ecs);
 void gobu_ecs_process(ecs_world_t *ecs, float deltaTime);
@@ -334,6 +355,8 @@ void gobu_scene_reload(ecs_world_t *world);
 int gobu_scene_count(ecs_world_t *world);
 ecs_entity_t gobu_scene_get_by_name(ecs_world_t *world, const char *name);
 void gobu_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name);
+bool gobu_scene_has(ecs_world_t *world, ecs_entity_t entity);
+void gobu_scene_process(ecs_world_t *world, ecs_entity_t root, float delta);
 
 // UTIL
 #define gobu_util_path_build(...) gobu_util_path_build_(__VA_ARGS__, NULL)

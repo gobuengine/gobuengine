@@ -45,8 +45,7 @@ gfx_backend_t *gfxb_viewport_create(void)
         },
     });
 
-    // gfx_backend->context = sgl_make_context(&(sgl_context_desc_t){0});
-
+    gfx_backend->context = sgl_make_context(&(sgl_context_desc_t){0});
     gfx_backend->framebuffer_id = 0;
 
     return gfx_backend;
@@ -56,7 +55,7 @@ void gfxb_destroy(gfx_backend_t *gfx_backend)
 {
     if (gfx_backend)
     {
-        // sgl_destroy_context(gfx_backend->context);
+        sgl_destroy_context(gfx_backend->context);
         sgl_destroy_pipeline(gfx_backend->pipeline);
         free(gfx_backend);
     }
@@ -64,7 +63,7 @@ void gfxb_destroy(gfx_backend_t *gfx_backend)
 
 void gfxb_viewport_begin(gfx_backend_t *gfx_backend)
 {
-    // sgl_set_context(gfx_backend->context);
+    sgl_set_context(gfx_backend->context);
     sgl_defaults();
     sgl_load_pipeline(gfx_backend->pipeline);
     sgl_ortho(0.0f, (float)gfx_backend->width, (float)gfx_backend->height, 0.0f, -1.0f, 1.0f);
@@ -76,11 +75,9 @@ void gfxb_viewport_end(gfx_backend_t *gfx_backend)
         .action = gfx_backend->pass_action,
         .swapchain = {.width = gfx_backend->width, .height = gfx_backend->height, .gl.framebuffer = gfx_backend->framebuffer_id},
     });
-
     for (int i = 0; i < gfxb__layer; i++)
         sgl_draw_layer(i);
-    // sgl_context_draw(gfx_backend->context);
-
+    sgl_context_draw(gfx_backend->context);
     sg_end_pass();
     sg_commit();
 
