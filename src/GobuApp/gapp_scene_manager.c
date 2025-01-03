@@ -329,6 +329,8 @@ static void signal_gesture_menu_context_list_item(GtkGesture *gesture, guint n_p
 
     if (gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture)) == GDK_BUTTON_SECONDARY)
     {
+        ecs_entity_t entityScene = TSCENEITEM_ITEM(gtk_list_item_get_item(list_item))->entity;
+
         GtkWidget *menu = gtk_popover_new();
         gtk_widget_set_parent(menu, widget);
         gtk_popover_set_has_arrow(GTK_POPOVER(menu), FALSE);
@@ -348,8 +350,10 @@ static void signal_gesture_menu_context_list_item(GtkGesture *gesture, guint n_p
 
             gtk_box_append(GTK_BOX(vbox), gapp_widget_separator_h());
 
+            bool is_remove = (gobu_scene_count(GWORLD) > 1 && gobu_scene_get_open(GWORLD) != entityScene);
+
             GtkWidget *btn_delete = gapp_widget_button_new_icon_with_label("user-trash-full-symbolic", "Delete");
-            gtk_widget_set_sensitive(btn_delete, gobu_scene_count(GWORLD) > 1);
+            gtk_widget_set_sensitive(btn_delete, is_remove);
             gtk_box_append(GTK_BOX(vbox), btn_delete);
             g_signal_connect(btn_delete, "clicked", G_CALLBACK(signal_delete_scene), list_item);
         }

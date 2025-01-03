@@ -332,34 +332,34 @@ static void gobu_project_settin_ui_setup(GappProjectSetting *self)
                 gapp_project_setting_prop_group_child_new("Icon", listbox, size_group, entry_iconSelect, GTK_ORIENTATION_HORIZONTAL);
             }
 
-            listbox = gapp_project_setting_prop_group_new("Startup");
-            gtk_box_append(vbox, listbox);
-            {
-                GtkWidget *entry_mainscene = gapp_project_setting_prop_entry_new("First scene", "Path to the main scene file that will be loaded when the project runs.", "first_scene");
-                gapp_project_setting_prop_group_child_new("First scene", listbox, size_group, entry_mainscene, GTK_ORIENTATION_HORIZONTAL);
-            }
+            // listbox = gapp_project_setting_prop_group_new("Startup");
+            // gtk_box_append(vbox, listbox);
+            // {
+            //     GtkWidget *entry_mainscene = gapp_project_setting_prop_entry_new("First scene", "Path to the main scene file that will be loaded when the project runs.", "first_scene");
+            //     gapp_project_setting_prop_group_child_new("First scene", listbox, size_group, entry_mainscene, GTK_ORIENTATION_HORIZONTAL);
+            // }
         }
 
         // Display
         {
             GtkWidget *vbox = gapp_project_setting_prop_page_new(stack, "Display");
 
-            listbox = gapp_project_setting_prop_group_new("Viewport");
-            gtk_box_append(vbox, listbox);
-            {
-                GtkWidget *spin_vwidth = gapp_project_setting_prop_number_new("", "viewport_width");
-                gapp_project_setting_prop_group_child_new("Viewport Width", listbox, size_group, spin_vwidth, GTK_ORIENTATION_HORIZONTAL);
+            // listbox = gapp_project_setting_prop_group_new("Viewport");
+            // gtk_box_append(vbox, listbox);
+            // {
+            //     GtkWidget *spin_vwidth = gapp_project_setting_prop_number_new("", "viewport_width");
+            //     gapp_project_setting_prop_group_child_new("Viewport Width", listbox, size_group, spin_vwidth, GTK_ORIENTATION_HORIZONTAL);
 
-                GtkWidget *spin_height = gapp_project_setting_prop_number_new("", "viewport_height");
-                gapp_project_setting_prop_group_child_new("Viewport Height", listbox, size_group, spin_height, GTK_ORIENTATION_HORIZONTAL);
+            //     GtkWidget *spin_height = gapp_project_setting_prop_number_new("", "viewport_height");
+            //     gapp_project_setting_prop_group_child_new("Viewport Height", listbox, size_group, spin_height, GTK_ORIENTATION_HORIZONTAL);
 
-                const char *const *texture_filter[] = {"Nearest", "Bliniear", "Trilinear", NULL};
-                GtkWidget *list_filter = gapp_project_setting_prop_select_new(texture_filter, "Texture filter", "texture_filter");
-                gapp_project_setting_prop_group_child_new("Sampling", listbox, size_group, list_filter, GTK_ORIENTATION_HORIZONTAL);
+            //     const char *const *texture_filter[] = {"Nearest", "Bliniear", "Trilinear", NULL};
+            //     GtkWidget *list_filter = gapp_project_setting_prop_select_new(texture_filter, "Texture filter", "texture_filter");
+            //     gapp_project_setting_prop_group_child_new("Sampling", listbox, size_group, list_filter, GTK_ORIENTATION_HORIZONTAL);
 
-                GtkWidget *color_bg = gapp_project_setting_prop_color_new("", "background_color");
-                gapp_project_setting_prop_group_child_new("Default Clear Color", listbox, size_group, color_bg, GTK_ORIENTATION_HORIZONTAL);
-            }
+            //     GtkWidget *color_bg = gapp_project_setting_prop_color_new("", "background_color");
+            //     gapp_project_setting_prop_group_child_new("Default Clear Color", listbox, size_group, color_bg, GTK_ORIENTATION_HORIZONTAL);
+            // }
 
             listbox = gapp_project_setting_prop_group_new("Window");
             gtk_box_append(vbox, listbox);
@@ -406,23 +406,23 @@ static void gobu_project_settin_ui_setup(GappProjectSetting *self)
 
         // Physics
         {
-            GtkWidget *vbox = gapp_project_setting_prop_page_new(stack, "Physics");
+            // GtkWidget *vbox = gapp_project_setting_prop_page_new(stack, "Physics");
 
-            listbox = gapp_project_setting_prop_group_new("");
-            gtk_box_append(vbox, listbox);
-            {
-                GtkWidget *p_gravity = gapp_project_setting_prop_number_new("The default gravity strength in 2D (in pixels per second squared).", "physics_gravity");
-                gapp_project_setting_prop_group_child_new("Default Gravity", listbox, size_group, p_gravity, GTK_ORIENTATION_HORIZONTAL);
+            // listbox = gapp_project_setting_prop_group_new("");
+            // gtk_box_append(vbox, listbox);
+            // {
+            //     GtkWidget *p_gravity = gapp_project_setting_prop_number_new("The default gravity strength in 2D (in pixels per second squared).", "physics_gravity");
+            //     gapp_project_setting_prop_group_child_new("Default Gravity", listbox, size_group, p_gravity, GTK_ORIENTATION_HORIZONTAL);
 
-                GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
-                gtk_widget_set_hexpand(hbox, TRUE);
-                {
-                    gtk_box_append(hbox, gapp_project_setting_prop_number_new("X direction", "physics_gravity_directionx"));
-                    gtk_box_append(hbox, gapp_project_setting_prop_number_new("Y direction", "physics_gravity_directiony"));
-                }
+            //     GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+            //     gtk_widget_set_hexpand(hbox, TRUE);
+            //     {
+            //         gtk_box_append(hbox, gapp_project_setting_prop_number_new("X direction", "physics_gravity_directionx"));
+            //         gtk_box_append(hbox, gapp_project_setting_prop_number_new("Y direction", "physics_gravity_directiony"));
+            //     }
 
-                gapp_project_setting_prop_group_child_new("Default Gravity Direction", listbox, size_group, hbox, GTK_ORIENTATION_VERTICAL);
-            }
+            //     gapp_project_setting_prop_group_child_new("Default Gravity Direction", listbox, size_group, hbox, GTK_ORIENTATION_VERTICAL);
+            // }
         }
 
         // InputMap

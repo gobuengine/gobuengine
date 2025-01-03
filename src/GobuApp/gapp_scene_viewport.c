@@ -37,9 +37,6 @@ static void gapp_scene_viewport_init(GappSceneViewport *self)
 
 static void gapp_scene_viewport_ready(GtkWidget *viewport)
 {
-    gfx_backend_t *context = gapp_widget_viewport_get_context_render(viewport);
-    gfxb_viewport_color(context, 18, 18, 18);
-
     // ecs_entity_t paint = gobu_ecs_entity_new(GWORLD, gobu_scene_get_open(GWORLD), "ShapeRect");
     // ecs_set(GWORLD, paint, gb_shape_rec_t, {.width = 100, .height = 100, .color = YELLOW, .lineColor = RED, .lineWidth = 2});
     // gb_transform_t *transform = ecs_get(GWORLD, paint, gb_transform_t);
@@ -48,8 +45,21 @@ static void gapp_scene_viewport_ready(GtkWidget *viewport)
 
 static void gapp_scene_viewport_render(GtkWidget *viewport, int width, int height)
 {
-    // gobu_draw_grid(width, height, 32, GRIDMODEDARK, 0);
-    // gobu_scene_process(GWORLD, gobu_scene_get_open(GWORLD), 0.0f);
+    gfx_backend_t *context = gapp_widget_viewport_get_context_render(viewport);
+
+    ecs_entity_t scene_id = gobu_scene_get_open(GWORLD);
+    gb_core_scene_t *scene = ecs_get_mut(GWORLD, scene_id, gb_core_scene_t);
+    gb_core_grid_t *grid = ecs_get_mut(GWORLD, scene_id, gb_core_grid_t);
+    gb_core_rendering_t *rendering = gobu_ecs_get_project_settings(GWORLD);
+
+    gfxb_viewport_color(context, scene->color.r, scene->color.g, scene->color.b);
+
+    gb_color_t gridColor = gobu_color_adjust_contrast(scene->color, 0.1f);
+    if (grid && grid->enabled)
+        gobu_draw_grid(width, height, grid->size, gridColor, 0);
+
+    gobu_draw_rect(0, 0, rendering->resolution.width, rendering->resolution.height, BLANK, gobu_color_adjust_contrast(gridColor, 0.2f), 2.0f, 0);
+
     gobu_ecs_process(GWORLD, 0.0f);
 }
 

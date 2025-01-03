@@ -118,6 +118,20 @@ typedef enum
     GB_FILTER_TRILINEAR
 } gb_texture_filter_t;
 
+typedef enum
+{
+    GB_SCALE_MODE_NEAREST,
+    GB_SCALE_MODE_LINEAR
+} gb_scale_mode_t;
+
+typedef enum
+{
+    GB_RESIZE_MODE_NO_CHANGE,
+    GB_RESIZE_MODE_FILL_SCREEN,
+    GB_RESIZE_MODE_ADJUST_WIDTH,
+    GB_RESIZE_MODE_ADJUST_HEIGHT,
+} gb_resolution_mode_t;
+
 typedef struct gfx_backend_t gfx_backend_t;
 typedef ecs_string_t gb_resource_t;
 
@@ -185,24 +199,6 @@ typedef struct gb_font_t
 
 typedef struct
 {
-    ecs_entity_t PreDraw;
-    ecs_entity_t Background;
-    ecs_entity_t Draw;
-    ecs_entity_t PostDraw;
-    ecs_entity_t ClearDraw;
-} gb_core_scene_phases_t;
-
-typedef struct
-{
-    gb_size_t size;
-    gb_color_t color;
-    ecs_u32_t gridSize;
-    bool gridEnabled;
-    bool debugBoundingBox;
-} gb_core_scene_t;
-
-typedef struct
-{
     ecs_string_t text;
     ecs_u32_t fontSize;
     ecs_f32_t spacing;
@@ -249,7 +245,45 @@ typedef struct
     ecs_f32_t segments;
 } gb_shape_rec_t;
 
-// GFXBACKEND
+typedef struct
+{
+    ecs_entity_t PreDraw;
+    ecs_entity_t Background;
+    ecs_entity_t Draw;
+    ecs_entity_t PostDraw;
+    ecs_entity_t ClearDraw;
+} gb_core_scene_phases_t;
+
+// MARK: CORE COMPONENT
+typedef struct
+{
+    gb_color_t color;
+    bool debugBoundingBox;
+} gb_core_scene_t;
+
+typedef struct
+{
+    float gravity;
+    gb_vec2_t gravityDirection;
+    bool enabled;
+    bool debug;
+} gb_core_physics_t;
+
+typedef struct
+{
+    bool enabled;
+    ecs_u32_t size;
+} gb_core_grid_t;
+
+typedef struct 
+{
+    gb_size_t resolution;
+    gb_resolution_mode_t resolutionMode;
+    int targetFps;
+    gb_scale_mode_t scaleMode;
+}gb_core_rendering_t;
+
+// MARK: GFXBACKEND
 gfx_backend_t *gfxb_viewport_create(void);
 void gfxb_destroy(gfx_backend_t *gfx_backend);
 void gfxb_viewport_begin(gfx_backend_t *gfx_backend);
@@ -279,7 +313,7 @@ void gfxb_scale(float x, float y);
 void gfxb_rotate(float angle);
 void gfxb_layer(int layer);
 
-// texture
+// MARK:texture
 gb_texture_t gobu_load_texture(const char *filename);
 bool gobu_texture_is_valid(gb_texture_t texture);
 void gobu_free_texture(gb_texture_t texture);
@@ -287,14 +321,14 @@ void gobu_draw_texture_pro(gb_texture_t texture, gb_rect_t src, gb_rect_t dst, g
 void gobu_draw_texture_rect(gb_texture_t texture, gb_rect_t src, gb_vec2_t position, gb_color_t tint, int layer_index);
 void gobu_draw_texture(gb_texture_t texture, gb_vec2_t position, gb_color_t tint, int layer_index);
 
-// shapes
+// MARK: shapes
 void gobu_draw_triangle(float x0, float y0, float x1, float y1, float x2, float y2, gb_color_t color, int layer_index);
 void gobu_draw_rect(float x, float y, float w, float h, gb_color_t fill_color, gb_color_t outline_color, float outline_thickness, int layer_index);
 void gobu_draw_line(float x0, float y0, float x1, float y1, float thickness, gb_color_t color, int layer_index);
 void bdr_draw_circle(float x, float y, float radius, gb_color_t fill_color, gb_color_t outline_color, float outline_thickness, int layer_index);
 void gobu_draw_grid(int width, int height, int cell_size, gb_color_t color, int layer_index);
 
-// ECS
+// MARK: ECS
 extern ECS_TAG_DECLARE(gbTagScene);
 extern ECS_TAG_DECLARE(gbOnSceneOpen);
 extern ECS_TAG_DECLARE(gbOnSceneClose);
@@ -307,11 +341,16 @@ extern ECS_TAG_DECLARE(gbOnSceneCreate);
 
 extern ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
 extern ECS_COMPONENT_DECLARE(gb_core_scene_t);
+extern ECS_COMPONENT_DECLARE(gb_core_physics_t);
+extern ECS_COMPONENT_DECLARE(gb_core_grid_t);
+extern ECS_COMPONENT_DECLARE(gb_core_rendering_t);
 
 // extern ECS_COMPONENT_DECLARE(gbSceneActive);
 extern ECS_COMPONENT_DECLARE(gb_origin_t);
 extern ECS_COMPONENT_DECLARE(gb_texture_flip_t);
 extern ECS_COMPONENT_DECLARE(gb_texture_filter_t);
+extern ECS_COMPONENT_DECLARE(gb_scale_mode_t);
+extern ECS_COMPONENT_DECLARE(gb_resolution_mode_t);
 extern ECS_COMPONENT_DECLARE(gb_resource_t);
 extern ECS_COMPONENT_DECLARE(gb_color_t);
 extern ECS_COMPONENT_DECLARE(gb_rect_t);
@@ -333,6 +372,9 @@ void gobu_ecs_free(ecs_world_t *ecs);
 void gobu_ecs_process(ecs_world_t *ecs, float deltaTime);
 void gobu_ecs_save_to_file(ecs_world_t *world, const char *filename);
 bool gobu_ecs_load_from_file(ecs_world_t *world, const char *filename);
+void gobu_ecs_project_settings_init(ecs_world_t *ecs);
+gb_core_rendering_t *gobu_ecs_get_project_settings(ecs_world_t *ecs);
+ecs_entity_t gobu_ecs_project_settings(ecs_world_t *ecs);
 
 ecs_entity_t gobu_ecs_entity_new_low(ecs_world_t *world, ecs_entity_t parent);
 ecs_entity_t gobu_ecs_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name);
@@ -358,7 +400,7 @@ void gobu_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name
 bool gobu_scene_has(ecs_world_t *world, ecs_entity_t entity);
 void gobu_scene_process(ecs_world_t *world, ecs_entity_t root, float delta);
 
-// UTIL
+// MARK: UTIL
 #define gobu_util_path_build(...) gobu_util_path_build_(__VA_ARGS__, NULL)
 
 bool gobu_util_path_isdir(const char *pathname);
@@ -388,5 +430,8 @@ const char *gobu_util_extname(const char *filename);
 char *gobu_util_name(const char *filename, bool with_ext);
 bool gobu_util_is_extension(const char *filename, const char *ext);
 char *gobu_util_read_text_file(const char *filename);
+
+// MARK: UTIL  COLOR
+gb_color_t gobu_color_adjust_contrast(gb_color_t color, float mixFactor);
 
 #endif // GOBU_H

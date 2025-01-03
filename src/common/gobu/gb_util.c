@@ -208,3 +208,23 @@ char *gobu_util_read_text_file(const char *filename)
     }
     return contents;
 }
+
+gb_color_t gobu_color_adjust_contrast(gb_color_t color, float mixFactor) {
+    // Limitar mixFactor entre 0.0 y 1.0
+    if (mixFactor < 0.0f) mixFactor = 0.0f;
+    if (mixFactor > 1.0f) mixFactor = 1.0f;
+
+    // Calcular el brillo percibido del color (luma)
+    float brightness = 0.299f * color.r + 0.587f * color.g + 0.114f * color.b;
+
+    // Determinar el color de referencia (negro o blanco) para mayor contraste
+    gb_color_t refColor = (brightness < 128) ? (gb_color_t){255, 255, 255, 255} : (gb_color_t){0, 0, 0, 255};
+
+    // Mezclar el color de entrada con el color de referencia
+    return (gb_color_t){
+        .r = (uint8_t)(color.r * (1.0f - mixFactor) + refColor.r * mixFactor),
+        .g = (uint8_t)(color.g * (1.0f - mixFactor) + refColor.g * mixFactor),
+        .b = (uint8_t)(color.b * (1.0f - mixFactor) + refColor.b * mixFactor),
+        .a = color.a // Mantener alpha igual
+    };
+}

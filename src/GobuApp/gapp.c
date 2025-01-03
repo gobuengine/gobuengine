@@ -61,7 +61,6 @@ static void gapp_main_class_init(GappMainClass *klass)
 static void gapp_main_init(GappMain *self)
 {
     self->config = gapp_project_config_new();
-    self->world = gobu_ecs_init();
 }
 
 // -----------------

@@ -92,20 +92,8 @@ static void inspectorWidgetCreateComponentDefaultEntity(GappInspector *self, Gtk
     gtk_box_append(GTK_BOX(content), button);
 }
 
-// MARK: PUBLIC
-void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t entity)
+static void inspector_load_component(GappInspector *self, ecs_world_t *world, ecs_entity_t entity)
 {
-    gtk_list_box_remove_all(self->listbox);
-    self->size_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
-
-    // ECS DATA
-    self->entity = entity;
-    self->world = world;
-
-    // ENTITY
-    if (!gobu_scene_has(world, entity))
-        inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);
-
     if (!gobu_ecs_is_enabled(world, entity))
         return;
 
@@ -115,7 +103,6 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
     {
         ecs_entity_t e_component = ecs_pair_second(world, type->array[i]);
 
-        // verificamos que sea un componente
         if (!ecs_has(world, e_component, EcsComponent))
             continue;
 
@@ -125,13 +112,30 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
 
         const char *component_name = ecs_get_name(world, e_component);
 
-        gboolean is_removable = (gobu_util_string_isequal(component_name, "gb_transform_t") &&
-                                 gobu_util_string_isequal(component_name, "gb_entity_t"));
-
-        GtkWidget *expander = inspectorWidgetCreateComponentGroup(self->listbox, is_removable, component_name, world, entity, e_component);
+        GtkWidget *expander = inspectorWidgetCreateComponentGroup(self->listbox, FALSE, component_name, world, entity, e_component);
         g_object_set_data(G_OBJECT(expander), "size-group", self->size_group);
         inspectorWidgetCreateComponentInputs(expander, world, component_ptr, e_component);
     }
+}
+
+// MARK: PUBLIC
+void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t entity)
+{
+    gtk_list_box_remove_all(self->listbox);
+    self->size_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
+
+    self->entity = entity;
+    self->world = world;
+
+    bool is_scene = gobu_scene_has(world, entity);
+
+    if (!is_scene)
+        inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);
+
+    inspector_load_component(self, world, entity);
+
+    if (is_scene)
+        inspector_load_component(self, world, gobu_ecs_project_settings(world));
 }
 
 void inspectorSetEmpty(GappInspector *self, const gchar *message)
@@ -143,4 +147,3 @@ void inspectorSetEmpty(GappInspector *self, const gchar *message)
     gtk_widget_set_hexpand(label, TRUE);
     gtk_list_box_append(self->listbox, label);
 }
-

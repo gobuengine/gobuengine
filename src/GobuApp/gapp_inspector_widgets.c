@@ -504,6 +504,8 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             {ecs_id(gb_texture_filter_t), inspectorWidgetCreate_EnumInput},
             {ecs_id(gb_texture_flip_t), inspectorWidgetCreate_EnumInput},
             {ecs_id(gb_origin_t), inspectorWidgetCreate_EnumInput},
+            {ecs_id(gb_scale_mode_t), inspectorWidgetCreate_EnumInput},
+            {ecs_id(gb_resolution_mode_t), inspectorWidgetCreate_EnumInput},
             {ecs_id(gb_resource_t), inspectorWidgetCreate_ResourceInput},
             {0, NULL} // Marca de fin
             // Agregar más tipos según sea necesario

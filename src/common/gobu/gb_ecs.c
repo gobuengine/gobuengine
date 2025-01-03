@@ -3,6 +3,7 @@
 
 static void gobucoreImport(ecs_world_t *world);
 static gb_core_scene_phases_t gbCoreScenePhases;
+static ecs_entity_t projectSettings;
 
 ECS_TAG_DECLARE(gbTagScene);
 ECS_TAG_DECLARE(gbOnSceneOpen);
@@ -16,11 +17,16 @@ ECS_TAG_DECLARE(gbOnSceneCreate);
 
 ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
 ECS_COMPONENT_DECLARE(gb_core_scene_t);
+ECS_COMPONENT_DECLARE(gb_core_physics_t);
+ECS_COMPONENT_DECLARE(gb_core_grid_t);
+ECS_COMPONENT_DECLARE(gb_core_rendering_t);
 
 // ECS_COMPONENT_DECLARE(gbSceneActive);
 ECS_COMPONENT_DECLARE(gb_origin_t);
 ECS_COMPONENT_DECLARE(gb_texture_flip_t);
 ECS_COMPONENT_DECLARE(gb_texture_filter_t);
+ECS_COMPONENT_DECLARE(gb_scale_mode_t);
+ECS_COMPONENT_DECLARE(gb_resolution_mode_t);
 ECS_COMPONENT_DECLARE(gb_resource_t);
 ECS_COMPONENT_DECLARE(gb_color_t);
 ECS_COMPONENT_DECLARE(gb_rect_t);
@@ -45,7 +51,8 @@ ecs_world_t *gobu_ecs_init(void)
 {
     ecs_world_t *ecs = ecs_init();
     ECS_IMPORT(ecs, gobucore);
-
+    if (projectSettings == 0)
+        gobu_ecs_project_settings_init(ecs);
     return ecs;
 }
 
@@ -67,6 +74,27 @@ void gobu_ecs_save_to_file(ecs_world_t *world, const char *filename)
 bool gobu_ecs_load_from_file(ecs_world_t *world, const char *filename)
 {
     return ecs_world_from_json_file(world, filename, NULL) == NULL ? false : true;
+}
+
+void gobu_ecs_project_settings_init(ecs_world_t *ecs)
+{
+    projectSettings = ecs_new_low_id(ecs);
+    ecs_set(ecs, projectSettings, gb_core_rendering_t, {
+        .resolution = {1280, 720},
+        .resolutionMode = GB_RESIZE_MODE_NO_CHANGE,
+        .targetFps = 60,
+        .scaleMode = GB_SCALE_MODE_LINEAR
+    });
+}
+
+gb_core_rendering_t *gobu_ecs_get_project_settings(ecs_world_t *ecs)
+{
+    return ecs_get_mut(ecs, projectSettings, gb_core_rendering_t);
+}
+
+ecs_entity_t gobu_ecs_project_settings(ecs_world_t *ecs)
+{
+    return projectSettings;
 }
 
 // -----------------
@@ -162,7 +190,9 @@ ecs_entity_t gobu_scene_new(ecs_world_t *world, const char *name)
         new_name = gobu_util_string_format("WorldScene.%s%d", name, counter++);
 
     ecs_entity_t scene = ecs_entity(world, {.name = gobu_util_string(new_name), .add = ecs_ids(gbTagScene)});
-    ecs_set(world, scene, gb_core_scene_t, {.color = GOBUWHITE, .gridSize = 32, .gridEnabled = TRUE, .size = {800, 600} });
+    ecs_set(world, scene, gb_core_scene_t, {.color = GOBUWHITE });
+    ecs_set(world, scene, gb_core_physics_t, {.enabled = TRUE, .debug = FALSE, .gravity = 980, .gravityDirection = {0, -1}});
+    ecs_set(world, scene, gb_core_grid_t, {.size = 32, .enabled = TRUE});
     ecs_enable(world, scene, FALSE);
     gobu_ecs_emit(world, gbOnSceneCreate, scene);
 
@@ -302,11 +332,7 @@ static void gobu_core_scene_render_pre_draw(ecs_iter_t *it)
 
         // gfxb_viewport_begin(scene[i].context);
         // gfxb_viewport_color(scene[i].context, scene[i].clear_color.r, scene[i].clear_color.g, scene[i].clear_color.b);
-
-        if (scene[i].gridEnabled)
-            gobu_draw_grid(1280, 768, scene[i].gridSize, GRIDMODEDARK, 0);
-
-        gobu_draw_rect(0, 0, scene[i].size.width, scene[i].size.height, BLANK, scene[i].color, 2.0f, 0);
+        // gobu_draw_rect(0, 0, scene[i].size.width, scene[i].size.height, BLANK, scene[i].color, 2.0f, 0);
     }
 }
 
@@ -338,11 +364,16 @@ static void gobucoreImport(ecs_world_t *world)
 
     ECS_COMPONENT_DEFINE(world, gb_core_scene_phases_t);
     ECS_COMPONENT_DEFINE(world, gb_core_scene_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_physics_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_grid_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_rendering_t);
 
     // ECS_COMPONENT_DEFINE(world, gbSceneActive);
     ECS_COMPONENT_DEFINE(world, gb_origin_t);
     ECS_COMPONENT_DEFINE(world, gb_texture_flip_t);
     ECS_COMPONENT_DEFINE(world, gb_texture_filter_t);
+    ECS_COMPONENT_DEFINE(world, gb_scale_mode_t);
+    ECS_COMPONENT_DEFINE(world, gb_resolution_mode_t);
     ECS_COMPONENT_DEFINE(world, gb_resource_t);
     ECS_COMPONENT_DEFINE(world, gb_color_t);
     ECS_COMPONENT_DEFINE(world, gb_rect_t);
@@ -390,6 +421,24 @@ static void gobucoreImport(ecs_world_t *world)
             {.name = "Point", .value = GB_FILTER_POINT},
             {.name = "Bilinear", .value = GB_FILTER_BILINEAR},
             {.name = "Trilinear", .value = GB_FILTER_TRILINEAR},
+        },
+    });
+
+    ecs_enum(world, {
+        .entity = ecs_id(gb_scale_mode_t),
+        .constants = {
+            {.name = "scale_nearest", .value = GB_SCALE_MODE_NEAREST},
+            {.name = "scale_linear", .value = GB_SCALE_MODE_LINEAR},
+        },
+    });
+
+    ecs_enum(world, {
+        .entity = ecs_id(gb_resolution_mode_t),
+        .constants = {
+            {.name = "resize_no_change", .value = GB_RESIZE_MODE_NO_CHANGE},
+            {.name = "resize_fill_screen", .value = GB_RESIZE_MODE_FILL_SCREEN},
+            {.name = "resize_adjust_width", .value = GB_RESIZE_MODE_ADJUST_WIDTH},
+            {.name = "resize_adjust_height", .value = GB_RESIZE_MODE_ADJUST_HEIGHT},
         },
     });
 
@@ -499,13 +548,35 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
     ecs_struct(world, {
+        .entity = ecs_id(gb_core_physics_t),
+        .members = {
+            {.name = "gravity", .type = ecs_id(ecs_f32_t)},
+            {.name = "gravityDirection", .type = ecs_id(gb_vec2_t)},
+        },
+    });
+
+    ecs_struct(world, {
         .entity = ecs_id(gb_core_scene_t),
         .members = {
-            {.name = "size", .type = ecs_id(gb_size_t)},
             {.name = "color", .type = ecs_id(gb_color_t)},
-            {.name = "gridSize", .type = ecs_id(ecs_u32_t)},
-            {.name = "gridEnabled", .type = ecs_id(ecs_bool_t)},
-            {.name = "debugBoundingBox", .type = ecs_id(ecs_bool_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(gb_core_grid_t),
+        .members = {
+            {.name = "enabled", .type = ecs_id(ecs_bool_t)},
+            {.name = "size", .type = ecs_id(ecs_u32_t)},
+        },
+    });
+
+    ecs_struct(world, {
+        .entity = ecs_id(gb_core_rendering_t),
+        .members = {
+            {.name = "resolution", .type = ecs_id(gb_size_t)},
+            {.name = "targetFps", .type = ecs_id(ecs_u32_t)},
+            {.name = "resolutionMode", .type = ecs_id(gb_resolution_mode_t)},
+            {.name = "scaleMode", .type = ecs_id(gb_scale_mode_t)},
         },
     });
 
