@@ -95,10 +95,11 @@ static void inspector_widget_signal_component_remove(GtkWidget *button, gpointer
 static GtkWidget *inspectorWidgetCreate_StringInput(ecs_meta_cursor_t cursor)
 {
     ecs_string_t **field = (ecs_string_t **)ecs_meta_get_ptr(&cursor);
+    const char *current_text = ecs_meta_get_string(&cursor);
 
     GtkWidget *entry = gtk_entry_new();
-    const char *current_text = ecs_meta_get_string(&cursor);
     gtk_editable_set_text(GTK_EDITABLE(entry), current_text ? current_text : "");
+    gtk_widget_add_css_class(entry, "min-height");
 
     g_signal_connect(entry, "changed", G_CALLBACK(signal_input_string), field);
 
@@ -177,6 +178,7 @@ static GtkWidget *inspectorWidgetCreate_ColorInput(ecs_meta_cursor_t cursor)
 
     GtkWidget *color_button = gtk_color_dialog_button_new(gtk_color_dialog_new());
     gtk_color_dialog_button_set_rgba(GTK_COLOR_DIALOG_BUTTON(color_button), &color);
+    gtk_widget_add_css_class(color_button, "min-height");
 
     g_signal_connect(color_button, "notify::rgba", G_CALLBACK(signal_input_color), field);
 
@@ -195,6 +197,9 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinx), field->x);
     gtk_widget_set_tooltip_text(number_spinx, "X");
     gtk_editable_set_width_chars(GTK_EDITABLE(number_spinx), 0);
+    gtk_widget_add_css_class(number_spinx, "inspector");
+    gtk_widget_add_css_class(number_spinx, "min-height");
+    gtk_widget_add_css_class(number_spinx, "vx");
     gtk_box_append(GTK_BOX(box), number_spinx);
 
     GtkWidget *number_spiny = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
@@ -203,6 +208,9 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spiny), field->y);
     gtk_widget_set_tooltip_text(number_spiny, "Y");
     gtk_editable_set_width_chars(GTK_EDITABLE(number_spiny), 0);
+    gtk_widget_add_css_class(number_spiny, "inspector");
+    gtk_widget_add_css_class(number_spiny, "min-height");
+    gtk_widget_add_css_class(number_spiny, "vy");
     gtk_box_append(GTK_BOX(box), number_spiny);
 
     g_signal_connect(number_spinx, "value-changed", G_CALLBACK(signal_input_vect2_x), field);
@@ -223,6 +231,7 @@ static GtkWidget *inspectorWidgetCreate_SizeInput(ecs_meta_cursor_t cursor)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinw), field->width);
     gtk_widget_set_tooltip_text(number_spinw, "Size Width");
     gtk_editable_set_width_chars(GTK_EDITABLE(number_spinw), 0);
+    gtk_widget_add_css_class(number_spinw, "inspector");
     gtk_box_append(GTK_BOX(box), number_spinw);
 
     GtkWidget *number_spinh = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
@@ -231,6 +240,7 @@ static GtkWidget *inspectorWidgetCreate_SizeInput(ecs_meta_cursor_t cursor)
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinh), field->height);
     gtk_widget_set_tooltip_text(number_spinh, "Size Height");
     gtk_editable_set_width_chars(GTK_EDITABLE(number_spinh), 0);
+    gtk_widget_add_css_class(number_spinh, "inspector");
     gtk_box_append(GTK_BOX(box), number_spinh);
 
     g_signal_connect(number_spinw, "value-changed", G_CALLBACK(signal_input_size_width), field);
@@ -267,7 +277,7 @@ static gint object_ienum_compare_func(ObjectIEnum *ienum_a, ObjectIEnum *ienum_b
         return 0;
 }
 
-static GtkWidget *inspectorWidgetCreate_EnumInput(ecs_meta_cursor_t cursor)
+static GtkWidget *inspectorWidgetCreate_EnumInput(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     void *field_ptr = ecs_meta_get_ptr(&cursor);
     ecs_entity_t field_type = ecs_meta_get_type(&cursor);
@@ -292,6 +302,8 @@ static GtkWidget *inspectorWidgetCreate_EnumInput(ecs_meta_cursor_t cursor)
     GtkWidget *select_option = gtk_drop_down_new(G_LIST_MODEL(store), NULL);
     gtk_drop_down_set_factory(GTK_DROP_DOWN(select_option), factory);
     gtk_drop_down_set_selected(GTK_DROP_DOWN(select_option), position);
+    gtk_widget_add_css_class(select_option, "inspector");
+    gtk_widget_add_css_class(select_option, "min-height");
     g_signal_connect(select_option, "notify::selected", G_CALLBACK(signal_input_enum), field_ptr);
 
     return select_option;
@@ -352,6 +364,7 @@ static GtkWidget *_input_resource(GtkFileFilter *filter, ecs_meta_cursor_t curso
     gtk_drop_down_set_enable_search(GTK_DROP_DOWN(dropdown), TRUE);
     // gtk_drop_down_set_expression(GTK_DROP_DOWN(dropdown), gtk_property_expression_new(G_TYPE_FILE_INFO, NULL, "name"));
     gtk_drop_down_set_factory(GTK_DROP_DOWN(dropdown), factory);
+    gtk_widget_add_css_class(dropdown, "inspector");
     gtk_box_append(GTK_BOX(box), dropdown);
 
     g_object_unref(content_dir);
@@ -501,11 +514,6 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             {ecs_id(gb_vec2_t), inspectorWidgetCreate_Vector2Input},
             {ecs_id(gb_size_t), inspectorWidgetCreate_SizeInput},
             {ecs_id(gb_color_t), inspectorWidgetCreate_ColorInput},
-            {ecs_id(gb_texture_filter_t), inspectorWidgetCreate_EnumInput},
-            {ecs_id(gb_texture_flip_t), inspectorWidgetCreate_EnumInput},
-            {ecs_id(gb_origin_t), inspectorWidgetCreate_EnumInput},
-            {ecs_id(gb_scale_mode_t), inspectorWidgetCreate_EnumInput},
-            {ecs_id(gb_resolution_mode_t), inspectorWidgetCreate_EnumInput},
             {ecs_id(gb_resource_t), inspectorWidgetCreate_ResourceInput},
             {0, NULL} // Marca de fin
             // Agregar más tipos según sea necesario
@@ -519,6 +527,10 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             if (WidgetCreator[n].type == field_type && WidgetCreator[n].create_widget != NULL)
             {
                 input = WidgetCreator[n].create_widget(cursor, member);
+                break;
+            }else if (field_type && ecs_has(world, field_type, EcsEnum))
+            {
+                input = inspectorWidgetCreate_EnumInput(cursor, member);
                 break;
             }
         }

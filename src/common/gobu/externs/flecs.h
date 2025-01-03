@@ -561,7 +561,6 @@ extern "C" {
 //// Aperiodic action flags (used by ecs_run_aperiodic)
 ////////////////////////////////////////////////////////////////////////////////
 
-#define EcsAperiodicEmptyTables        (1u << 1u)  /* Process pending empty table events */
 #define EcsAperiodicComponentMonitors  (1u << 2u)  /* Process component monitors */
 #define EcsAperiodicEmptyQueries       (1u << 4u)  /* Process empty queries */
 
@@ -3208,7 +3207,6 @@ typedef struct ecs_table_cache_hdr_t {
     struct ecs_table_cache_t *cache;  /**< Table cache of element. Of type ecs_id_record_t* for component index elements. */
     ecs_table_t *table;               /**< Table associated with element. */
     struct ecs_table_cache_hdr_t *prev, *next; /**< Next/previous elements for id in table cache. */
-    bool empty;                       /**< Whether element is in empty list. */
 } ecs_table_cache_hdr_t;
 
 /** Metadata describing where a component id is stored in a table.
@@ -3758,7 +3756,8 @@ typedef struct ecs_worker_iter_t {
 /* Convenience struct to iterate table array for id */
 typedef struct ecs_table_cache_iter_t {
     struct ecs_table_cache_hdr_t *cur, *next;
-    struct ecs_table_cache_hdr_t *next_list;
+    bool iter_fill;
+    bool iter_empty;
 } ecs_table_cache_iter_t;
 
 /** Each iterator */
@@ -4674,7 +4673,6 @@ typedef struct ecs_world_info_t {
     int32_t pair_id_count;            /**< Number of pair ids in the world */
 
     int32_t table_count;              /**< Number of tables */
-    int32_t empty_table_count;        /**< Number of tables without entities */
 
     /* -- Command counts -- */
     struct {
@@ -5050,12 +5048,6 @@ FLECS_API extern const ecs_entity_t EcsOnTableCreate;
 
 /** Event that triggers when a table is deleted. */
 FLECS_API extern const ecs_entity_t EcsOnTableDelete;
-
-/** Event that triggers when a table becomes empty (doesn't emit on creation). */
-FLECS_API extern const ecs_entity_t EcsOnTableEmpty;
-
-/** Event that triggers when a table becomes non-empty. */
-FLECS_API extern const ecs_entity_t EcsOnTableFill;
 
 /** Relationship used for specifying cleanup behavior. */
 FLECS_API extern const ecs_entity_t EcsOnDelete;
@@ -5829,6 +5821,24 @@ void ecs_run_aperiodic(
     ecs_world_t *world,
     ecs_flags32_t flags);
 
+/** Used with ecs_delete_empty_tables(). */
+typedef struct ecs_delete_empty_tables_desc_t {
+    /** Optional component filter for the tables to evaluate. */
+    ecs_id_t id;
+
+    /** Free table data when generation > clear_generation. */
+    uint16_t clear_generation;
+
+    /** Delete table when generation > delete_generation. */
+    uint16_t delete_generation;
+
+    /** Minimum number of component ids the table should have. */
+    int32_t min_id_count;
+
+    /** Amount of time operation is allowed to spend. */
+    double time_budget_seconds;
+} ecs_delete_empty_tables_desc_t;
+
 /** Cleanup empty tables.
  * This operation cleans up empty tables that meet certain conditions. Having
  * large amounts of empty tables does not negatively impact performance of the
@@ -5855,21 +5865,13 @@ void ecs_run_aperiodic(
  * The time budget specifies how long the operation should take at most.
  *
  * @param world The world.
- * @param id Optional component filter for the tables to evaluate.
- * @param clear_generation Free table data when generation > clear_generation.
- * @param delete_generation Delete table when generation > delete_generation.
- * @param min_id_count Minimum number of component ids the table should have.
- * @param time_budget_seconds Amount of time operation is allowed to spend.
+ * @param desc Configuration parameters.
  * @return Number of deleted tables.
  */
 FLECS_API
 int32_t ecs_delete_empty_tables(
     ecs_world_t *world,
-    ecs_id_t id,
-    uint16_t clear_generation,
-    uint16_t delete_generation,
-    int32_t min_id_count,
-    double time_budget_seconds);
+    const ecs_delete_empty_tables_desc_t *desc);
 
 /** Get world from poly.
  *
@@ -10735,6 +10737,22 @@ void ecs_parser_errorv_(
     const char *fmt,
     va_list args);
 
+FLECS_API
+void ecs_parser_warning_(
+    const char *name,
+    const char *expr,
+    int64_t column,
+    const char *fmt,
+    ...);
+
+FLECS_API
+void ecs_parser_warningv_(
+    const char *name,
+    const char *expr,
+    int64_t column,
+    const char *fmt,
+    va_list args);
+
 
 ////////////////////////////////////////////////////////////////////////////////
 //// Logging macros
@@ -10979,6 +10997,12 @@ void ecs_parser_errorv_(
 
 #define ecs_parser_errorv(name, expr, column, fmt, args)\
     ecs_parser_errorv_(name, expr, column, fmt, args)
+
+#define ecs_parser_warning(name, expr, column, ...)\
+    ecs_parser_warning_(name, expr, column, __VA_ARGS__)
+
+#define ecs_parser_warningv(name, expr, column, fmt, args)\
+    ecs_parser_warningv_(name, expr, column, fmt, args)
 
 #endif // FLECS_LEGACY
 
@@ -11479,6 +11503,7 @@ int ecs_http_server_request(
     ecs_http_server_t* srv,
     const char *method,
     const char *req,
+    const char *body,
     ecs_http_reply_t *reply_out);
 
 /** Get context provided in ecs_http_server_desc_t */
@@ -14275,6 +14300,15 @@ void FlecsUnitsImport(
 extern "C" {
 #endif
 
+FLECS_API
+extern ECS_COMPONENT_DECLARE(EcsScriptRng);
+
+/* Randon number generator */
+typedef struct {
+    uint64_t seed;
+    void *impl;
+} EcsScriptRng;
+
 /** Script math import function.
  * Usage:
  * @code
@@ -14361,12 +14395,15 @@ typedef struct ecs_script_var_t {
     const char *name;
     ecs_value_t value;
     const ecs_type_info_t *type_info;
+    int32_t sp;
     bool is_const;
 } ecs_script_var_t;
 
 /** Script variable scope. */
 typedef struct ecs_script_vars_t {
     struct ecs_script_vars_t *parent;
+    int32_t sp;
+
     ecs_hashmap_t var_index;
     ecs_vec_t vars;
 
@@ -14757,6 +14794,45 @@ ecs_script_var_t* ecs_script_vars_lookup(
     const ecs_script_vars_t *vars,
     const char *name);
 
+/** Lookup a variable by stack pointer.
+ * This operation provides a faster way to lookup variables that are always 
+ * declared in the same order in a ecs_script_vars_t scope.
+ * 
+ * The stack pointer of a variable can be obtained from the ecs_script_var_t 
+ * type. The provided frame offset must be valid for the provided variable  
+ * stack. If the frame offset is not valid, this operation will panic.
+ * 
+ * @param vars The variable scope.
+ * @param sp The stack pointer to the variable.
+ * @return The variable.
+ */
+FLECS_API
+ecs_script_var_t* ecs_script_vars_from_sp(
+    const ecs_script_vars_t *vars,
+    int32_t sp);
+
+/** Print variables.
+ * This operation prints all variables in the vars scope and parent scopes.asm
+ * 
+ * @param vars The variable scope.
+ */
+FLECS_API
+void ecs_script_vars_print(
+    const ecs_script_vars_t *vars);
+
+/** Preallocate space for variables.
+ * This operation preallocates space for the specified number of variables. This
+ * is a performance optimization only, and is not necessary before declaring
+ * variables in a scope.
+ * 
+ * @param vars The variable scope.
+ * @param count The number of variables to preallocate space for.
+ */
+FLECS_API
+void ecs_script_vars_set_size(
+    ecs_script_vars_t *vars,
+    int32_t count);
+
 /** Convert iterator to vars
  * This operation converts an iterator to a variable array. This allows for
  * using iterator results in expressions. The operation only converts a
@@ -14802,18 +14878,23 @@ void ecs_script_vars_from_iter(
 typedef struct ecs_expr_eval_desc_t {
     const char *name;                /**< Script name */
     const char *expr;                /**< Full expression string */
+    const ecs_script_vars_t *vars;   /**< Variables accessible in expression */
+    ecs_entity_t type;               /**< Type of parsed value (optional) */
     ecs_entity_t (*lookup_action)(   /**< Function for resolving entity identifiers */
         const ecs_world_t*,
         const char *value,
         void *ctx);
     void *lookup_ctx;                /**< Context passed to lookup function */
-    const ecs_script_vars_t *vars;   /**< Variables accessible in expression */
-    ecs_entity_t type;               /**< Type of parsed value (optional) */
-    
-    /* Disable constant folding (slower evaluation, faster parsing) */
+
+    /** Disable constant folding (slower evaluation, faster parsing) */
     bool disable_folding;
-    
-    /* Allow for unresolved identifiers when parsing. Useful when entities can
+
+    /** This option instructs the expression runtime to lookup variables by 
+     * stack pointer instead of by name, which improves performance. Only enable 
+     * when provided variables are always declared in the same order. */
+    bool disable_dynamic_variable_binding;
+
+    /** Allow for unresolved identifiers when parsing. Useful when entities can
      * be created in between parsing & evaluating. */
     bool allow_unresolved_identifiers;
 

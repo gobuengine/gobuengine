@@ -92,7 +92,7 @@
 
 typedef enum
 {
-    GB_ORIGIN_TOP_LEFT,
+    GB_ORIGIN_TOP_LEFT = 0,
     GB_ORIGIN_TOP_CENTER,
     GB_ORIGIN_TOP_RIGHT,
     GB_ORIGIN_CENTER_LEFT,
@@ -120,13 +120,13 @@ typedef enum
 
 typedef enum
 {
-    GB_SCALE_MODE_NEAREST,
+    GB_SCALE_MODE_NEAREST = 0,
     GB_SCALE_MODE_LINEAR
 } gb_scale_mode_t;
 
 typedef enum
 {
-    GB_RESIZE_MODE_NO_CHANGE,
+    GB_RESIZE_MODE_NO_CHANGE = 0,
     GB_RESIZE_MODE_FILL_SCREEN,
     GB_RESIZE_MODE_ADJUST_WIDTH,
     GB_RESIZE_MODE_ADJUST_HEIGHT,
@@ -278,10 +278,24 @@ typedef struct
 typedef struct 
 {
     gb_size_t resolution;
-    gb_resolution_mode_t resolutionMode;
     int targetFps;
+    gb_resolution_mode_t resolutionMode;
     gb_scale_mode_t scaleMode;
 }gb_core_rendering_t;
+
+typedef struct 
+{
+    ecs_string_t name;
+    ecs_string_t description;
+    ecs_string_t author;
+}gb_core_game_info_t;
+
+typedef struct 
+{
+    ecs_string_t name;
+    ecs_string_t version;
+    ecs_string_t publisher;
+}gb_core_game_packaging_t;
 
 // MARK: GFXBACKEND
 gfx_backend_t *gfxb_viewport_create(void);
@@ -343,7 +357,10 @@ extern ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
 extern ECS_COMPONENT_DECLARE(gb_core_scene_t);
 extern ECS_COMPONENT_DECLARE(gb_core_physics_t);
 extern ECS_COMPONENT_DECLARE(gb_core_grid_t);
+// game project settings
 extern ECS_COMPONENT_DECLARE(gb_core_rendering_t);
+extern ECS_COMPONENT_DECLARE(gb_core_game_info_t);
+extern ECS_COMPONENT_DECLARE(gb_core_game_packaging_t);
 
 // extern ECS_COMPONENT_DECLARE(gbSceneActive);
 extern ECS_COMPONENT_DECLARE(gb_origin_t);

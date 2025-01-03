@@ -391,9 +391,8 @@ void gapp_open_project(GappMain *self, const gchar *path)
     if (!gobu_ecs_load_from_file(self->world, gobu_util_path_build(gapp_get_project_path(), "resources", "world.json")))
     {
         g_warning("Failed to load project world");
-    }
-
-    gobu_scene_reload(self->world);
+    }else 
+        gobu_scene_reload(self->world);
 }
 
 const gchar *gapp_get_project_path(void)

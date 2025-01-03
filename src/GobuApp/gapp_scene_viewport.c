@@ -48,6 +48,9 @@ static void gapp_scene_viewport_render(GtkWidget *viewport, int width, int heigh
     gfx_backend_t *context = gapp_widget_viewport_get_context_render(viewport);
 
     ecs_entity_t scene_id = gobu_scene_get_open(GWORLD);
+    if (!scene_id)
+        return;
+        
     gb_core_scene_t *scene = ecs_get_mut(GWORLD, scene_id, gb_core_scene_t);
     gb_core_grid_t *grid = ecs_get_mut(GWORLD, scene_id, gb_core_grid_t);
     gb_core_rendering_t *rendering = gobu_ecs_get_project_settings(GWORLD);
