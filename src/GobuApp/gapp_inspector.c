@@ -133,9 +133,6 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
         inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);
 
     inspector_load_component(self, world, entity);
-
-    if (is_scene)
-        inspector_load_component(self, world, gobu_ecs_project_settings(world));
 }
 
 void inspectorSetEmpty(GappInspector *self, const gchar *message)

@@ -99,6 +99,7 @@ static GtkWidget *inspectorWidgetCreate_StringInput(ecs_meta_cursor_t cursor)
 
     GtkWidget *entry = gtk_entry_new();
     gtk_editable_set_text(GTK_EDITABLE(entry), current_text ? current_text : "");
+    gtk_widget_add_css_class(entry, "inspector");
     gtk_widget_add_css_class(entry, "min-height");
 
     g_signal_connect(entry, "changed", G_CALLBACK(signal_input_string), field);
@@ -113,6 +114,7 @@ static GtkWidget *inspectorWidgetCreate_BoolInput(ecs_meta_cursor_t cursor)
     GtkWidget *check = gtk_check_button_new();
     gtk_widget_set_valign(check, GTK_ALIGN_CENTER);
     gtk_check_button_set_active(GTK_CHECK_BUTTON(check), (ecs_bool_t)*field);
+    gtk_widget_add_css_class(check, "inspector");
 
     g_signal_connect(check, "toggled", G_CALLBACK(signal_input_bool), field);
 
@@ -130,6 +132,7 @@ static GtkWidget *inspectorWidgetCreate_NumberU32Input(ecs_meta_cursor_t cursor,
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), (gdouble)*field);
+    gtk_widget_add_css_class(number_spin, "inspector");
 
     g_signal_connect(number_spin, "value-changed", G_CALLBACK(signal_input_u32), field);
 
@@ -147,6 +150,7 @@ static GtkWidget *inspectorWidgetCreate_NumberF64Input(ecs_meta_cursor_t cursor,
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);
+    gtk_widget_add_css_class(number_spin, "inspector");
 
     g_signal_connect(number_spin, "value-changed", G_CALLBACK(signal_input_f64), field);
 
@@ -165,6 +169,7 @@ static GtkWidget *inspectorWidgetCreate_NumberF32Input(ecs_meta_cursor_t cursor,
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);
+    gtk_widget_add_css_class(number_spin, "inspector");
 
     g_signal_connect(number_spin, "value-changed", G_CALLBACK(signal_input_f32), field);
 
@@ -178,6 +183,7 @@ static GtkWidget *inspectorWidgetCreate_ColorInput(ecs_meta_cursor_t cursor)
 
     GtkWidget *color_button = gtk_color_dialog_button_new(gtk_color_dialog_new());
     gtk_color_dialog_button_set_rgba(GTK_COLOR_DIALOG_BUTTON(color_button), &color);
+    gtk_widget_add_css_class(color_button, "inspector");
     gtk_widget_add_css_class(color_button, "min-height");
 
     g_signal_connect(color_button, "notify::rgba", G_CALLBACK(signal_input_color), field);
