@@ -195,21 +195,21 @@ static gboolean browserIsContentFolder(GappBrowser *browser, const gchar *path)
 
 static void browserSetIconForFileInfo(GtkImage *icon, GFileInfo *fileInfo)
 {
-    const char *ext_file = g_file_info_get_name(fileInfo);
+    // const char *ext_file = g_file_info_get_name(fileInfo);
 
-    if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_IMAGE) || fsIsExtension(ext_file, GAPP_BROWSER_FILE_IMAGE2))
-        gtk_image_set_from_file(icon, g_file_get_path(gapp_browser_create_file_from_file_info(fileInfo)));
-    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_PREFAB))
-        gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_PREFAB));
-    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_SCENE))
-        gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCENE));
-    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_SCRIPT))
-        gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCRIPT));
-    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_ANIMATION))
-        gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_ANIM2D));
-    else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_COMPONENT))
-        gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_COMPS));
-    else
+    // if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_IMAGE) || fsIsExtension(ext_file, GAPP_BROWSER_FILE_IMAGE2))
+    //     gtk_image_set_from_file(icon, g_file_get_path(gapp_browser_create_file_from_file_info(fileInfo)));
+    // else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_PREFAB))
+    //     gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_PREFAB));
+    // else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_SCENE))
+    //     gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCENE));
+    // else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_SCRIPT))
+    //     gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_SCRIPT));
+    // else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_ANIMATION))
+    //     gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_ANIM2D));
+    // else if (fsIsExtension(ext_file, GAPP_BROWSER_FILE_COMPONENT))
+    //     gtk_image_set_from_paintable(icon, gapp_get_resource_icon(GAPP_RESOURCE_ICON_COMPS));
+    // else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileInfo));
 }
 

@@ -1,18 +1,19 @@
 // gapp_project_setting.h
-#ifndef GOBU_PROJECT_SETTING_H
-#define GOBU_PROJECT_SETTING_H
+#ifndef GAPP_PROJECT_SETTING_H
+#define GAPP_PROJECT_SETTING_H
 
 #include "config.h"
+#include "gobu/gobu.h"
 
 G_BEGIN_DECLS
 
-#define GOBU_TYPE_PROJECT_SETTING (gobu_project_setting_get_type())
-G_DECLARE_FINAL_TYPE(GappProjectSetting, gobu_project_setting, GOBU, PROJECT_SETTING, GtkWindow)
+#define GAPP_PROJECT_TYPE_SETTING (gapp_project_setting_get_type())
+G_DECLARE_FINAL_TYPE(GappProjectSetting, gapp_project_setting, GAPP_PROJECT, SETTING, GtkWindow)
 
-GappProjectSetting *gobu_project_setting_new(void);
-
-void gobu_project_setting_show(GappProjectSetting *self, GtkWidget *parent);
+GappProjectSetting *gapp_project_setting_new(void);
+void gapp_project_setting_show(GappProjectSetting *self);
+const char *gapp_project_setting_get_name(ecs_world_t *world);
 
 G_END_DECLS
 
-#endif // GOBU_PROJECT_SETTING_H
+#endif // GAPP_PROJECT_SETTING_H

@@ -579,7 +579,7 @@ gboolean gapp_project_config_save(GappProjectConfig *self)
     return TRUE;
 }
 
-const gchar *gapp_project_config_get_name(GappProjectConfig *self)
+const gchar *gapp_project_setting_get_name(GappProjectConfig *self)
 {
     g_return_val_if_fail(GAPP_IS_PROJECT_CONFIG(self), NULL);
     return self->name;

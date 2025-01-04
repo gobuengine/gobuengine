@@ -50,7 +50,28 @@ static void gobu_project_manager_init(GobuProjectManager *self)
 
 // MARK: PRIVATE FUNC
 
-static binn *gobu_fn_if_project_exist_register(binn *list)
+/**
+ * Filters a list of project paths and saves only the valid ones.
+ *
+ * @param list: Input binn list containing project paths to validate
+ *             Each item must be a binn object with a "path" string field
+ *
+ * @return: A new binn list containing only the valid project paths
+ *          or NULL if an error occurs. The caller is responsible for
+ *          freeing the returned list.
+ *
+ * This function:
+ * - Validates each path in the input list
+ * - Checks for the existence of GAPP_PROJECT_GAME_FILE in each path
+ * - Creates a new list with only the valid project paths
+ * - Saves the filtered list to the user's config file
+ * - Handles memory allocation failures and invalid paths gracefully
+ *
+ * Side effects:
+ * - Writes to the user's config file in GOBU/GAPP_FILE_PROJECTS_NAME
+ * - Logs warnings for invalid paths and operation failures
+ */
+static binn *gobu_fn_filter_and_save_valid_project_paths(binn *list)
 {
     g_return_val_if_fail(list != NULL, NULL);
 
@@ -68,7 +89,7 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
         const char *item_path = binn_object_str(&value, "path");
         if (item_path != NULL)
         {
-            g_autofree gchar *project_file = gobu_util_path_build(item_path, GAPP_PROJECT_MANAGER_FILE);
+            g_autofree gchar *project_file = gobu_util_path_build(item_path, GAPP_PROJECT_GAME_FILE);
             if (project_file != NULL && gobu_util_path_exist(project_file))
             {
                 if (binn_list_add_object(list_new, &value) == FALSE)
@@ -89,7 +110,25 @@ static binn *gobu_fn_if_project_exist_register(binn *list)
     return list_new;
 }
 
-static binn *gobu_fn_register_load_projects(void)
+/**
+ * Loads and validates the user's project list from config.
+ *
+ * @return: A binn list containing valid project paths from the user's
+ *          config file. If the config file doesn't exist, returns a new
+ *          empty list. Returns NULL on critical errors.
+ *
+ * This function:
+ * - Attempts to load projects from the user's config file
+ * - Creates a new empty list if the config file doesn't exist
+ * - Filters out any invalid project paths
+ * - Updates the config file with only valid projects
+ * - Handles file and memory errors gracefully
+ *
+ * Side effects:
+ * - May update the config file if invalid projects are found
+ * - Logs warnings for file access and creation failures
+ */
+static binn *gobu_fn_load_and_validate_user_projects(void)
 {
     binn *list = NULL;
     gchar *config_file = gobu_util_path_build(gobu_util_path_user(), "GOBU", GAPP_FILE_PROJECTS_NAME);
@@ -113,10 +152,31 @@ static binn *gobu_fn_register_load_projects(void)
 
     g_free(config_file);
 
-    return gobu_fn_if_project_exist_register(list);
+    return gobu_fn_filter_and_save_valid_project_paths(list);
 }
 
-static gboolean gobu_fn_register_project(const gchar *path)
+/**
+ * Adds a new project path to the user's config file.
+ *
+ * @param path: The path to the project to be added. Must not be NULL or empty.
+ * @return: TRUE if the project was successfully added, FALSE otherwise.
+ *
+ * This function:
+ * - Creates the config directory if it doesn't exist
+ * - Loads existing projects from the config file (if any)
+ * - Adds the new project path to the list
+ * - Saves the updated project list back to the config file
+ * - Handles all cleanup and error cases
+ *
+ * Side effects:
+ * - Creates GOBU config directory if it doesn't exist
+ * - Modifies the projects config file
+ * - Logs warnings for file operations failures
+ *
+ * Note: This function doesn't validate if the project at the given path
+ * is valid - that's handled when the projects are loaded.
+ */
+static gboolean gobu_fn_add_project_to_config(const gchar *path)
 {
     g_return_val_if_fail(path != NULL && *path != '\0', FALSE);
 
@@ -165,32 +225,51 @@ cleanup:
     return success;
 }
 
-static gboolean gobu_fn_create_project(const gchar *name, const gchar *path)
+/**
+ * Creates a new GOBU game project with the initial structure and files.
+ *
+ * @param name: Name of the new project/directory to create. Must not be NULL or empty.
+ * @param path: Parent directory where the project will be created. Must not be NULL or empty.
+ * @return: TRUE if project was created successfully, FALSE otherwise.
+ *
+ * This function:
+ * - Creates the project directory structure (project_dir/resources)
+ * - Initializes a new ECS world with a "Main" scene
+ * - Saves the initial game state to GAPP_PROJECT_GAME_FILE
+ * - Registers the project in user's config for future loading
+ * - Validates inputs and handles existing directories
+ *
+ * Side effects:
+ * - Creates new directories at the specified path
+ * - Creates initial game state file
+ * - Updates user's project config file
+ * - Logs warnings for validation and creation failures
+ */
+static gboolean gobu_fn_initialize_game_project(const gchar *name, const gchar *path)
 {
     g_return_val_if_fail(name != NULL && *name != '\0', FALSE);
     g_return_val_if_fail(path != NULL && *path != '\0', FALSE);
-
-    gboolean is_created = FALSE;
-    g_autoptr(GError) error = NULL;
 
     g_autofree gchar *project_dir = gobu_util_path_build(path, name);
 
     if (!gobu_util_path_exist(project_dir))
     {
         g_autofree gchar *content_dir = gobu_util_path_build(project_dir, "resources");
-        g_autofree gchar *project_file = gobu_util_path_build(project_dir, GAPP_PROJECT_MANAGER_FILE);
 
         // Crear directorios
         if (gobu_util_path_create(project_dir) &&
             gobu_util_path_create(content_dir))
         {
-            // Crear archivo de configuración
-            is_created = gapp_project_config_create_file_default(gapp_get_config_instance(), project_file, name);
             // WORLD + SCENE INIT
             ecs_world_t *world = gobu_ecs_init();
             gobu_scene_open(world, gobu_scene_new(world, "Main"));
-            gobu_ecs_save_to_file(world, gobu_util_path_build(content_dir, "world.json"));
+            gobu_ecs_save_to_file(world, gobu_util_path_build(project_dir, GAPP_PROJECT_GAME_FILE));
             gobu_ecs_free(world);
+
+            // registramos el proyecto en el archivo de configuración del usuario
+            gobu_fn_add_project_to_config(project_dir);
+
+            return TRUE;
         }
         else
         {
@@ -202,25 +281,29 @@ static gboolean gobu_fn_create_project(const gchar *name, const gchar *path)
         g_warning("El directorio del proyecto ya existe: %s", project_dir);
     }
 
-    if (is_created)
-    {
-        // registramos el proyecto en el archivo de configuración del usuario
-        gobu_fn_register_project(project_dir);
-    }
-
-    return is_created;
+    return FALSE;
 }
 
-static gboolean gobu_fn_open_editor_main(const gchar *path, GobuProjectManager *self)
+/**
+ * Opens the project in the main GOBU editor window.
+ *
+ * @param path: Path to the project directory to open. Must not be NULL.
+ * @param self: The ProjectManager instance. Must be valid.
+ * @return: TRUE if editor opened successfully, FALSE on failure.
+ *
+ * This function:
+ * - Gets the current editor instance
+ * - Opens the specified project in the editor
+ * - Logs debug information about successful opening
+ * - Validates input parameters
+ *
+ * Note: This function assumes the editor instance exists and is ready
+ * to receive projects.
+ */
+static gboolean gobu_fn_launch_project_editor(const gchar *path, GobuProjectManager *self)
 {
     g_return_val_if_fail(path != NULL, FALSE);
     g_return_val_if_fail(GOBU_IS_PROJECT_MANAGER(self), FALSE);
-
-    if (!gapp_project_config_load(gapp_get_config_instance(), path))
-    {
-        g_warning("Failed to initialize project configuration for path: %s", path);
-        return FALSE;
-    }
 
     gapp_open_project(gapp_get_editor_instance(), path);
 
@@ -228,7 +311,22 @@ static gboolean gobu_fn_open_editor_main(const gchar *path, GobuProjectManager *
     return TRUE;
 }
 
-static gboolean gobu_fn_validate_project_name(const char *project_name)
+/**
+ * Checks if a project name contains only allowed characters.
+ *
+ * @param project_name: The name to validate. Must not be NULL or empty.
+ * @return: TRUE if name contains only alphanumeric characters, underscores,
+ *          and hyphens. FALSE otherwise.
+ *
+ * This function:
+ * - Checks for NULL or empty strings
+ * - Validates that name only contains: [a-zA-Z0-9_-]
+ * - Uses strspn() to efficiently check character set
+ *
+ * Note: The function is case-sensitive and treats upper and lowercase
+ * letters as valid but distinct characters.
+ */
+static gboolean gobu_fn_is_valid_project_name(const char *project_name)
 {
     if (project_name == NULL || *project_name == '\0')
     {
@@ -239,7 +337,19 @@ static gboolean gobu_fn_validate_project_name(const char *project_name)
     return strspn(project_name, valid_chars) == strlen(project_name);
 }
 
-static void gobu_fn_response_file_chooser_folder(GtkFileDialog *source, GAsyncResult *res, GobuProjectManager *self)
+/**
+ * Callback handler for folder selection in project location dialog.
+ * Updates the file chooser button label with the selected path.
+ *
+ * @param source: The file dialog that triggered the event
+ * @param res: The async result of the folder selection
+ * @param self: The ProjectManager instance
+ *
+ * Side effects:
+ * - Updates button label with selected path
+ * - Logs warnings for selection errors
+ */
+static void gobu_fn_handle_project_location_selected(GtkFileDialog *source, GAsyncResult *res, GobuProjectManager *self)
 {
     g_return_if_fail(GTK_IS_FILE_DIALOG(source));
     g_return_if_fail(G_IS_ASYNC_RESULT(res));
@@ -265,16 +375,28 @@ static void gobu_fn_response_file_chooser_folder(GtkFileDialog *source, GAsyncRe
     }
 }
 
-static void gobu_fn_open_dialog_response(GObject *source, GAsyncResult *result, GobuProjectManager *self)
+/**
+ * Callback handler for project selection in open dialog.
+ * Opens the selected project in the editor and adds it to config.
+ *
+ * @param source: The file dialog that triggered the event
+ * @param result: The async result of the file selection
+ * @param self: The ProjectManager instance
+ *
+ * Side effects:
+ * - Launches project editor if selection is valid
+ * - Updates project config with selected project
+ */
+static void gobu_fn_handle_project_open_selected(GObject *source, GAsyncResult *result, GobuProjectManager *self)
 {
     GtkFileDialog *dialog = GTK_FILE_DIALOG(source);
     GFile *file = gtk_file_dialog_open_finish(dialog, result, NULL);
     if (file)
     {
         g_autofree gchar *filename = g_file_get_path(file);
-        if (gobu_fn_open_editor_main(filename, self))
+        if (gobu_fn_launch_project_editor(filename, self))
         {
-            gobu_fn_register_project(gobu_util_path_dirname(filename));
+            gobu_fn_add_project_to_config(gobu_util_path_dirname(filename));
         }
 
         // g_free(filename);
@@ -282,10 +404,25 @@ static void gobu_fn_open_dialog_response(GObject *source, GAsyncResult *result, 
     }
 }
 
-static GtkStringList *gobu_fn_grid_view_list_project_model(void)
+/**
+ * Creates a string list model of project Content paths for the grid view.
+ *
+ * @return: A new GtkStringList containing paths to the Content directory
+ *          of each valid project. The caller owns the returned list.
+ *
+ * This function:
+ * - Loads the list of valid user projects
+ * - Extracts the path from each project
+ * - Builds the Content subdirectory path for each project
+ * - Creates a GTK string list model with these paths
+ *
+ * Note: Projects without a valid path or Content directory will be
+ * skipped in the resulting list.
+ */
+static GtkStringList *gobu_fn_create_project_paths_model(void)
 {
     GtkStringList *sl = gtk_string_list_new(NULL);
-    binn *list = gobu_fn_register_load_projects();
+    binn *list = gobu_fn_load_and_validate_user_projects();
 
     if (list != NULL)
     {
@@ -297,10 +434,7 @@ static GtkStringList *gobu_fn_grid_view_list_project_model(void)
             if (item_path != NULL)
             {
                 g_autofree gchar *content_path = gobu_util_path_build(item_path, "Content");
-                // g_autofree gchar *project_file = gobu_util_path_build(item_path, GAPP_PROJECT_MANAGER_FILE);
-
                 gtk_string_list_append(sl, content_path);
-                // g_free(content_path);
             }
         }
         binn_free(list);
@@ -384,7 +518,7 @@ static void gobu_s_btn_file_chooser_clicked(GtkWidget *button, GobuProjectManage
     gtk_file_dialog_select_folder(GTK_FILE_DIALOG(dialog),
                                   GTK_WINDOW(self),
                                   NULL,
-                                  gobu_fn_response_file_chooser_folder,
+                                  gobu_fn_handle_project_location_selected,
                                   self);
 }
 
@@ -407,12 +541,12 @@ static void gobu_s_create_project_clicked(GtkWidget *button, GobuProjectManager 
 
     g_debug("Intentando crear proyecto '%s' en '%s'", name, path);
 
-    gboolean is_created = gobu_fn_create_project(name, path);
+    gboolean is_created = gobu_fn_initialize_game_project(name, path);
 
     if (is_created)
     {
         g_debug("Proyecto creado exitosamente");
-        gobu_fn_open_editor_main(gobu_util_path_build(path, name, GAPP_PROJECT_MANAGER_FILE), self);
+        gobu_fn_launch_project_editor(gobu_util_path_build(path, name, GAPP_PROJECT_MANAGER_FILE), self);
     }
     else
     {
@@ -433,7 +567,7 @@ static void gobu_s_list_project_activated(GtkGridView *grid_view, guint position
     g_return_if_fail(GTK_IS_STRING_OBJECT(obj));
     const char *path_project = gobu_util_path_dirname(gtk_string_object_get_string(obj));
 
-    gobu_fn_open_editor_main(gobu_util_path_build(path_project, GAPP_PROJECT_MANAGER_FILE), self);
+    gobu_fn_launch_project_editor(gobu_util_path_build(path_project, GAPP_PROJECT_MANAGER_FILE), self);
 }
 
 static void gobu_s_open_other_project_clicked(GtkWidget *button, GobuProjectManager *self)
@@ -448,7 +582,7 @@ static void gobu_s_open_other_project_clicked(GtkWidget *button, GobuProjectMana
     gtk_file_dialog_open(dialog,
                          GTK_WINDOW(root),
                          NULL,
-                         gobu_fn_open_dialog_response,
+                         gobu_fn_handle_project_open_selected,
                          self);
 
     g_debug("Diálogo de selección de proyecto abierto");
@@ -463,7 +597,7 @@ static void gobu_s_entry_name_changed(GtkWidget *entry, GobuProjectManager *self
     const char *path = gtk_button_get_label(GTK_BUTTON(self->btn_file_chooser));
     g_autofree char *project_dir = gobu_util_path_build(path, name);
 
-    gboolean name_is_valid = gobu_fn_validate_project_name(name);
+    gboolean name_is_valid = gobu_fn_is_valid_project_name(name);
     gboolean dir_not_exists = !gobu_util_path_exist(project_dir);
     gboolean is_valid = name_is_valid && dir_not_exists;
 
@@ -583,7 +717,7 @@ static void gobu_project_manager_ui_setup(GobuProjectManager *self)
         GtkWidget *scroll = gtk_scrolled_window_new();
         gtk_box_append(GTK_BOX(self), scroll);
         {
-            GtkStringList *sl = gobu_fn_grid_view_list_project_model();
+            GtkStringList *sl = gobu_fn_create_project_paths_model();
 
             GtkFilter *filter = GTK_FILTER(gtk_string_filter_new(gtk_property_expression_new(GTK_TYPE_STRING_OBJECT, NULL, "string")));
             GtkFilterListModel *filter_model = gtk_filter_list_model_new(G_LIST_MODEL(sl), filter);

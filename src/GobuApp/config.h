@@ -52,6 +52,7 @@
 #define GAPP_PROJECT_MANAGER_PREVIEW "sample.png"
 #define GAPP_PROJECT_MANAGER_ICON    "image-missing-symbolic"
 #define GAPP_PROJECT_MANAGER_FILE    "game.gobuproject"
+#define GAPP_PROJECT_GAME_FILE       "gameWorld.gobuproject"
 
 #endif // CONFIG_H
 

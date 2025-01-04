@@ -23,11 +23,8 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(GappMain, gapp_main, GAPP, MAIN, GtkApplication)
 
 GObject *gapp_get_editor_instance(void);
-GObject *gapp_get_config_instance(void);
 ecs_world_t *gapp_get_world_instance(void);
 GtkWindow *gapp_get_window_instance(void);
-
-GdkPaintable *gapp_get_resource_icon(GappResourceIcon icon);
 
 void gapp_open_project(GappMain *self, const gchar *path);
 
