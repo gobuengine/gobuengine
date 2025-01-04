@@ -257,12 +257,12 @@ void gapp_project_setting_show(GappProjectSetting *self)
 
 void gapp_project_settings_set_name(ecs_world_t *world, const char *name)
 {
-    gb_core_project_settings1_t *settings = ecs_get(world, projectSettings, gb_core_project_settings1_t);
+    gb_core_project_settings1_t *settings = ecs_get(world, gobu_ecs_project_settings(), gb_core_project_settings1_t);
     settings->name = gobu_util_string(name);
 }
 
 const char *gapp_project_settings_name(ecs_world_t *world)
 {
-    gb_core_project_settings1_t *settings = ecs_get_mut(world, projectSettings, gb_core_project_settings1_t);
+    gb_core_project_settings1_t *settings = ecs_get_mut(world, gobu_ecs_project_settings(), gb_core_project_settings1_t);
     return settings->name;
 }

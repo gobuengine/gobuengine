@@ -393,8 +393,6 @@ bool gobu_ecs_load_from_file(ecs_world_t *world, const char *filename);
 
 void gobu_ecs_project_settings_init(ecs_world_t *ecs, const char *name);
 ecs_entity_t gobu_ecs_project_settings(void);
-void gobu_ecs_project_settings_set_name(ecs_world_t *world, const char *name);
-const char *gobu_ecs_project_settings_get_name(ecs_world_t *world);
 
 ecs_entity_t gobu_ecs_entity_new_low(ecs_world_t *world, ecs_entity_t parent);
 ecs_entity_t gobu_ecs_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name);
