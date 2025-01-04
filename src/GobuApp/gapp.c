@@ -184,7 +184,7 @@ static void gapp_signal_observer_scene_open(ecs_iter_t *it)
     for (int i = 0; i < it->count; i++)
     {
         ecs_entity_t entity = it->entities[i];
-        inspectorSetEntity(self->inspector, it->world, gobu_scene_get_open(it->world));
+        inspectorSetEntity(self->inspector, it->world, gobu_ecs_scene_get_open(it->world));
     }
 }
 
@@ -368,9 +368,9 @@ void gapp_open_project(GappMain *self, const gchar *path)
     {
         g_warning("Failed to load project world");
     }else 
-        gobu_scene_reload(self->world);
+        gobu_ecs_scene_reload(self->world);
 
-    g_autofree gchar *title = gobu_util_string_format("%s - %s", GAPP_VERSION_STR, gapp_project_setting_get_name(self->world));
+    g_autofree gchar *title = gobu_util_string_format("%s - %s", GAPP_VERSION_STR, gapp_project_settings_name(self->world));
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
 

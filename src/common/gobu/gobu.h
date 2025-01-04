@@ -245,6 +245,7 @@ typedef struct
     ecs_f32_t segments;
 } gb_shape_rec_t;
 
+// MARK: CORE SCENE
 typedef struct
 {
     ecs_entity_t PreDraw;
@@ -254,7 +255,6 @@ typedef struct
     ecs_entity_t ClearDraw;
 } gb_core_scene_phases_t;
 
-// MARK: CORE COMPONENT
 typedef struct
 {
     gb_color_t color;
@@ -263,39 +263,40 @@ typedef struct
 
 typedef struct
 {
-    float gravity;
+    ecs_u32_t gravity;
     gb_vec2_t gravityDirection;
     bool enabled;
     bool debug;
-} gb_core_physics_t;
+} gb_core_scene_physics_t;
 
 typedef struct
 {
     bool enabled;
     ecs_u32_t size;
-} gb_core_grid_t;
+} gb_core_scene_grid_t;
 
-typedef struct 
+// MARK: PROJECT SETTINGS
+typedef struct
+{
+    ecs_string_t name;
+    ecs_string_t description;
+    ecs_string_t author;
+}gb_core_project_settings1_t;
+
+typedef struct
+{
+    ecs_string_t name;
+    ecs_string_t version;
+    ecs_string_t publisher;
+}gb_core_project_settings2_t;
+
+typedef struct
 {
     gb_size_t resolution;
     int targetFps;
     gb_resolution_mode_t resolutionMode;
     gb_scale_mode_t scaleMode;
-}gb_core_rendering_t;
-
-typedef struct 
-{
-    ecs_string_t name;
-    ecs_string_t description;
-    ecs_string_t author;
-}gb_core_game_info_t;
-
-typedef struct 
-{
-    ecs_string_t name;
-    ecs_string_t version;
-    ecs_string_t publisher;
-}gb_core_game_packaging_t;
+}gb_core_project_settings3_t;
 
 // MARK: GFXBACKEND
 gfx_backend_t *gfxb_viewport_create(void);
@@ -355,12 +356,12 @@ extern ECS_TAG_DECLARE(gbOnSceneCreate);
 
 extern ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
 extern ECS_COMPONENT_DECLARE(gb_core_scene_t);
-extern ECS_COMPONENT_DECLARE(gb_core_physics_t);
-extern ECS_COMPONENT_DECLARE(gb_core_grid_t);
+extern ECS_COMPONENT_DECLARE(gb_core_scene_physics_t);
+extern ECS_COMPONENT_DECLARE(gb_core_scene_grid_t);
 // game project settings
-extern ECS_COMPONENT_DECLARE(gb_core_rendering_t);
-extern ECS_COMPONENT_DECLARE(gb_core_game_info_t);
-extern ECS_COMPONENT_DECLARE(gb_core_game_packaging_t);
+extern ECS_COMPONENT_DECLARE(gb_core_project_settings1_t);
+extern ECS_COMPONENT_DECLARE(gb_core_project_settings2_t);
+extern ECS_COMPONENT_DECLARE(gb_core_project_settings3_t);
 
 // extern ECS_COMPONENT_DECLARE(gbSceneActive);
 extern ECS_COMPONENT_DECLARE(gb_origin_t);
@@ -389,9 +390,11 @@ void gobu_ecs_free(ecs_world_t *ecs);
 void gobu_ecs_process(ecs_world_t *ecs, float deltaTime);
 void gobu_ecs_save_to_file(ecs_world_t *world, const char *filename);
 bool gobu_ecs_load_from_file(ecs_world_t *world, const char *filename);
-void gobu_ecs_project_settings_init(ecs_world_t *ecs);
-gb_core_rendering_t *gobu_ecs_get_project_settings(ecs_world_t *ecs);
-ecs_entity_t gobu_ecs_project_settings(ecs_world_t *ecs);
+
+void gobu_ecs_project_settings_init(ecs_world_t *ecs, const char *name);
+ecs_entity_t gobu_ecs_project_settings(void);
+void gobu_ecs_project_settings_set_name(ecs_world_t *world, const char *name);
+const char *gobu_ecs_project_settings_get_name(ecs_world_t *world);
 
 ecs_entity_t gobu_ecs_entity_new_low(ecs_world_t *world, ecs_entity_t parent);
 ecs_entity_t gobu_ecs_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name);
@@ -405,17 +408,17 @@ void gobu_ecs_add_component_name(ecs_world_t *world, ecs_entity_t entity, const 
 ecs_entity_t gobu_ecs_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_action_t callback, void *ctx);
 void gobu_ecs_emit(ecs_world_t *world, ecs_entity_t event, ecs_entity_t entity);
 
-ecs_entity_t gobu_scene_new(ecs_world_t *world, const char *name);
-ecs_entity_t gobu_scene_clone(ecs_world_t *world, ecs_entity_t entity);
-void gobu_scene_delete(ecs_world_t *world, ecs_entity_t entity);
-void gobu_scene_open(ecs_world_t *world, ecs_entity_t entity);
-ecs_entity_t gobu_scene_get_open(ecs_world_t *world);
-void gobu_scene_reload(ecs_world_t *world);
-int gobu_scene_count(ecs_world_t *world);
-ecs_entity_t gobu_scene_get_by_name(ecs_world_t *world, const char *name);
-void gobu_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name);
-bool gobu_scene_has(ecs_world_t *world, ecs_entity_t entity);
-void gobu_scene_process(ecs_world_t *world, ecs_entity_t root, float delta);
+ecs_entity_t gobu_ecs_scene_new(ecs_world_t *world, const char *name);
+ecs_entity_t gobu_ecs_scene_clone(ecs_world_t *world, ecs_entity_t entity);
+void gobu_ecs_scene_delete(ecs_world_t *world, ecs_entity_t entity);
+void gobu_ecs_scene_open(ecs_world_t *world, ecs_entity_t entity);
+ecs_entity_t gobu_ecs_scene_get_open(ecs_world_t *world);
+void gobu_ecs_scene_reload(ecs_world_t *world);
+int gobu_ecs_scene_count(ecs_world_t *world);
+ecs_entity_t gobu_ecs_scene_get_by_name(ecs_world_t *world, const char *name);
+void gobu_ecs_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name);
+bool gobu_ecs_scene_has(ecs_world_t *world, ecs_entity_t entity);
+void gobu_ecs_scene_process(ecs_world_t *world, ecs_entity_t root, float delta);
 
 // MARK: UTIL
 #define gobu_util_path_build(...) gobu_util_path_build_(__VA_ARGS__, NULL)

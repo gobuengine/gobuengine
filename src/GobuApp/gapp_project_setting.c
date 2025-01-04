@@ -215,6 +215,7 @@ static GtkWidget *gapp_project_setting_input_text_view_new(void)
 static GtkWidget *gapp_project_setting_input_number_new(const char *tooltip, double min, double max, double step)
 {
     GtkWidget *number_spin = gtk_spin_button_new_with_range(min, max, step);
+    gapp_widget_set_noscroll_focus(number_spin);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), 0);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
@@ -254,7 +255,14 @@ void gapp_project_setting_show(GappProjectSetting *self)
     gtk_window_present(GTK_WINDOW(self));
 }
 
-const char *gapp_project_setting_get_name(ecs_world_t *world)
+void gapp_project_settings_set_name(ecs_world_t *world, const char *name)
 {
-    return "";
+    gb_core_project_settings1_t *settings = ecs_get(world, projectSettings, gb_core_project_settings1_t);
+    settings->name = gobu_util_string(name);
+}
+
+const char *gapp_project_settings_name(ecs_world_t *world)
+{
+    gb_core_project_settings1_t *settings = ecs_get_mut(world, projectSettings, gb_core_project_settings1_t);
+    return settings->name;
 }

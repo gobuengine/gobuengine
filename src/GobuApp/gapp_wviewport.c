@@ -144,7 +144,7 @@ GappViewport *gapp_widget_viewport_new(void)
     return g_object_new(GAPP_WIDGET_TYPE_VIEWPORT, NULL);
 }
 
-gfx_backend_t *gapp_widget_viewport_get_context_render(GappViewport *self)
+gfx_backend_t *gapp_widget_viewport_context(GappViewport *self)
 {
     g_return_val_if_fail(GAPP_WIDGET_IS_VIEWPORT(self), NULL);
     return self->context_render;

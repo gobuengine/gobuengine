@@ -127,7 +127,7 @@ void inspectorSetEntity(GappInspector *self, ecs_world_t *world, ecs_entity_t en
     self->entity = entity;
     self->world = world;
 
-    bool is_scene = gobu_scene_has(world, entity);
+    bool is_scene = gobu_ecs_scene_has(world, entity);
 
     if (!is_scene)
         inspectorWidgetCreateComponentDefaultEntity(self, self->size_group);

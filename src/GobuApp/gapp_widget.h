@@ -50,6 +50,8 @@ extern "C"
     void gapp_widget_entry_set_text(GtkEntry *entry, const gchar *text);
     const gchar *gapp_widget_entry_get_text(GtkEntry *entry);
 
+    void gapp_widget_set_noscroll_focus(GtkWidget *widget);
+
 #ifdef __cplusplus
 }
 #endif

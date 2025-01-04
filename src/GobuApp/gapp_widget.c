@@ -254,3 +254,16 @@ const gchar *gapp_widget_entry_get_text(GtkEntry *entry)
 {
     return gtk_entry_buffer_get_text(gtk_entry_get_buffer(entry));
 }
+
+// spinbutton
+static gboolean input_number_on_scroll_event(GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpointer user_data)
+{
+    return TRUE; // Evita que el evento se propague al spin button
+}
+
+void gapp_widget_set_noscroll_focus(GtkWidget *widget)
+{
+    GtkEventController *scroll_controller = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_BOTH_AXES);
+    g_signal_connect(scroll_controller, "scroll", G_CALLBACK(input_number_on_scroll_event), NULL);
+    gtk_widget_add_controller(GTK_WIDGET(widget), scroll_controller);
+}

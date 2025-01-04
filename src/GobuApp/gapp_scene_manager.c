@@ -96,7 +96,7 @@ static TSceneItem *tscene_item_new(ecs_entity_t entity, const gchar *name)
 static void tscene_item_set_name(TSceneItem *self, const gchar *name)
 {
     g_object_set(self, "name", name, NULL);
-    gobu_scene_rename(GWORLD, self->entity, name);
+    gobu_ecs_scene_rename(GWORLD, self->entity, name);
 
     g_autofree gchar *thumbnail_path = gobu_util_path_build(gapp_get_project_path(), "saved", gobu_util_string_format("scene_thumbnail_%s.jpg", name));
     if (gobu_util_path_exist(thumbnail_path))
@@ -244,7 +244,7 @@ static void signal_grid_view_activated(GtkGridView *view, guint position, GappSc
     GtkNoSelection *selection = gtk_grid_view_get_model(view);
     TSceneItem *item = TSCENEITEM_ITEM(g_object_ref(g_list_model_get_item(G_LIST_MODEL(selection), position)));
 
-    gobu_scene_open(GWORLD, item->entity);
+    gobu_ecs_scene_open(GWORLD, item->entity);
     // gtk_widget_add_css_class(gtk_widget_get_ancestor(item->icon, GTK_TYPE_BOX) , "active_scene");
     gtk_window_close(GTK_WINDOW(self));
 }
@@ -310,7 +310,7 @@ static void signal_factory_bind_item(GtkListItemFactory *factory, GtkListItem *l
 
 static void signal_create_scene(GtkWidget *widget, GappSceneManager *self)
 {
-    gobu_scene_new(GWORLD, "Scene");
+    gobu_ecs_scene_new(GWORLD, "Scene");
 }
 
 static void signal_observer_scene_create(ecs_iter_t *it)
@@ -350,7 +350,7 @@ static void signal_gesture_menu_context_list_item(GtkGesture *gesture, guint n_p
 
             gtk_box_append(GTK_BOX(vbox), gapp_widget_separator_h());
 
-            bool is_remove = (gobu_scene_count(GWORLD) > 1 && gobu_scene_get_open(GWORLD) != entityScene);
+            bool is_remove = (gobu_ecs_scene_count(GWORLD) > 1 && gobu_ecs_scene_get_open(GWORLD) != entityScene);
 
             GtkWidget *btn_delete = gapp_widget_button_new_icon_with_label("user-trash-full-symbolic", "Delete");
             gtk_widget_set_sensitive(btn_delete, is_remove);
@@ -368,7 +368,7 @@ static void signal_rename_scene_response(GtkWidget *button, GappWidgetDialogEntr
     GappSceneManager *self = g_object_get_data(G_OBJECT(dialog->data), "GappSceneManager");
 
     const char *name = gapp_widget_entry_get_text(GTK_ENTRY(dialog->entry));
-    if (gobu_scene_get_by_name(GWORLD, name) > 0)
+    if (gobu_ecs_scene_get_by_name(GWORLD, name) > 0)
         gtk_widget_add_css_class(dialog->entry, "error");
     else
     {
@@ -404,7 +404,7 @@ static void signal_duplicate_scene(GtkWidget *button, GtkListItem *list_item)
     TSceneItem *item = gtk_list_item_get_item(list_item);
     GappSceneManager *self = g_object_get_data(G_OBJECT(list_item), "GappSceneManager");
 
-    ecs_entity_t clone = gobu_scene_clone(GWORLD, item->entity);
+    ecs_entity_t clone = gobu_ecs_scene_clone(GWORLD, item->entity);
     gapp_scene_manager_append(self->store, clone);
 }
 
@@ -418,7 +418,7 @@ static void signal_delete_scene_response(GtkAlertDialog *dialog, GAsyncResult *r
         GappSceneManager *self = g_object_get_data(G_OBJECT(list_item), "GappSceneManager");
         guint position = gtk_list_item_get_position(list_item);
 
-        gobu_scene_delete(GWORLD, item->entity);
+        gobu_ecs_scene_delete(GWORLD, item->entity);
         g_list_store_remove(self->store, position);
     }
 }

@@ -17,12 +17,13 @@ ECS_TAG_DECLARE(gbOnSceneCreate);
 
 ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
 ECS_COMPONENT_DECLARE(gb_core_scene_t);
-ECS_COMPONENT_DECLARE(gb_core_physics_t);
-ECS_COMPONENT_DECLARE(gb_core_grid_t);
+ECS_COMPONENT_DECLARE(gb_core_scene_physics_t);
+ECS_COMPONENT_DECLARE(gb_core_scene_grid_t);
+
 // game project settings
-ECS_COMPONENT_DECLARE(gb_core_rendering_t);
-ECS_COMPONENT_DECLARE(gb_core_game_info_t);
-ECS_COMPONENT_DECLARE(gb_core_game_packaging_t);
+ECS_COMPONENT_DECLARE(gb_core_project_settings1_t);
+ECS_COMPONENT_DECLARE(gb_core_project_settings2_t);
+ECS_COMPONENT_DECLARE(gb_core_project_settings3_t);
 
 // ECS_COMPONENT_DECLARE(gbSceneActive);
 ECS_COMPONENT_DECLARE(gb_origin_t);
@@ -54,8 +55,13 @@ ecs_world_t *gobu_ecs_init(void)
 {
     ecs_world_t *ecs = ecs_init();
     ECS_IMPORT(ecs, gobucore);
-    if (projectSettings == 0)
-        gobu_ecs_project_settings_init(ecs);
+
+    // Esto es para crear el project settings siempre
+    // esto ayuda a que siempre exista un project settings
+    // con valores por defecto y si se agrega un valor nuevo
+    // se actualizara en el archivo de proyecto.
+    gobu_ecs_project_settings_init(ecs, "New Project");
+
     return ecs;
 }
 
@@ -79,40 +85,38 @@ bool gobu_ecs_load_from_file(ecs_world_t *world, const char *filename)
     if (gobu_util_exist_file(filename) == false)
         return false;
 
-    const char *json = ecs_world_from_json_file(world, filename, NULL);
-    return json == NULL ? false : true;
+    return ecs_world_from_json_file(world, filename, NULL) == NULL ? false : true;
 }
 
-void gobu_ecs_project_settings_init(ecs_world_t *ecs)
+// -----------------
+// NOTE MARK: project settings
+// -----------------
+void gobu_ecs_project_settings_init(ecs_world_t *ecs, const char *name)
 {
     projectSettings = ecs_new_low_id(ecs);
+    // ecs_set_name(ecs, projectSettings, gobu_util_string("ProjectSettings"));
 
-    ecs_set(ecs, projectSettings, gb_core_rendering_t, {
+    ecs_set(ecs, projectSettings, gb_core_project_settings1_t, {
+        .name = gobu_util_string(name),
+        .description = gobu_util_string(""),
+        .author = gobu_util_string("")
+    });
+
+    ecs_set(ecs, projectSettings, gb_core_project_settings2_t, {
+        .name = gobu_util_string("com.example.game"),
+        .version = gobu_util_string("1.0.0"),
+        .publisher = gobu_util_string("[Publisher]")
+    });
+
+    ecs_set(ecs, projectSettings, gb_core_project_settings3_t, {
         .resolution = {1280, 720},
         .targetFps = 60,
         .resolutionMode = GB_RESIZE_MODE_NO_CHANGE,
         .scaleMode = GB_SCALE_MODE_LINEAR
     });
-
-    ecs_set(ecs, projectSettings, gb_core_game_info_t, {
-        .name = gobu_util_string("Game Name"),
-        .description = gobu_util_string("Game Description"),
-        .author = gobu_util_string("Author")
-    });
-
-    ecs_set(ecs, projectSettings, gb_core_game_packaging_t, {
-        .name = gobu_util_string("com.example.game"),
-        .version = gobu_util_string("1.0.0"),
-        .publisher = gobu_util_string("[Publisher]")
-    });
 }
 
-gb_core_rendering_t *gobu_ecs_get_project_settings(ecs_world_t *ecs)
-{
-    return ecs_get_mut(ecs, projectSettings, gb_core_rendering_t);
-}
-
-ecs_entity_t gobu_ecs_project_settings(ecs_world_t *ecs)
+ecs_entity_t gobu_ecs_project_settings(void)
 {
     return projectSettings;
 }
@@ -200,7 +204,7 @@ void gobu_ecs_emit(ecs_world_t *world, ecs_entity_t event, ecs_entity_t entity)
 // -----------------
 // NOTE MARK: Entity SCENE
 // -----------------
-ecs_entity_t gobu_scene_new(ecs_world_t *world, const char *name)
+ecs_entity_t gobu_ecs_scene_new(ecs_world_t *world, const char *name)
 {
     g_autofree gchar *new_name = gobu_util_string_format("WorldScene.%s", name);
 
@@ -211,15 +215,15 @@ ecs_entity_t gobu_scene_new(ecs_world_t *world, const char *name)
 
     ecs_entity_t scene = ecs_entity(world, {.name = gobu_util_string(new_name), .add = ecs_ids(gbTagScene)});
     ecs_set(world, scene, gb_core_scene_t, {.color = GOBUWHITE });
-    ecs_set(world, scene, gb_core_physics_t, {.enabled = TRUE, .debug = FALSE, .gravity = 980, .gravityDirection = {0, -1}});
-    ecs_set(world, scene, gb_core_grid_t, {.size = 32, .enabled = TRUE});
+    ecs_set(world, scene, gb_core_scene_physics_t, {.enabled = TRUE, .debug = FALSE, .gravity = 980, .gravityDirection = {0, -1}});
+    ecs_set(world, scene, gb_core_scene_grid_t, {.size = 32, .enabled = TRUE});
     ecs_enable(world, scene, FALSE);
     gobu_ecs_emit(world, gbOnSceneCreate, scene);
 
     return scene;
 }
 
-ecs_entity_t gobu_scene_clone(ecs_world_t *world, ecs_entity_t entity)
+ecs_entity_t gobu_ecs_scene_clone(ecs_world_t *world, ecs_entity_t entity)
 {
     const char *orig_name = ecs_get_name(world, entity);
 
@@ -238,15 +242,15 @@ ecs_entity_t gobu_scene_clone(ecs_world_t *world, ecs_entity_t entity)
     return scene_clone;
 }
 
-void gobu_scene_delete(ecs_world_t *world, ecs_entity_t entity)
+void gobu_ecs_scene_delete(ecs_world_t *world, ecs_entity_t entity)
 {
     gobu_ecs_emit(world, gbOnSceneDelete, entity);
     ecs_delete(world, entity);
 }
 
-void gobu_scene_open(ecs_world_t *world, ecs_entity_t entity)
+void gobu_ecs_scene_open(ecs_world_t *world, ecs_entity_t entity)
 {
-    ecs_entity_t scene_active = gobu_scene_get_open(world);
+    ecs_entity_t scene_active = gobu_ecs_scene_get_open(world);
     if (scene_active > 0)
         ecs_enable(world, scene_active, FALSE);
 
@@ -254,7 +258,7 @@ void gobu_scene_open(ecs_world_t *world, ecs_entity_t entity)
     gobu_ecs_emit(world, gbOnSceneOpen, entity);
 }
 
-ecs_entity_t gobu_scene_get_open(ecs_world_t *world)
+ecs_entity_t gobu_ecs_scene_get_open(ecs_world_t *world)
 {
     ecs_query_t *q = ecs_query(world, {.terms = {{gbTagScene}}});
     ecs_iter_t it = ecs_query_iter(world, q);
@@ -263,38 +267,38 @@ ecs_entity_t gobu_scene_get_open(ecs_world_t *world)
     return scene;
 }
 
-void gobu_scene_reload(ecs_world_t *world)
+void gobu_ecs_scene_reload(ecs_world_t *world)
 {
-    ecs_entity_t scene_active = gobu_scene_get_open(world);
+    ecs_entity_t scene_active = gobu_ecs_scene_get_open(world);
     if (scene_active > 0)
     {
-        gobu_scene_open(world, scene_active);
+        gobu_ecs_scene_open(world, scene_active);
     }
 }
 
-int gobu_scene_count(ecs_world_t *world)
+int gobu_ecs_scene_count(ecs_world_t *world)
 {
     return ecs_count(world, gbTagScene);
 }
 
-ecs_entity_t gobu_scene_get_by_name(ecs_world_t *world, const char *name)
+ecs_entity_t gobu_ecs_scene_get_by_name(ecs_world_t *world, const char *name)
 {
     ecs_entity_t parent = ecs_lookup(world, "WorldScene");
     return ecs_lookup_child(world, parent, name);
 }
 
-void gobu_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name)
+void gobu_ecs_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name)
 {
     ecs_set_name(world, entity, name);
     gobu_ecs_emit(world, gbOnSceneRename, entity);
 }
 
-bool gobu_scene_has(ecs_world_t *world, ecs_entity_t entity)
+bool gobu_ecs_scene_has(ecs_world_t *world, ecs_entity_t entity)
 {
     return ecs_has(world, entity, gbTagScene);
 }
 
-void gobu_scene_process(ecs_world_t *world, ecs_entity_t root, float delta)
+void gobu_ecs_scene_process(ecs_world_t *world, ecs_entity_t root, float delta)
 {
     // // process
     // gb_transform_t *transform = ecs_get(world, root, gb_transform_t);
@@ -318,7 +322,7 @@ void gobu_scene_process(ecs_world_t *world, ecs_entity_t root, float delta)
     //     for (int i = 0; i < it.count; i++)
     //     {
     //         ecs_entity_t entity = it.entities[i];
-    //         gobu_scene_process(world, entity, delta);
+    //         gobu_ecs_scene_process(world, entity, delta);
     //     }
     // }
 }
@@ -384,12 +388,12 @@ static void gobucoreImport(ecs_world_t *world)
 
     ECS_COMPONENT_DEFINE(world, gb_core_scene_phases_t);
     ECS_COMPONENT_DEFINE(world, gb_core_scene_t);
-    ECS_COMPONENT_DEFINE(world, gb_core_physics_t);
-    ECS_COMPONENT_DEFINE(world, gb_core_grid_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_scene_physics_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_scene_grid_t);
     // game project settings
-    ECS_COMPONENT_DEFINE(world, gb_core_rendering_t);
-    ECS_COMPONENT_DEFINE(world, gb_core_game_info_t);
-    ECS_COMPONENT_DEFINE(world, gb_core_game_packaging_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_project_settings1_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_project_settings2_t);
+    ECS_COMPONENT_DEFINE(world, gb_core_project_settings3_t);
 
     // ECS_COMPONENT_DEFINE(world, gbSceneActive);
     ECS_COMPONENT_DEFINE(world, gb_origin_t);
@@ -518,6 +522,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
+// MARK: COMPONENT DRAW
     ecs_struct(world, {
         .entity = ecs_id(gb_text_t),
         .members = {
@@ -570,11 +575,12 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
+// MARK: CORE SCENE 
     ecs_struct(world, {
-        .entity = ecs_id(gb_core_physics_t),
+        .entity = ecs_id(gb_core_scene_grid_t),
         .members = {
-            {.name = "gravity", .type = ecs_id(ecs_f32_t)},
-            {.name = "gravityDirection", .type = ecs_id(gb_vec2_t)},
+            {.name = "enabled", .type = ecs_id(ecs_bool_t)},
+            {.name = "size", .type = ecs_id(ecs_u32_t)},
         },
     });
 
@@ -586,26 +592,16 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
     ecs_struct(world, {
-        .entity = ecs_id(gb_core_grid_t),
+        .entity = ecs_id(gb_core_scene_physics_t),
         .members = {
-            {.name = "enabled", .type = ecs_id(ecs_bool_t)},
-            {.name = "size", .type = ecs_id(ecs_u32_t)},
+            {.name = "gravity", .type = ecs_id(ecs_u32_t)},
+            {.name = "gravityDirection", .type = ecs_id(gb_vec2_t)},
         },
     });
 
-    // game project settings
+// MARK: PROJECT SETTINGS
     ecs_struct(world, {
-        .entity = ecs_id(gb_core_rendering_t),
-        .members = {
-            {.name = "resolution", .type = ecs_id(gb_size_t)},
-            {.name = "targetFps", .type = ecs_id(ecs_u32_t)},
-            {.name = "resolutionMode", .type = ecs_id(gb_resolution_mode_t)},
-            {.name = "scaleMode", .type = ecs_id(gb_scale_mode_t)},
-        },
-    });
-
-    ecs_struct(world, {
-        .entity = ecs_id(gb_core_game_info_t),
+        .entity = ecs_id(gb_core_project_settings1_t),
         .members = {
             {.name = "name", .type = ecs_id(ecs_string_t)},
             {.name = "description", .type = ecs_id(ecs_string_t)},
@@ -614,7 +610,7 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
     ecs_struct(world, {
-        .entity = ecs_id(gb_core_game_packaging_t),
+        .entity = ecs_id(gb_core_project_settings2_t),
         .members = {
             {.name = "name", .type = ecs_id(ecs_string_t)},
             {.name = "version", .type = ecs_id(ecs_string_t)},
@@ -622,7 +618,17 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    // system and pipelines
+    ecs_struct(world, {
+        .entity = ecs_id(gb_core_project_settings3_t),
+        .members = {
+            {.name = "resolution", .type = ecs_id(gb_size_t)},
+            {.name = "targetFps", .type = ecs_id(ecs_u32_t)},
+            {.name = "resolutionMode", .type = ecs_id(gb_resolution_mode_t)},
+            {.name = "scaleMode", .type = ecs_id(gb_scale_mode_t)},
+        },
+    });
+
+// MARK: System and pipelines
     gbCoreScenePhases.PreDraw = ecs_new_w_id(world, EcsPhase);
     gbCoreScenePhases.Background = ecs_new_w_id(world, EcsPhase);
     gbCoreScenePhases.Draw = ecs_new_w_id(world, EcsPhase);

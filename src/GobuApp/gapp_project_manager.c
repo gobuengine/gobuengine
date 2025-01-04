@@ -262,7 +262,8 @@ static gboolean gobu_fn_initialize_game_project(const gchar *name, const gchar *
         {
             // WORLD + SCENE INIT
             ecs_world_t *world = gobu_ecs_init();
-            gobu_scene_open(world, gobu_scene_new(world, "Main"));
+            gobu_ecs_project_settings_set_name(world, name);
+            gobu_ecs_scene_open(world, gobu_ecs_scene_new(world, "Main"));
             gobu_ecs_save_to_file(world, gobu_util_path_build(project_dir, GAPP_PROJECT_GAME_FILE));
             gobu_ecs_free(world);
 

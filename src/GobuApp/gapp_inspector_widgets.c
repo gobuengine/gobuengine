@@ -129,6 +129,7 @@ static GtkWidget *inspectorWidgetCreate_NumberU32Input(ecs_meta_cursor_t cursor,
     double max = member->range.max == 0.000000 && member->range.min == 0.000000 ? UINT32_MAX : member->range.max;
 
     GtkWidget *number_spin = gtk_spin_button_new_with_range(min, max, 1.0);
+    gapp_widget_set_noscroll_focus(number_spin);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), (gdouble)*field);
@@ -147,6 +148,7 @@ static GtkWidget *inspectorWidgetCreate_NumberF64Input(ecs_meta_cursor_t cursor,
     double max = member->range.max == 0.000000 && member->range.min == 0.000000 ? INTMAX_MAX : member->range.max;
 
     GtkWidget *number_spin = gtk_spin_button_new_with_range(min, max, 0.1);
+    gapp_widget_set_noscroll_focus(number_spin);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);
@@ -166,6 +168,7 @@ static GtkWidget *inspectorWidgetCreate_NumberF32Input(ecs_meta_cursor_t cursor,
     double max = member->range.max == 0.000000 && member->range.min == 0.000000 ? INTMAX_MAX : member->range.max;
 
     GtkWidget *number_spin = gtk_spin_button_new_with_range(min, max, 0.1);
+    gapp_widget_set_noscroll_focus(number_spin);
     gtk_widget_set_valign(number_spin, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spin, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), *field);
@@ -198,6 +201,7 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
 
     GtkWidget *number_spinx = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
+    gapp_widget_set_noscroll_focus(number_spinx);
     gtk_widget_set_valign(number_spinx, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spinx, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spinx), field->x);
@@ -209,6 +213,7 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
     gtk_box_append(GTK_BOX(box), number_spinx);
 
     GtkWidget *number_spiny = gtk_spin_button_new_with_range(INTMAX_MIN, INTMAX_MAX, 0.1);
+    gapp_widget_set_noscroll_focus(number_spiny);
     gtk_widget_set_valign(number_spiny, GTK_ALIGN_CENTER);
     gtk_widget_set_hexpand(number_spiny, TRUE);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spiny), field->y);
