@@ -24,20 +24,12 @@
 #define GFXB_TEXTURE 0x1702    // TEXTURE
 
 // Some Basic Colors
-#define VIEWPORTMODEDARK \
-    (gb_color_t) { 18, 18, 18, 255 }
-#define GRIDMODEDARK \
-    (gb_color_t) { 24, 24, 24, 255 }
-    
-#define LIGHTGRAY \
-    (gb_color_t) { 211, 211, 211, 255 }
-#define GRAY \
-    (gb_color_t) { 150, 150, 150, 255 }
-#define DARKGRAY \
-    (gb_color_t) { 90, 90, 90, 255 }
-
-#define YELLOW \
-    (gb_color_t) { 255, 245, 60, 255 }
+#define VIEWPORTMODEDARK    (gb_color_t) { 18, 18, 18, 255 }
+#define GRIDMODEDARK        (gb_color_t) { 24, 24, 24, 255 }
+#define LIGHTGRAY           (gb_color_t) { 211, 211, 211, 255 }
+#define GRAY                (gb_color_t) { 150, 150, 150, 255 }
+#define DARKGRAY            (gb_color_t) { 90, 90, 90, 255 }
+#define YELLOW              (gb_color_t) { 255, 245, 60, 255 }
 #define GOLD \
     (gb_color_t) { 255, 200, 30, 255 }
 #define ORANGE \
@@ -137,6 +129,13 @@ typedef ecs_string_t gb_resource_t;
 
 typedef struct
 {
+    const char *name;
+    int type;
+    bool hidden;
+} gb_inspector_t;
+
+typedef struct
+{
     uint8_t r;
     uint8_t g;
     uint8_t b;
@@ -172,15 +171,6 @@ typedef struct
 
 typedef struct
 {
-    gb_vec2_t position;
-    gb_vec2_t scale;
-    ecs_f32_t rotation;
-    gb_origin_t origin;
-    gb_boundingbox_t box;
-} gb_transform_t;
-
-typedef struct
-{
     uint32_t id;
 } gb_image_t;
 
@@ -199,13 +189,29 @@ typedef struct gb_font_t
 
 typedef struct
 {
+    ecs_u32_t hframes;
+    ecs_u32_t vframes;
+    ecs_u32_t frame;
+} gb_frame_t;
+
+typedef struct
+{
+    gb_vec2_t position;
+    gb_vec2_t scale;
+    ecs_f32_t rotation;
+    gb_origin_t origin;
+    gb_boundingbox_t box;
+} gb_transform_t;
+
+typedef struct
+{
     ecs_string_t text;
     ecs_u32_t fontSize;
     ecs_f32_t spacing;
     gb_color_t color;
     gb_resource_t font_resource;
     gb_font_t font;
-} gb_text_t;
+} gb_comp_text_t;
 
 typedef struct
 {
@@ -216,14 +222,7 @@ typedef struct
     gb_rect_t srcRect;
     gb_rect_t dstRect;
     gb_texture_t texture;
-} gb_sprite_t;
-
-typedef struct
-{
-    ecs_u32_t hframes;
-    ecs_u32_t vframes;
-    ecs_u32_t frame;
-} gb_sprite_frame_t;
+} gb_comp_sprite_t;
 
 typedef struct
 {
@@ -232,7 +231,7 @@ typedef struct
     gb_color_t color;
     ecs_f32_t lineWidth;
     gb_color_t lineColor;
-} gb_shape_circle_t;
+} gb_comp_circle_t;
 
 typedef struct
 {
@@ -243,7 +242,7 @@ typedef struct
     ecs_f32_t lineWidth;
     gb_color_t lineColor;
     ecs_f32_t segments;
-} gb_shape_rec_t;
+} gb_comp_rectangle_t;
 
 // MARK: CORE SCENE
 typedef struct
@@ -379,11 +378,14 @@ extern ECS_COMPONENT_DECLARE(gb_transform_t);
 extern ECS_COMPONENT_DECLARE(gb_image_t);
 extern ECS_COMPONENT_DECLARE(gb_texture_t);
 extern ECS_COMPONENT_DECLARE(gb_font_t);
-extern ECS_COMPONENT_DECLARE(gb_text_t);
-extern ECS_COMPONENT_DECLARE(gb_sprite_t);
-extern ECS_COMPONENT_DECLARE(gb_sprite_frame_t);
-extern ECS_COMPONENT_DECLARE(gb_shape_circle_t);
-extern ECS_COMPONENT_DECLARE(gb_shape_rec_t);
+extern ECS_COMPONENT_DECLARE(gb_frame_t);
+extern ECS_COMPONENT_DECLARE(gb_comp_text_t);
+extern ECS_COMPONENT_DECLARE(gb_comp_sprite_t);
+extern ECS_COMPONENT_DECLARE(gb_comp_circle_t);
+extern ECS_COMPONENT_DECLARE(gb_comp_rectangle_t);
+
+#define gobu_ecs_struct(world, ...)\
+    ecs_struct_init(world, &(ecs_struct_desc_t) __VA_ARGS__ )
 
 ecs_world_t *gobu_ecs_init(void);
 void gobu_ecs_free(ecs_world_t *ecs);

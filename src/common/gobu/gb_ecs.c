@@ -41,11 +41,11 @@ ECS_COMPONENT_DECLARE(gb_transform_t);
 ECS_COMPONENT_DECLARE(gb_image_t);
 ECS_COMPONENT_DECLARE(gb_texture_t);
 ECS_COMPONENT_DECLARE(gb_font_t);
-ECS_COMPONENT_DECLARE(gb_text_t);
-ECS_COMPONENT_DECLARE(gb_sprite_t);
-ECS_COMPONENT_DECLARE(gb_sprite_frame_t);
-ECS_COMPONENT_DECLARE(gb_shape_circle_t);
-ECS_COMPONENT_DECLARE(gb_shape_rec_t);
+ECS_COMPONENT_DECLARE(gb_frame_t);
+ECS_COMPONENT_DECLARE(gb_comp_text_t);
+ECS_COMPONENT_DECLARE(gb_comp_sprite_t);
+ECS_COMPONENT_DECLARE(gb_comp_circle_t);
+ECS_COMPONENT_DECLARE(gb_comp_rectangle_t);
 
 // -----------------
 // NOTE MARK: WORLD
@@ -311,7 +311,7 @@ void gobu_ecs_scene_process(ecs_world_t *world, ecs_entity_t root, float delta)
     //     float angle = transform->rotation;
     //     gb_origin_t origin = transform->origin;
 
-    //     gb_shape_rec_t *shape = ecs_get(world, root, gb_shape_rec_t);
+    //     gb_comp_rectangle_t *shape = ecs_get(world, root, gb_comp_rectangle_t);
     //     if (shape)
     //         gobu_draw_rect(px, py, shape->width, shape->height, shape->color, shape->lineColor, shape->lineWidth, 0);
     // }
@@ -411,12 +411,13 @@ static void gobucoreImport(ecs_world_t *world)
     ECS_COMPONENT_DEFINE(world, gb_image_t);
     ECS_COMPONENT_DEFINE(world, gb_texture_t);
     ECS_COMPONENT_DEFINE(world, gb_font_t);
-    ECS_COMPONENT_DEFINE(world, gb_text_t);
-    ECS_COMPONENT_DEFINE(world, gb_sprite_t);
-    ECS_COMPONENT_DEFINE(world, gb_sprite_frame_t);
-    ECS_COMPONENT_DEFINE(world, gb_shape_circle_t);
-    ECS_COMPONENT_DEFINE(world, gb_shape_rec_t);
+    ECS_COMPONENT_DEFINE(world, gb_comp_text_t);
+    ECS_COMPONENT_DEFINE(world, gb_comp_sprite_t);
+    ECS_COMPONENT_DEFINE(world, gb_frame_t);
+    ECS_COMPONENT_DEFINE(world, gb_comp_circle_t);
+    ECS_COMPONENT_DEFINE(world, gb_comp_rectangle_t);
 
+// MARK: ENUM
     ecs_enum(world, {
         .entity = ecs_id(gb_origin_t),
         .constants = {
@@ -469,14 +470,15 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
+// MARK: DATA-COMPONENT
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_resource_t),
         .members = {
             {.name = "resource", .type = ecs_id(ecs_string_t)},
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_color_t),
         .members = {
             {.name = "r", .type = ecs_id(ecs_byte_t)},
@@ -486,7 +488,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_size_t),
         .members = {
             {.name = "width", .type = ecs_id(ecs_f32_t)},
@@ -494,7 +496,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_vec2_t),
         .members = {
             {.name = "x", .type = ecs_id(ecs_f32_t)},
@@ -502,7 +504,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_rect_t),
         .members = {
             {.name = "x", .type = ecs_id(ecs_f32_t)},
@@ -512,7 +514,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_transform_t),
         .members = {
             {.name = "position", .type = ecs_id(gb_vec2_t)},
@@ -523,8 +525,8 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: COMPONENT DRAW
-    ecs_struct(world, {
-        .entity = ecs_id(gb_text_t),
+    gobu_ecs_struct(world, {
+        .entity = ecs_id(gb_comp_text_t),
         .members = {
             {.name = "text", .type = ecs_id(ecs_string_t)},
             {.name = "fontSize", .type = ecs_id(ecs_u32_t)},
@@ -534,8 +536,8 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
-        .entity = ecs_id(gb_sprite_t),
+    gobu_ecs_struct(world, {
+        .entity = ecs_id(gb_comp_sprite_t),
         .members = {
             {.name = "texture#texture", .type = ecs_id(gb_resource_t)},
             {.name = "filter", .type = ecs_id(gb_texture_filter_t)},
@@ -544,8 +546,8 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
-        .entity = ecs_id(gb_sprite_frame_t),
+    gobu_ecs_struct(world, {
+        .entity = ecs_id(gb_frame_t),
         .members = {
             {.name = "hframes", .type = ecs_id(ecs_u32_t)},
             {.name = "vframes", .type = ecs_id(ecs_u32_t)},
@@ -553,8 +555,8 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
-        .entity = ecs_id(gb_shape_circle_t),
+    gobu_ecs_struct(world, {
+        .entity = ecs_id(gb_comp_circle_t),
         .members = {
             {.name = "radius", .type = ecs_id(ecs_f32_t)},
             {.name = "thickness", .type = ecs_id(ecs_f32_t), .range = {0, 20}},
@@ -562,8 +564,8 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
-        .entity = ecs_id(gb_shape_rec_t),
+    gobu_ecs_struct(world, {
+        .entity = ecs_id(gb_comp_rectangle_t),
         .members = {
             {.name = "width", .type = ecs_id(ecs_f32_t)},
             {.name = "height", .type = ecs_id(ecs_f32_t)},
@@ -576,7 +578,7 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: CORE SCENE 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_core_scene_grid_t),
         .members = {
             {.name = "enabled", .type = ecs_id(ecs_bool_t)},
@@ -584,14 +586,14 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_core_scene_t),
         .members = {
             {.name = "color", .type = ecs_id(gb_color_t)},
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_core_scene_physics_t),
         .members = {
             {.name = "gravity", .type = ecs_id(ecs_u32_t)},
@@ -600,16 +602,16 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: PROJECT SETTINGS
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_core_project_settings1_t),
         .members = {
             {.name = "name", .type = ecs_id(ecs_string_t)},
-            {.name = "description", .type = ecs_id(ecs_string_t)},
+            {.name = gobu_prop_inspector({.name = "description"}), .type = ecs_id(ecs_string_t)},
             {.name = "author", .type = ecs_id(ecs_string_t)},
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_core_project_settings2_t),
         .members = {
             {.name = "name", .type = ecs_id(ecs_string_t)},
@@ -618,7 +620,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    ecs_struct(world, {
+    gobu_ecs_struct(world, {
         .entity = ecs_id(gb_core_project_settings3_t),
         .members = {
             {.name = "resolution", .type = ecs_id(gb_size_t)},
@@ -643,10 +645,10 @@ static void gobucoreImport(ecs_world_t *world)
         .entity = ecs_entity(world, { .add = ecs_ids(ecs_dependson(EcsPreUpdate)) }),
         .query.terms = {
             {ecs_id(gb_transform_t)}, 
-            {ecs_id(gb_text_t), .oper = EcsOptional},
-            {ecs_id(gb_shape_circle_t), .oper = EcsOptional},
-            {ecs_id(gb_shape_rec_t), .oper = EcsOptional},
-            {ecs_id(gb_sprite_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_text_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_circle_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_rectangle_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_sprite_t), .oper = EcsOptional},
         },
         .callback = gobu_core_scene_pre_update,
     });
@@ -655,10 +657,10 @@ static void gobucoreImport(ecs_world_t *world)
         .entity = ecs_entity(world, { .add = ecs_ids(ecs_dependson(gbCoreScenePhases.Draw)) }),
         .query.terms = {
             {ecs_id(gb_transform_t)}, 
-            {ecs_id(gb_text_t), .oper = EcsOptional},
-            {ecs_id(gb_shape_circle_t), .oper = EcsOptional},
-            {ecs_id(gb_shape_rec_t), .oper = EcsOptional},
-            {ecs_id(gb_sprite_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_text_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_circle_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_rectangle_t), .oper = EcsOptional},
+            {ecs_id(gb_comp_sprite_t), .oper = EcsOptional},
         },
         .callback = gobu_core_scene_render_draw,
     });

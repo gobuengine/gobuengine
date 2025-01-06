@@ -38,7 +38,6 @@ libgobu_src = files(
     'gb_audio.c',
     'gb_ecs.c',
     'gfx_backend.c', # TODO: Move to renderer
-    'gobu.c',
     'gb_shapes.c',
     'gb_text.c',
     'gb_texture.c',

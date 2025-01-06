@@ -5,11 +5,14 @@
 #include "config.h"
 #include "gobu/gobu.h"
 
-void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component);
+// callback esta funcion se llama cuando se crea un input_field nuevo.
+typedef void (*GappPropsReadyCallback)(GtkWidget *parent, GtkWidget *input, const char *field_name, gpointer data);
 
-GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component);
+void gapp_inspector_create_component_fields(ecs_world_t *world, void *ptr, ecs_entity_t component, GtkWidget *parent, GappPropsReadyCallback fieldCallback, gpointer data);
 
-GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation);
+GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component);
+
+GtkWidget *gapp_inspector_create_field_row(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation);
 
 #endif // GAPP_INSPECTOR_WIDGETS_H
 

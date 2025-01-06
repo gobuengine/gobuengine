@@ -92,22 +92,49 @@ static void inspector_widget_signal_component_remove(GtkWidget *button, gpointer
     ecs_remove_id(world, entity, component);
 }
 
-static GtkWidget *inspectorWidgetCreate_StringInput(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_create_text_field(const char *current_text)
+{
+    GtkWidget *text_view = gtk_text_view_new();
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(text_view), GTK_WRAP_WORD_CHAR);
+    gtk_text_view_set_monospace(GTK_TEXT_VIEW(text_view), TRUE);
+    gtk_widget_set_hexpand(text_view, TRUE);
+    gtk_widget_set_size_request(GTK_WIDGET(text_view), -1, 100);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(text_view), 10);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(text_view), 10);
+    gtk_text_view_set_top_margin(GTK_TEXT_VIEW(text_view), 10);
+    gapp_widget_text_view_set_text(GTK_TEXT_VIEW(text_view), current_text);
+
+    return text_view;
+}
+
+static GtkWidget *gapp_inspector_create_string_field(ecs_meta_cursor_t cursor)
 {
     ecs_string_t **field = (ecs_string_t **)ecs_meta_get_ptr(&cursor);
     const char *current_text = ecs_meta_get_string(&cursor);
 
-    GtkWidget *entry = gtk_entry_new();
-    gtk_editable_set_text(GTK_EDITABLE(entry), current_text ? current_text : "");
-    gtk_widget_add_css_class(entry, "inspector");
-    gtk_widget_add_css_class(entry, "min-height");
+    // props input config field
+    const char *field_name = ecs_meta_get_member(&cursor);
+    const char **types = gobu_util_string_split(field_name, "#");
+    const char *type = gobu_util_string(types[1]);
+    gobu_util_string_split_free(types);
 
-    g_signal_connect(entry, "changed", G_CALLBACK(signal_input_string), field);
+    GtkWidget *input;
+    if (gobu_util_string_isequal(type, "text"))
+        input = gapp_inspector_create_text_field(current_text ? current_text : "");
+    else{
+        input = gtk_entry_new();
+        gtk_editable_set_text(GTK_EDITABLE(input), current_text ? current_text : "");
+    }
 
-    return entry;
+    gtk_widget_add_css_class(input, "inspector");
+    gtk_widget_add_css_class(input, "min-height");
+
+    g_signal_connect(input, "changed", G_CALLBACK(signal_input_string), field);
+
+    return input;
 }
 
-static GtkWidget *inspectorWidgetCreate_BoolInput(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_create_bool_field(ecs_meta_cursor_t cursor)
 {
     ecs_bool_t *field = (ecs_bool_t *)ecs_meta_get_ptr(&cursor);
 
@@ -121,7 +148,7 @@ static GtkWidget *inspectorWidgetCreate_BoolInput(ecs_meta_cursor_t cursor)
     return check;
 }
 
-static GtkWidget *inspectorWidgetCreate_NumberU32Input(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *gapp_inspector_create_number_u32_field(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_u32_t *field = (ecs_u32_t *)ecs_meta_get_ptr(&cursor);
 
@@ -140,7 +167,7 @@ static GtkWidget *inspectorWidgetCreate_NumberU32Input(ecs_meta_cursor_t cursor,
     return number_spin;
 }
 
-static GtkWidget *inspectorWidgetCreate_NumberF64Input(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *gapp_inspector_create_number_f64_field(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_f64_t *field = (ecs_f64_t *)ecs_meta_get_ptr(&cursor);
 
@@ -159,7 +186,7 @@ static GtkWidget *inspectorWidgetCreate_NumberF64Input(ecs_meta_cursor_t cursor,
     return number_spin;
 }
 
-static GtkWidget *inspectorWidgetCreate_NumberF32Input(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *gapp_inspector_create_number_f32_field(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     ecs_f32_t *field = (ecs_f32_t *)ecs_meta_get_ptr(&cursor);
     ecs_entity_t field_type = ecs_meta_get_type(&cursor);
@@ -179,7 +206,7 @@ static GtkWidget *inspectorWidgetCreate_NumberF32Input(ecs_meta_cursor_t cursor,
     return number_spin;
 }
 
-static GtkWidget *inspectorWidgetCreate_ColorInput(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_create_color_field(ecs_meta_cursor_t cursor)
 {
     gb_color_t *field = (gb_color_t *)ecs_meta_get_ptr(&cursor);
     GdkRGBA color = gb_color_to_gdk_rgba(field);
@@ -194,7 +221,7 @@ static GtkWidget *inspectorWidgetCreate_ColorInput(ecs_meta_cursor_t cursor)
     return color_button;
 }
 
-static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_create_vector2_field(ecs_meta_cursor_t cursor)
 {
     gb_vec2_t *field = (gb_vec2_t *)ecs_meta_get_ptr(&cursor);
 
@@ -230,7 +257,7 @@ static GtkWidget *inspectorWidgetCreate_Vector2Input(ecs_meta_cursor_t cursor)
     return box;
 }
 
-static GtkWidget *inspectorWidgetCreate_SizeInput(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_create_size_field(ecs_meta_cursor_t cursor)
 {
     gb_size_t *field = (gb_size_t *)ecs_meta_get_ptr(&cursor);
 
@@ -288,7 +315,7 @@ static gint object_ienum_compare_func(ObjectIEnum *ienum_a, ObjectIEnum *ienum_b
         return 0;
 }
 
-static GtkWidget *inspectorWidgetCreate_EnumInput(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *gapp_inspector_create_enum_field(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     void *field_ptr = ecs_meta_get_ptr(&cursor);
     ecs_entity_t field_type = ecs_meta_get_type(&cursor);
@@ -383,7 +410,7 @@ static GtkWidget *_input_resource(GtkFileFilter *filter, ecs_meta_cursor_t curso
     return box;
 }
 
-static GtkWidget *inspectorWidgetCreate_ResourceInput(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *gapp_inspector_create_resource_field(ecs_meta_cursor_t cursor, ecs_member_t *member)
 {
     GtkFileFilter *file_filter = gtk_file_filter_new();
 
@@ -423,7 +450,7 @@ static GtkWidget *inspectorWidgetCreate_ResourceInput(ecs_meta_cursor_t cursor, 
     return widget;
 }
 
-GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation)
+GtkWidget *gapp_inspector_create_field_row(GtkWidget *size_group, const char *label_str, GtkWidget *input, GtkOrientation orientation)
 {
     GtkWidget *label, *box;
 
@@ -448,7 +475,7 @@ GtkWidget *inspectorWidgetCreateFieldRow(GtkWidget *size_group, const char *labe
     return box;
 }
 
-GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component)
+GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component)
 {
     GtkWidget *expander = gtk_expander_new(NULL);
     gtk_expander_set_expanded(GTK_EXPANDER(expander), TRUE);
@@ -498,7 +525,7 @@ GtkWidget *inspectorWidgetCreateComponentGroup(GtkWidget *list, bool buttonRemov
     return content;
 }
 
-void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world, void *ptr, ecs_entity_t component)
+void gapp_inspector_create_component_fields(ecs_world_t *world, void *ptr, ecs_entity_t component, GtkWidget *parent, GappPropsReadyCallback fieldCallback, gpointer data)
 {
     ecs_meta_cursor_t cursor = ecs_meta_cursor(world, component, ptr);
 
@@ -517,15 +544,15 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
             ecs_entity_t type;
             GtkWidget *(*create_widget)(ecs_meta_cursor_t, ecs_member_t *);
         } WidgetCreator[] = {
-            {ecs_id(ecs_string_t), inspectorWidgetCreate_StringInput},
-            {ecs_id(ecs_bool_t), inspectorWidgetCreate_BoolInput},
-            {ecs_id(ecs_u32_t), inspectorWidgetCreate_NumberU32Input},
-            {ecs_id(ecs_f64_t), inspectorWidgetCreate_NumberF64Input},
-            {ecs_id(ecs_f32_t), inspectorWidgetCreate_NumberF32Input},
-            {ecs_id(gb_vec2_t), inspectorWidgetCreate_Vector2Input},
-            {ecs_id(gb_size_t), inspectorWidgetCreate_SizeInput},
-            {ecs_id(gb_color_t), inspectorWidgetCreate_ColorInput},
-            {ecs_id(gb_resource_t), inspectorWidgetCreate_ResourceInput},
+            {ecs_id(ecs_string_t), gapp_inspector_create_string_field},
+            {ecs_id(ecs_bool_t), gapp_inspector_create_bool_field},
+            {ecs_id(ecs_u32_t), gapp_inspector_create_number_u32_field},
+            {ecs_id(ecs_f64_t), gapp_inspector_create_number_f64_field},
+            {ecs_id(ecs_f32_t), gapp_inspector_create_number_f32_field},
+            {ecs_id(gb_vec2_t), gapp_inspector_create_vector2_field},
+            {ecs_id(gb_size_t), gapp_inspector_create_size_field},
+            {ecs_id(gb_color_t), gapp_inspector_create_color_field},
+            {ecs_id(gb_resource_t), gapp_inspector_create_resource_field},
             {0, NULL} // Marca de fin
             // Agregar más tipos según sea necesario
         };
@@ -541,21 +568,15 @@ void inspectorWidgetCreateComponentInputs(GtkWidget *content, ecs_world_t *world
                 break;
             }else if (field_type && ecs_has(world, field_type, EcsEnum))
             {
-                input = inspectorWidgetCreate_EnumInput(cursor, member);
+                input = gapp_inspector_create_enum_field(cursor, member);
                 break;
             }
         }
 
         if (input)
         {
-            GtkWidget *size_group = g_object_get_data(G_OBJECT(content), "size-group");
-            GtkWidget *child = inspectorWidgetCreateFieldRow(size_group, field_name, input, GTK_ORIENTATION_HORIZONTAL);
-            gtk_box_append(GTK_BOX(content), child);
+            fieldCallback(parent, input, field_name, data);
         }
-        // else if (ecs_id(gb_property_ui_title) == field_type)
-        // {
-        //     gtk_box_append(GTK_BOX(content), gtk_label_new(field_name));
-        // }
 
         ecs_meta_next(&cursor);
     }

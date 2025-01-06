@@ -136,7 +136,7 @@ static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
 {
     g_return_if_fail(self != NULL);
 
-    g_autofree gchar *path_world = gobu_util_path_build(gapp_get_project_path(), "resources", GAPP_PROJECT_GAME_FILE);
+    g_autofree gchar *path_world = gobu_util_path_build(gapp_get_project_path(), GAPP_PROJECT_GAME_FILE);
     gobu_ecs_save_to_file(self->world, path_world);
 }
 
@@ -184,7 +184,7 @@ static void gapp_signal_observer_scene_open(ecs_iter_t *it)
     for (int i = 0; i < it->count; i++)
     {
         ecs_entity_t entity = it->entities[i];
-        inspectorSetEntity(self->inspector, it->world, gobu_ecs_scene_get_open(it->world));
+        gapp_inspector_set_target_entity(self->inspector, it->world, gobu_ecs_scene_get_open(it->world));
     }
 }
 
@@ -295,7 +295,7 @@ static GtkWidget *gapp_module_editor(GappMain *app)
 
         // right modulo
         app->inspector = gapp_inspector_new();
-        inspectorSetEmpty(app->inspector, "Select an entity to inspect");
+        gapp_inspector_set_clear(app->inspector, "Select an entity to inspect");
         gtk_widget_set_size_request(app->inspector, 300, -1);
         gtk_paned_set_end_child(cpaned, app->inspector);
     }
@@ -370,7 +370,7 @@ void gapp_open_project(GappMain *self, const gchar *path)
     }else 
         gobu_ecs_scene_reload(self->world);
 
-    g_autofree gchar *title = gobu_util_string_format("%s - %s", GAPP_VERSION_STR, gapp_project_settings_name(self->world));
+    g_autofree gchar *title = gobu_util_string_format("%s - %s", GAPP_VERSION_STR, gapp_project_settings_name());
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
 

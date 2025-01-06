@@ -250,7 +250,7 @@ static void outlinerEntitySelected(GappScene *scene, ecs_entity_t entity, gboole
     if (selected)
         outlinerSelectItemByEntity(scene, entity);
 
-    inspectorSetEntity(scene->inspector, scene->world, entity);
+    gapp_inspector_set_target_entity(scene->inspector, scene->world, entity);
 }
 
 static gboolean outlinerSelectItemByEntity(GappScene *scene, ecs_entity_t entity)
@@ -745,7 +745,7 @@ static GtkWidget *setupOutlinerInterface(GappScene *scene)
 static GtkWidget *setupInspectorInterface(GappScene *scene)
 {
     GtkWidget *inspector = gapp_inspector_new();
-    inspectorSetEmpty(inspector, "Select an entity to view its properties");
+    gapp_inspector_set_clear(inspector, "Select an entity to view its properties");
     return inspector;
 }
 

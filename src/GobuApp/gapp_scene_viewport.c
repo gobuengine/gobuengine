@@ -38,7 +38,7 @@ static void gapp_scene_viewport_init(GappSceneViewport *self)
 static void gapp_scene_viewport_ready(GtkWidget *viewport)
 {
     // ecs_entity_t paint = gobu_ecs_entity_new(GWORLD, gobu_ecs_scene_get_open(GWORLD), "ShapeRect");
-    // ecs_set(GWORLD, paint, gb_shape_rec_t, {.width = 100, .height = 100, .color = YELLOW, .lineColor = RED, .lineWidth = 2});
+    // ecs_set(GWORLD, paint, gb_comp_rectangle_t, {.width = 100, .height = 100, .color = YELLOW, .lineColor = RED, .lineWidth = 2});
     // gb_transform_t *transform = ecs_get(GWORLD, paint, gb_transform_t);
     // transform->position = (gb_vec2_t){100, 100};
 }

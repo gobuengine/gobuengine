@@ -12,8 +12,9 @@ G_DECLARE_FINAL_TYPE(GappProjectSetting, gapp_project_setting, GAPP_PROJECT, SET
 
 GappProjectSetting *gapp_project_setting_new(void);
 void gapp_project_setting_show(GappProjectSetting *self);
-void gapp_project_settings_set_name(ecs_world_t *world, const char *name);
-const char *gapp_project_settings_name(ecs_world_t *world);
+
+void gapp_project_settings_set_name(const char *name);
+const char *gapp_project_settings_name(void);
 
 G_END_DECLS
 
