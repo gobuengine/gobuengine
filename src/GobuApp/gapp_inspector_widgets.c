@@ -20,6 +20,12 @@ static gb_color_t gdk_rgba_to_color(const GdkRGBA *gdk_color)
         .a = (uint8_t)(gdk_color->alpha * 255.0)};
 }
 
+static void signal_input_text(GtkTextBuffer *self, ecs_string_t **field)
+{
+    g_autofree gchar *text = gapp_widget_text_view_get_text(self);
+    *field = ecs_os_strdup(text);
+}
+
 static void signal_input_string(GtkEditable *self, ecs_string_t **field)
 {
     const gchar *text = gtk_editable_get_text(self);
@@ -107,29 +113,27 @@ static GtkWidget *gapp_inspector_create_text_field(const char *current_text)
     return text_view;
 }
 
-static GtkWidget *gapp_inspector_create_string_field(ecs_meta_cursor_t cursor)
+static GtkWidget *gapp_inspector_create_string_field(ecs_meta_cursor_t cursor, ecs_member_t *member, gb_property_t *props)
 {
+    GtkWidget *input;
     ecs_string_t **field = (ecs_string_t **)ecs_meta_get_ptr(&cursor);
     const char *current_text = ecs_meta_get_string(&cursor);
 
     // props input config field
-    const char *field_name = ecs_meta_get_member(&cursor);
-    const char **types = gobu_util_string_split(field_name, "#");
-    const char *type = gobu_util_string(types[1]);
-    gobu_util_string_split_free(types);
-
-    GtkWidget *input;
-    if (gobu_util_string_isequal(type, "text"))
+    if (props && props->type == GB_PROPERTY_TYPE_TEXT)
+    {
         input = gapp_inspector_create_text_field(current_text ? current_text : "");
-    else{
+        g_signal_connect(gtk_text_view_get_buffer(input), "changed", G_CALLBACK(signal_input_text), field);
+    }
+    else
+    {
         input = gtk_entry_new();
         gtk_editable_set_text(GTK_EDITABLE(input), current_text ? current_text : "");
+        g_signal_connect(input, "changed", G_CALLBACK(signal_input_string), field);
     }
 
     gtk_widget_add_css_class(input, "inspector");
     gtk_widget_add_css_class(input, "min-height");
-
-    g_signal_connect(input, "changed", G_CALLBACK(signal_input_string), field);
 
     return input;
 }
@@ -424,23 +428,23 @@ static GtkWidget *gapp_inspector_create_resource_field(ecs_meta_cursor_t cursor,
     {
         gtk_file_filter_add_pattern(file_filter, "*");
     }
-    else if (gobu_util_string_isequal(type,"font"))
+    else if (gobu_util_string_isequal(type, "font"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.ttf");
     }
-    else if (gobu_util_string_isequal(type,"audio"))
+    else if (gobu_util_string_isequal(type, "audio"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.wav");
         gtk_file_filter_add_pattern(file_filter, "*.mp3");
         gtk_file_filter_add_pattern(file_filter, "*.ogg");
     }
-    else if (gobu_util_string_isequal(type,"texture"))
+    else if (gobu_util_string_isequal(type, "texture"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.png");
         gtk_file_filter_add_pattern(file_filter, "*.jpg");
         gtk_file_filter_add_pattern(file_filter, "*.jpeg");
     }
-    else if (gobu_util_string_isequal(type,"anim"))
+    else if (gobu_util_string_isequal(type, "anim"))
     {
         gtk_file_filter_add_pattern(file_filter, "*.anim");
     }
@@ -527,36 +531,41 @@ GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRem
 
 void gapp_inspector_create_component_fields(ecs_world_t *world, void *ptr, ecs_entity_t component, GtkWidget *parent, GappPropsReadyCallback fieldCallback, gpointer data)
 {
-    ecs_meta_cursor_t cursor = ecs_meta_cursor(world, component, ptr);
+    struct WidgetCreator
+    {
+        ecs_entity_t type;
+        GtkWidget *(*create_widget)(ecs_meta_cursor_t, ecs_member_t *, const gb_property_t *props);
+    } WidgetCreator[] = {
+        {ecs_id(ecs_string_t), gapp_inspector_create_string_field},
+        {ecs_id(ecs_bool_t), gapp_inspector_create_bool_field},
+        {ecs_id(ecs_u32_t), gapp_inspector_create_number_u32_field},
+        {ecs_id(ecs_f64_t), gapp_inspector_create_number_f64_field},
+        {ecs_id(ecs_f32_t), gapp_inspector_create_number_f32_field},
+        {ecs_id(gb_vec2_t), gapp_inspector_create_vector2_field},
+        {ecs_id(gb_size_t), gapp_inspector_create_size_field},
+        {ecs_id(gb_color_t), gapp_inspector_create_color_field},
+        {ecs_id(gb_resource_t), gapp_inspector_create_resource_field},
+        {0, NULL} // Marca de fin
+        // Agregar más tipos según sea necesario
+    };
 
+    ecs_meta_cursor_t cursor = ecs_meta_cursor(world, component, ptr);
     const EcsStruct *struct_member = ecs_get(world, component, EcsStruct);
 
     ecs_meta_push(&cursor);
     for (int i = 0; i < ECS_MEMBER_DESC_CACHE_SIZE; i++)
     {
-        GtkWidget *input = NULL;
         const char *field_name = ecs_meta_get_member(&cursor);
         if (!field_name)
             break;
 
-        struct WidgetCreator
-        {
-            ecs_entity_t type;
-            GtkWidget *(*create_widget)(ecs_meta_cursor_t, ecs_member_t *);
-        } WidgetCreator[] = {
-            {ecs_id(ecs_string_t), gapp_inspector_create_string_field},
-            {ecs_id(ecs_bool_t), gapp_inspector_create_bool_field},
-            {ecs_id(ecs_u32_t), gapp_inspector_create_number_u32_field},
-            {ecs_id(ecs_f64_t), gapp_inspector_create_number_f64_field},
-            {ecs_id(ecs_f32_t), gapp_inspector_create_number_f32_field},
-            {ecs_id(gb_vec2_t), gapp_inspector_create_vector2_field},
-            {ecs_id(gb_size_t), gapp_inspector_create_size_field},
-            {ecs_id(gb_color_t), gapp_inspector_create_color_field},
-            {ecs_id(gb_resource_t), gapp_inspector_create_resource_field},
-            {0, NULL} // Marca de fin
-            // Agregar más tipos según sea necesario
-        };
+        // props input config field
+        gb_property_t *props = ecs_get_mut(world, ecs_lookup_child(world, component, field_name), gb_property_t);
+        if (props && props->hidden){
+            goto NEXT_META;
+        }
 
+        GtkWidget *input = NULL;
         ecs_entity_t field_type = ecs_meta_get_type(&cursor);
         ecs_member_t *member = ecs_vec_get_t(&struct_member->members, ecs_member_t, i);
 
@@ -564,9 +573,10 @@ void gapp_inspector_create_component_fields(ecs_world_t *world, void *ptr, ecs_e
         {
             if (WidgetCreator[n].type == field_type && WidgetCreator[n].create_widget != NULL)
             {
-                input = WidgetCreator[n].create_widget(cursor, member);
+                input = WidgetCreator[n].create_widget(cursor, member, props);
                 break;
-            }else if (field_type && ecs_has(world, field_type, EcsEnum))
+            }
+            else if (field_type && ecs_has(world, field_type, EcsEnum))
             {
                 input = gapp_inspector_create_enum_field(cursor, member);
                 break;
@@ -578,6 +588,7 @@ void gapp_inspector_create_component_fields(ecs_world_t *world, void *ptr, ecs_e
             fieldCallback(parent, input, field_name, data);
         }
 
+        NEXT_META:
         ecs_meta_next(&cursor);
     }
     ecs_meta_pop(&cursor);

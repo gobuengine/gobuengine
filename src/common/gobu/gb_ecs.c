@@ -14,7 +14,9 @@ ECS_TAG_DECLARE(gbOnSceneReload);
 ECS_TAG_DECLARE(gbOnSceneRename);
 ECS_TAG_DECLARE(gbOnSceneDelete);
 ECS_TAG_DECLARE(gbOnSceneCreate);
-
+// property inspector
+ECS_COMPONENT_DECLARE(gb_property_t);
+// pipeline
 ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
 ECS_COMPONENT_DECLARE(gb_core_scene_t);
 ECS_COMPONENT_DECLARE(gb_core_scene_physics_t);
@@ -48,21 +50,42 @@ ECS_COMPONENT_DECLARE(gb_comp_circle_t);
 ECS_COMPONENT_DECLARE(gb_comp_rectangle_t);
 
 // -----------------
+// NOTE MARK: ENTITY PROPERTYI INSPECTOR
+// -----------------
+static ecs_entity_t propertyEntity = 0;
+
+#define GPROPERTY(world, name, ...)\
+        gobu_ecs_create_property(world, name, propertyEntity, &(gb_property_t)__VA_ARGS__)
+
+#define gobu_ecs_struct(world, entity, ...)\
+{\
+    propertyEntity = entity;\
+    ecs_struct_desc_t v = {entity, __VA_ARGS__};\
+    ecs_struct_init(world, &v);\
+}\
+
+static const char *gobu_ecs_create_property(ecs_world_t *world, const char *name, ecs_entity_t parent, const gb_property_t *desc)
+{
+    ecs_entity_t m = ecs_entity(world, {.name = name, .parent = parent});
+    ecs_set_id(world, m, ecs_id(gb_property_t), sizeof(desc), desc);
+    return name;
+}
+
+// -----------------
 // NOTE MARK: WORLD
 // -----------------
-
 ecs_world_t *gobu_ecs_init(void)
 {
-    ecs_world_t *ecs = ecs_init();
-    ECS_IMPORT(ecs, gobucore);
+    ecs_world_t *world = ecs_init();
+    ECS_IMPORT(world, gobucore);
 
     // Esto es para crear el project settings siempre
     // esto ayuda a que siempre exista un project settings
     // con valores por defecto y si se agrega un valor nuevo
     // se actualizara en el archivo de proyecto.
-    gobu_ecs_project_settings_init(ecs, "New Project");
+    gobu_ecs_project_settings_init(world, "New Project");
 
-    return ecs;
+    return world;
 }
 
 void gobu_ecs_free(ecs_world_t *ecs)
@@ -385,7 +408,9 @@ static void gobucoreImport(ecs_world_t *world)
     ECS_TAG_DEFINE(world, gbOnSceneRename);
     ECS_TAG_DEFINE(world, gbOnSceneDelete);
     ECS_TAG_DEFINE(world, gbOnSceneCreate);
-
+    // property inspector
+    ECS_COMPONENT_DEFINE(world, gb_property_t);
+    // pipeline
     ECS_COMPONENT_DEFINE(world, gb_core_scene_phases_t);
     ECS_COMPONENT_DEFINE(world, gb_core_scene_t);
     ECS_COMPONENT_DEFINE(world, gb_core_scene_physics_t);
@@ -471,14 +496,14 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: DATA-COMPONENT
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_resource_t),
         .members = {
             {.name = "resource", .type = ecs_id(ecs_string_t)},
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_color_t),
         .members = {
             {.name = "r", .type = ecs_id(ecs_byte_t)},
@@ -488,7 +513,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_size_t),
         .members = {
             {.name = "width", .type = ecs_id(ecs_f32_t)},
@@ -496,7 +521,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_vec2_t),
         .members = {
             {.name = "x", .type = ecs_id(ecs_f32_t)},
@@ -504,7 +529,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_rect_t),
         .members = {
             {.name = "x", .type = ecs_id(ecs_f32_t)},
@@ -514,7 +539,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_transform_t),
         .members = {
             {.name = "position", .type = ecs_id(gb_vec2_t)},
@@ -525,7 +550,7 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: COMPONENT DRAW
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_comp_text_t),
         .members = {
             {.name = "text", .type = ecs_id(ecs_string_t)},
@@ -536,7 +561,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_comp_sprite_t),
         .members = {
             {.name = "texture#texture", .type = ecs_id(gb_resource_t)},
@@ -546,7 +571,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_frame_t),
         .members = {
             {.name = "hframes", .type = ecs_id(ecs_u32_t)},
@@ -555,7 +580,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_comp_circle_t),
         .members = {
             {.name = "radius", .type = ecs_id(ecs_f32_t)},
@@ -564,7 +589,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_comp_rectangle_t),
         .members = {
             {.name = "width", .type = ecs_id(ecs_f32_t)},
@@ -578,7 +603,7 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: CORE SCENE 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_core_scene_grid_t),
         .members = {
             {.name = "enabled", .type = ecs_id(ecs_bool_t)},
@@ -586,14 +611,14 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_core_scene_t),
         .members = {
             {.name = "color", .type = ecs_id(gb_color_t)},
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_core_scene_physics_t),
         .members = {
             {.name = "gravity", .type = ecs_id(ecs_u32_t)},
@@ -602,16 +627,13 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: PROJECT SETTINGS
-    gobu_ecs_struct(world, {
-        .entity = ecs_id(gb_core_project_settings1_t),
-        .members = {
+    gobu_ecs_struct(world, ecs_id(gb_core_project_settings1_t), {
             {.name = "name", .type = ecs_id(ecs_string_t)},
-            {.name = gobu_prop_inspector({.name = "description"}), .type = ecs_id(ecs_string_t)},
+            {.name = GPROPERTY(world, "description", {.type = GB_PROPERTY_TYPE_TEXT}), .type = ecs_id(ecs_string_t)},
             {.name = "author", .type = ecs_id(ecs_string_t)},
-        },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_core_project_settings2_t),
         .members = {
             {.name = "name", .type = ecs_id(ecs_string_t)},
@@ -620,7 +642,7 @@ static void gobucoreImport(ecs_world_t *world)
         },
     });
 
-    gobu_ecs_struct(world, {
+    ecs_struct(world, {
         .entity = ecs_id(gb_core_project_settings3_t),
         .members = {
             {.name = "resolution", .type = ecs_id(gb_size_t)},

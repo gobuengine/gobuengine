@@ -84,6 +84,12 @@
 
 typedef enum
 {
+    GB_PROPERTY_TYPE_NONE = 0,
+    GB_PROPERTY_TYPE_TEXT,
+}gb_property_type_t;
+
+typedef enum
+{
     GB_ORIGIN_TOP_LEFT = 0,
     GB_ORIGIN_TOP_CENTER,
     GB_ORIGIN_TOP_RIGHT,
@@ -126,13 +132,6 @@ typedef enum
 
 typedef struct gfx_backend_t gfx_backend_t;
 typedef ecs_string_t gb_resource_t;
-
-typedef struct
-{
-    const char *name;
-    int type;
-    bool hidden;
-} gb_inspector_t;
 
 typedef struct
 {
@@ -297,6 +296,12 @@ typedef struct
     gb_scale_mode_t scaleMode;
 }gb_core_project_settings3_t;
 
+// MARK: INSPECTOR PROPERTIES
+typedef struct gb_property_t {
+    uint32_t type;
+    bool hidden;
+} gb_property_t;
+
 // MARK: GFXBACKEND
 gfx_backend_t *gfxb_viewport_create(void);
 void gfxb_destroy(gfx_backend_t *gfx_backend);
@@ -352,7 +357,9 @@ extern ECS_TAG_DECLARE(gbOnSceneReload);
 extern ECS_TAG_DECLARE(gbOnSceneRename);
 extern ECS_TAG_DECLARE(gbOnSceneDelete);
 extern ECS_TAG_DECLARE(gbOnSceneCreate);
-
+// property inspector
+extern ECS_COMPONENT_DECLARE(gb_property_t);
+// pipeline
 extern ECS_COMPONENT_DECLARE(gb_core_scene_phases_t);
 extern ECS_COMPONENT_DECLARE(gb_core_scene_t);
 extern ECS_COMPONENT_DECLARE(gb_core_scene_physics_t);
@@ -379,13 +386,11 @@ extern ECS_COMPONENT_DECLARE(gb_image_t);
 extern ECS_COMPONENT_DECLARE(gb_texture_t);
 extern ECS_COMPONENT_DECLARE(gb_font_t);
 extern ECS_COMPONENT_DECLARE(gb_frame_t);
+
 extern ECS_COMPONENT_DECLARE(gb_comp_text_t);
 extern ECS_COMPONENT_DECLARE(gb_comp_sprite_t);
 extern ECS_COMPONENT_DECLARE(gb_comp_circle_t);
 extern ECS_COMPONENT_DECLARE(gb_comp_rectangle_t);
-
-#define gobu_ecs_struct(world, ...)\
-    ecs_struct_init(world, &(ecs_struct_desc_t) __VA_ARGS__ )
 
 ecs_world_t *gobu_ecs_init(void);
 void gobu_ecs_free(ecs_world_t *ecs);

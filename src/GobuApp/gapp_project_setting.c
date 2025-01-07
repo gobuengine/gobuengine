@@ -207,7 +207,7 @@ void gapp_project_setting_show(GappProjectSetting *self)
 
 void gapp_project_settings_set_name(const char *name)
 {
-    gb_core_project_settings1_t *settings = ecs_get(GWORLD, gobu_ecs_project_settings(), gb_core_project_settings1_t);
+    gb_core_project_settings1_t *settings = ecs_get_mut(GWORLD, gobu_ecs_project_settings(), gb_core_project_settings1_t);
     settings->name = gobu_util_string(name);
 }
 
