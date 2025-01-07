@@ -3,7 +3,13 @@
 
 static void gobucoreImport(ecs_world_t *world);
 static gb_core_scene_phases_t gbCoreScenePhases;
+
+// Esta es la entidad que guarda la confi del proyecto abierto.
 static ecs_entity_t projectSettings = 0;
+
+// Cada proyecto tiene su propio mundo
+// por eso no importa globalizar esta variable.
+static ecs_world_t *uworld = NULL;
 
 ECS_TAG_DECLARE(gbTagScene);
 ECS_TAG_DECLARE(gbOnSceneOpen);
@@ -54,84 +60,87 @@ ECS_COMPONENT_DECLARE(gb_comp_rectangle_t);
 // -----------------
 static ecs_entity_t propertyEntity = 0;
 
-#define GPROPERTY(world, name, ...)\
-        gobu_ecs_create_property(world, name, propertyEntity, &(gb_property_t)__VA_ARGS__)
+#define GPROPERTY(name, ...)\
+        gobu_ecs_create_property(name, propertyEntity, &(gb_property_t)__VA_ARGS__)
 
-#define gobu_ecs_struct(world, entity, ...)\
+#define gobu_ecs_struct(entity, ...)\
 {\
     propertyEntity = entity;\
     ecs_struct_desc_t v = {entity, __VA_ARGS__};\
-    ecs_struct_init(world, &v);\
+    ecs_struct_init(uworld, &v);\
 }\
 
-static const char *gobu_ecs_create_property(ecs_world_t *world, const char *name, ecs_entity_t parent, const gb_property_t *desc)
+static const char *gobu_ecs_create_property(const char *name, ecs_entity_t parent, const gb_property_t *desc)
 {
-    ecs_entity_t m = ecs_entity(world, {.name = name, .parent = parent});
-    ecs_set_id(world, m, ecs_id(gb_property_t), sizeof(desc), desc);
+    ecs_entity_t m = ecs_entity(uworld, {.name = name, .parent = parent});
+    ecs_set_id(uworld, m, ecs_id(gb_property_t), sizeof(desc), desc);
     return name;
 }
 
 // -----------------
 // NOTE MARK: WORLD
 // -----------------
-ecs_world_t *gobu_ecs_init(void)
+void gobu_ecs_init(void)
 {
-    ecs_world_t *world = ecs_init();
-    ECS_IMPORT(world, gobucore);
+    uworld = ecs_init();
+    ECS_IMPORT(uworld, gobucore);
 
     // Esto es para crear el project settings siempre
     // esto ayuda a que siempre exista un project settings
     // con valores por defecto y si se agrega un valor nuevo
     // se actualizara en el archivo de proyecto.
-    gobu_ecs_project_settings_init(world, "New Project");
-
-    return world;
+    gobu_ecs_project_settings_init("New Project");
 }
 
-void gobu_ecs_free(ecs_world_t *ecs)
+ecs_world_t *gobu_ecs_world(void)
 {
-    ecs_fini(ecs);
+    return uworld;
 }
 
-void gobu_ecs_process(ecs_world_t *ecs, float deltaTime)
+void gobu_ecs_free(void)
 {
-    ecs_progress(ecs, deltaTime);
+    ecs_fini(uworld);
 }
 
-void gobu_ecs_save_to_file(ecs_world_t *world, const char *filename)
+void gobu_ecs_process(float deltaTime)
 {
-    gobu_util_write_text_file(filename, ecs_world_to_json(world, NULL));
+    ecs_progress(uworld, deltaTime);
 }
 
-bool gobu_ecs_load_from_file(ecs_world_t *world, const char *filename)
+void gobu_ecs_save_to_file(const char *filename)
+{
+    gobu_util_write_text_file(filename, ecs_world_to_json(uworld, NULL));
+}
+
+bool gobu_ecs_load_from_file(const char *filename)
 {
     if (gobu_util_exist_file(filename) == false)
         return false;
 
-    return ecs_world_from_json_file(world, filename, NULL) == NULL ? false : true;
+    return ecs_world_from_json_file(uworld, filename, NULL) == NULL ? false : true;
 }
 
 // -----------------
 // NOTE MARK: project settings
 // -----------------
-void gobu_ecs_project_settings_init(ecs_world_t *ecs, const char *name)
+void gobu_ecs_project_settings_init(const char *name)
 {
-    projectSettings = ecs_new_low_id(ecs);
+    projectSettings = ecs_new_low_id(uworld);
     // ecs_set_name(ecs, projectSettings, gobu_util_string("ProjectSettings"));
 
-    ecs_set(ecs, projectSettings, gb_core_project_settings1_t, {
+    ecs_set(uworld, projectSettings, gb_core_project_settings1_t, {
         .name = gobu_util_string(name),
         .description = gobu_util_string(""),
         .author = gobu_util_string("")
     });
 
-    ecs_set(ecs, projectSettings, gb_core_project_settings2_t, {
+    ecs_set(uworld, projectSettings, gb_core_project_settings2_t, {
         .name = gobu_util_string("com.example.game"),
         .version = gobu_util_string("1.0.0"),
         .publisher = gobu_util_string("[Publisher]")
     });
 
-    ecs_set(ecs, projectSettings, gb_core_project_settings3_t, {
+    ecs_set(uworld, projectSettings, gb_core_project_settings3_t, {
         .resolution = {1280, 720},
         .targetFps = 60,
         .resolutionMode = GB_RESIZE_MODE_NO_CHANGE,
@@ -147,71 +156,86 @@ ecs_entity_t gobu_ecs_project_settings(void)
 // -----------------
 // NOTE MARK: Entity
 // -----------------
-ecs_entity_t gobu_ecs_entity_new_low(ecs_world_t *world, ecs_entity_t parent)
+ecs_entity_t gobu_ecs_entity_new_low(ecs_entity_t parent)
 {
-    ecs_entity_t entity = ecs_new_low_id(world);
+    ecs_entity_t entity = ecs_new_low_id(uworld);
     if (parent > 0)
-        gobu_ecs_set_parent(world, entity, parent);
+        gobu_ecs_set_parent(entity, parent);
 
     return entity;
 }
 
-ecs_entity_t gobu_ecs_entity_new(ecs_world_t *world, ecs_entity_t parent, const char *name)
+ecs_entity_t gobu_ecs_entity_new(ecs_entity_t parent, const char *name)
 {
-    ecs_entity_t entity = gobu_ecs_entity_new_low(world, parent);
+    ecs_entity_t entity = gobu_ecs_entity_new_low(parent);
     g_autofree gchar *name_entity = gobu_util_string_format("%s%ld", name, entity);
-    ecs_set_name(world, entity, name_entity);
-    ecs_set(world, entity, gb_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = GB_ORIGIN_CENTER});
+    ecs_set_name(uworld, entity, name_entity);
+    ecs_set(uworld, entity, gb_transform_t, {.position = {0, 0}, .scale = {1, 1}, .rotation = 0, .origin = GB_ORIGIN_CENTER});
 
     return entity;
 }
 
-void gobu_ecs_set_parent(ecs_world_t *world, ecs_entity_t entity, ecs_entity_t parent)
+void gobu_ecs_set_parent(ecs_entity_t entity, ecs_entity_t parent)
 {
-    ecs_add_pair(world, entity, EcsChildOf, parent);
+    ecs_add_pair(uworld, entity, EcsChildOf, parent);
 }
 
-ecs_entity_t gobu_ecs_get_parent(ecs_world_t *world, ecs_entity_t entity)
+ecs_entity_t gobu_ecs_get_parent(ecs_entity_t entity)
 {
-    return ecs_get_target(world, entity, EcsChildOf, 0);
+    return ecs_get_target(uworld, entity, EcsChildOf, 0);
 }
 
-bool gobu_ecs_has_parent(ecs_world_t *world, ecs_entity_t entity)
+bool gobu_ecs_has_parent(ecs_entity_t entity)
 {
-    return ecs_has_id(world, entity, ecs_pair(EcsChildOf, EcsWildcard));
+    return ecs_has_id(uworld, entity, ecs_pair(EcsChildOf, EcsWildcard));
 }
 
-ecs_entity_t gobu_ecs_clone(ecs_world_t *world, ecs_entity_t entity)
+ecs_entity_t gobu_ecs_clone(ecs_entity_t entity)
 {
-    ecs_entity_t clone = ecs_clone(world, 0, entity, TRUE);
-    ecs_set_name(world, clone, gobu_util_string_format("%s%ld", ecs_get_name(world, entity), clone));
-    gobu_ecs_set_parent(world, clone, gobu_ecs_get_parent(world, entity));
+    ecs_entity_t clone = ecs_clone(uworld, 0, entity, TRUE);
+    ecs_set_name(uworld, clone, gobu_util_string_format("%s%ld", ecs_get_name(uworld, entity), clone));
+    gobu_ecs_set_parent(clone, gobu_ecs_get_parent(entity));
 
-    ecs_iter_t it = ecs_children(world, entity);
+    ecs_iter_t it = ecs_children(uworld, entity);
     while (ecs_children_next(&it))
         for (int i = 0; i < it.count; i++)
-            if (ecs_is_alive(world, it.entities[i]))
-                gobu_ecs_set_parent(world, gobu_ecs_clone(world, it.entities[i]), clone);
+            if (ecs_is_alive(uworld, it.entities[i]))
+                gobu_ecs_set_parent(gobu_ecs_clone(it.entities[i]), clone);
 
     return clone;
 }
 
-bool gobu_ecs_is_enabled(ecs_world_t *world, ecs_entity_t entity)
+bool gobu_ecs_is_enabled(ecs_entity_t entity)
 {
-    return !ecs_has_id(world, entity, EcsDisabled);
+    return !ecs_has_id(uworld, entity, EcsDisabled);
 }
 
-void gobu_ecs_add_component_name(ecs_world_t *world, ecs_entity_t entity, const char *component)
+void gobu_ecs_add_component_name(ecs_entity_t entity, const char *component)
 {
-    ecs_add_id(world, entity, ecs_lookup(world, component));
+    ecs_add_id(uworld, entity, ecs_lookup(uworld, component));
+}
+
+const char *gobu_ecs_name(ecs_entity_t entity)
+{
+    return ecs_get_name(uworld, entity);
+}
+
+void gobu_ecs_set_name(ecs_entity_t entity, const char *name)
+{
+    ecs_set_name(uworld, entity, name);
+}
+
+void gobu_ecs_enable(ecs_entity_t entity, bool enable)
+{
+    ecs_enable(uworld, entity, enable);
 }
 
 // -----------------
 // NOTE MARK: Entity Events
 // -----------------
-ecs_entity_t gobu_ecs_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_action_t callback, void *ctx)
+ecs_entity_t gobu_ecs_observer(ecs_entity_t event, ecs_iter_action_t callback, void *ctx)
 {
-    return ecs_observer(world, {
+    return ecs_observer(uworld, {
         .query.terms = {{.id = EcsAny}, {EcsDisabled, .oper = EcsOptional}},
         .events = {event},
         .callback = callback,
@@ -219,112 +243,112 @@ ecs_entity_t gobu_ecs_observer(ecs_world_t *world, ecs_entity_t event, ecs_iter_
     });
 }
 
-void gobu_ecs_emit(ecs_world_t *world, ecs_entity_t event, ecs_entity_t entity)
+void gobu_ecs_emit(ecs_entity_t event, ecs_entity_t entity)
 {
-    ecs_emit(world, &(ecs_event_desc_t){.entity = entity, .event = event});
+    ecs_emit(uworld, &(ecs_event_desc_t){.entity = entity, .event = event});
 }
 
 // -----------------
 // NOTE MARK: Entity SCENE
 // -----------------
-ecs_entity_t gobu_ecs_scene_new(ecs_world_t *world, const char *name)
+ecs_entity_t gobu_ecs_scene_new(const char *name)
 {
     g_autofree gchar *new_name = gobu_util_string_format("WorldScene.%s", name);
 
     // Le agregamos un numero al final si ya existe
     int counter = 1;
-    while (ecs_lookup(world, new_name) > 0)
+    while (ecs_lookup(uworld, new_name) > 0)
         new_name = gobu_util_string_format("WorldScene.%s%d", name, counter++);
 
-    ecs_entity_t scene = ecs_entity(world, {.name = gobu_util_string(new_name), .add = ecs_ids(gbTagScene)});
-    ecs_set(world, scene, gb_core_scene_t, {.color = GOBUWHITE });
-    ecs_set(world, scene, gb_core_scene_physics_t, {.enabled = TRUE, .debug = FALSE, .gravity = 980, .gravityDirection = {0, -1}});
-    ecs_set(world, scene, gb_core_scene_grid_t, {.size = 32, .enabled = TRUE});
-    ecs_enable(world, scene, FALSE);
-    gobu_ecs_emit(world, gbOnSceneCreate, scene);
+    ecs_entity_t scene = ecs_entity(uworld, {.name = gobu_util_string(new_name), .add = ecs_ids(gbTagScene)});
+    ecs_set(uworld, scene, gb_core_scene_t, {.color = GOBUWHITE });
+    ecs_set(uworld, scene, gb_core_scene_physics_t, {.enabled = TRUE, .debug = FALSE, .gravity = 980, .gravityDirection = {0, -1}});
+    ecs_set(uworld, scene, gb_core_scene_grid_t, {.size = 32, .enabled = TRUE});
+    gobu_ecs_enable(scene, FALSE);
+    gobu_ecs_emit(gbOnSceneCreate, scene);
 
     return scene;
 }
 
-ecs_entity_t gobu_ecs_scene_clone(ecs_world_t *world, ecs_entity_t entity)
+ecs_entity_t gobu_ecs_scene_clone(ecs_entity_t entity)
 {
-    const char *orig_name = ecs_get_name(world, entity);
+    const char *orig_name = gobu_ecs_name(entity);
 
     g_autofree gchar *new_name = gobu_util_string(orig_name);
-    ecs_entity_t parent = ecs_lookup(world, "WorldScene");
+    ecs_entity_t parent = ecs_lookup(uworld, "WorldScene");
 
     // Le agregamos un numero al final si ya existe
     int counter = 1;
-    while (ecs_lookup_child(world, parent, new_name) > 0)
+    while (ecs_lookup_child(uworld, parent, new_name) > 0)
         new_name = gobu_util_string_format("%s%d", orig_name, counter++);
 
-    ecs_entity_t scene_clone = gobu_ecs_clone(world, entity);
-    ecs_set_name(world, scene_clone, new_name);
-    ecs_enable(world, scene_clone, FALSE);
+    ecs_entity_t scene_clone = gobu_ecs_clone(entity);
+    ecs_set_name(uworld, scene_clone, new_name);
+    gobu_ecs_enable(scene_clone, FALSE);
 
     return scene_clone;
 }
 
-void gobu_ecs_scene_delete(ecs_world_t *world, ecs_entity_t entity)
+void gobu_ecs_scene_delete(ecs_entity_t entity)
 {
-    gobu_ecs_emit(world, gbOnSceneDelete, entity);
-    ecs_delete(world, entity);
+    gobu_ecs_emit(gbOnSceneDelete, entity);
+    ecs_delete(uworld, entity);
 }
 
-void gobu_ecs_scene_open(ecs_world_t *world, ecs_entity_t entity)
+void gobu_ecs_scene_open(ecs_entity_t entity)
 {
-    ecs_entity_t scene_active = gobu_ecs_scene_get_open(world);
+    ecs_entity_t scene_active = gobu_ecs_scene_get_open();
     if (scene_active > 0)
-        ecs_enable(world, scene_active, FALSE);
+        ecs_enable(uworld, scene_active, FALSE);
 
-    ecs_enable(world, entity, TRUE);
-    gobu_ecs_emit(world, gbOnSceneOpen, entity);
+    ecs_enable(uworld, entity, TRUE);
+    gobu_ecs_emit(gbOnSceneOpen, entity);
 }
 
-ecs_entity_t gobu_ecs_scene_get_open(ecs_world_t *world)
+ecs_entity_t gobu_ecs_scene_get_open(void)
 {
-    ecs_query_t *q = ecs_query(world, {.terms = {{gbTagScene}}});
-    ecs_iter_t it = ecs_query_iter(world, q);
+    ecs_query_t *q = ecs_query(uworld, {.terms = {{gbTagScene}}});
+    ecs_iter_t it = ecs_query_iter(uworld, q);
     ecs_entity_t scene = ecs_iter_first(&it);
     ecs_query_fini(q);
     return scene;
 }
 
-void gobu_ecs_scene_reload(ecs_world_t *world)
+void gobu_ecs_scene_reload(void)
 {
-    ecs_entity_t scene_active = gobu_ecs_scene_get_open(world);
+    ecs_entity_t scene_active = gobu_ecs_scene_get_open();
     if (scene_active > 0)
     {
-        gobu_ecs_scene_open(world, scene_active);
+        gobu_ecs_scene_open(scene_active);
     }
 }
 
-int gobu_ecs_scene_count(ecs_world_t *world)
+int gobu_ecs_scene_count(void)
 {
-    return ecs_count(world, gbTagScene);
+    return ecs_count(uworld, gbTagScene);
 }
 
-ecs_entity_t gobu_ecs_scene_get_by_name(ecs_world_t *world, const char *name)
+ecs_entity_t gobu_ecs_scene_get_by_name(const char *name)
 {
-    ecs_entity_t parent = ecs_lookup(world, "WorldScene");
-    return ecs_lookup_child(world, parent, name);
+    ecs_entity_t parent = ecs_lookup(uworld, "WorldScene");
+    return ecs_lookup_child(uworld, parent, name);
 }
 
-void gobu_ecs_scene_rename(ecs_world_t *world, ecs_entity_t entity, const char *name)
+void gobu_ecs_scene_rename(ecs_entity_t entity, const char *name)
 {
-    ecs_set_name(world, entity, name);
-    gobu_ecs_emit(world, gbOnSceneRename, entity);
+    ecs_set_name(uworld, entity, name);
+    gobu_ecs_emit(gbOnSceneRename, entity);
 }
 
-bool gobu_ecs_scene_has(ecs_world_t *world, ecs_entity_t entity)
+bool gobu_ecs_scene_has(ecs_entity_t entity)
 {
-    return ecs_has(world, entity, gbTagScene);
+    return ecs_has(uworld, entity, gbTagScene);
 }
 
-void gobu_ecs_scene_process(ecs_world_t *world, ecs_entity_t root, float delta)
+void gobu_ecs_scene_process(ecs_entity_t root, float delta)
 {
     // // process
-    // gb_transform_t *transform = ecs_get(world, root, gb_transform_t);
+    // gb_transform_t *transform = ecs_get(uworld, root, gb_transform_t);
     // if (transform)
     // {
     //     float px = transform->position.x;
@@ -334,18 +358,18 @@ void gobu_ecs_scene_process(ecs_world_t *world, ecs_entity_t root, float delta)
     //     float angle = transform->rotation;
     //     gb_origin_t origin = transform->origin;
 
-    //     gb_comp_rectangle_t *shape = ecs_get(world, root, gb_comp_rectangle_t);
+    //     gb_comp_rectangle_t *shape = ecs_get(uworld, root, gb_comp_rectangle_t);
     //     if (shape)
     //         gobu_draw_rect(px, py, shape->width, shape->height, shape->color, shape->lineColor, shape->lineWidth, 0);
     // }
     // // children root
-    // ecs_iter_t it = ecs_children(world, root);
+    // ecs_iter_t it = ecs_children(uworld, root);
     // while (ecs_children_next(&it))
     // {
     //     for (int i = 0; i < it.count; i++)
     //     {
     //         ecs_entity_t entity = it.entities[i];
-    //         gobu_ecs_scene_process(world, entity, delta);
+    //         gobu_ecs_scene_process(uworld, entity, delta);
     //     }
     // }
 }
@@ -550,16 +574,16 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: COMPONENT DRAW
-    gobu_ecs_struct(world, ecs_id(gb_comp_text_t),{
+    gobu_ecs_struct(ecs_id(gb_comp_text_t),{
         {.name = "text", .type = ecs_id(ecs_string_t)},
         {.name = "fontSize", .type = ecs_id(ecs_u32_t)},
         {.name = "spacing", .type = ecs_id(ecs_f32_t)},
         {.name = "color", .type = ecs_id(gb_color_t)},
-        {.name = GPROPERTY(world, "font", {.type = GB_PROPERTY_TYPE_FONT}), .type = ecs_id(gb_resource_t)},
+        {.name = GPROPERTY("font", {.type = GB_PROPERTY_TYPE_FONT}), .type = ecs_id(gb_resource_t)},
     });
 
-    gobu_ecs_struct(world, ecs_id(gb_comp_sprite_t),{
-        {.name = GPROPERTY(world, "texture", {.type = GB_PROPERTY_TYPE_TEXTURE}), .type = ecs_id(gb_resource_t)},
+    gobu_ecs_struct(ecs_id(gb_comp_sprite_t),{
+        {.name = GPROPERTY("texture", {.type = GB_PROPERTY_TYPE_TEXTURE}), .type = ecs_id(gb_resource_t)},
         {.name = "filter", .type = ecs_id(gb_texture_filter_t)},
         {.name = "flip", .type = ecs_id(gb_texture_flip_t)},
         {.name = "tint", .type = ecs_id(gb_color_t)},
@@ -621,9 +645,9 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: PROJECT SETTINGS
-    gobu_ecs_struct(world, ecs_id(gb_core_project_settings1_t),{
+    gobu_ecs_struct(ecs_id(gb_core_project_settings1_t),{
         {.name = "name", .type = ecs_id(ecs_string_t)},
-        {.name = GPROPERTY(world, "description", {.type = GB_PROPERTY_TYPE_TEXT}), .type = ecs_id(ecs_string_t)},
+        {.name = GPROPERTY("description", {.type = GB_PROPERTY_TYPE_TEXT}), .type = ecs_id(ecs_string_t)},
         {.name = "author", .type = ecs_id(ecs_string_t)},
     });
 

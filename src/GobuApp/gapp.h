@@ -3,8 +3,6 @@
 #include "config.h"
 #include "gobu/gobu.h"
 
-#define GWORLD gapp_get_world_instance()
-
 typedef enum GappResourceIcon
 {
     GAPP_RESOURCE_ICON_NONE = 0,

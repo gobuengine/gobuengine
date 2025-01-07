@@ -91,7 +91,9 @@
         "stb_image.h": "c",
         "gapp_scene_hierarchy.h": "c",
         "gapp_scene_viewport.h": "c",
-        "gapp_wviewport.h": "c"
+        "gapp_wviewport.h": "c",
+        "gb_input.h": "c",
+        "string.h": "c"
     },
     "mesonbuild.configureOnOpen": false
 }

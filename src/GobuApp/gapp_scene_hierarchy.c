@@ -96,8 +96,8 @@ static void gapp_scene_hierarchy_init(GappSceneHierarchy *self)
         }
     }
 
-    gobu_ecs_observer(GWORLD, gbOnSceneOpen, signal_observer_scene_changed, self);
-    gobu_ecs_observer(GWORLD, gbOnSceneRename, signal_observer_scene_changed, self);
+    gobu_ecs_observer(gbOnSceneOpen, signal_observer_scene_changed, self);
+    gobu_ecs_observer(gbOnSceneRename, signal_observer_scene_changed, self);
 }
 
 // -----------------
@@ -124,9 +124,9 @@ static void signal_observer_scene_changed(ecs_iter_t *it)
     for (int i = 0; i < it->count; i++)
     {
         ecs_entity_t entity = it->entities[i];
-        if (gobu_ecs_is_enabled(it->world, entity))
+        if (gobu_ecs_is_enabled(entity))
         {
-            const gchar *name = ecs_get_name(it->world, entity);
+            const gchar *name = gobu_ecs_name(entity);
             gtk_label_set_text(GTK_LABEL(self->scene_label), g_strdup_printf("<b>Scene</b> (%s)", name));
             gtk_label_set_use_markup(GTK_LABEL(self->scene_label), TRUE);
         }

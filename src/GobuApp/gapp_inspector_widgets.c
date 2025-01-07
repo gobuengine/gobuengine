@@ -89,13 +89,12 @@ static void signal_input_enum(GtkWidget *self, GParamSpec *pspec, void *field_pt
 
 static void inspector_widget_signal_component_remove(GtkWidget *button, gpointer data)
 {
-    ecs_world_t *world = g_object_get_data(G_OBJECT(button), "entity_world");
     ecs_entity_t component = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(button), "entity_component"));
     ecs_entity_t entity = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(button), "entity_entity"));
 
     GtkWidget *expander = g_object_get_data(G_OBJECT(button), "expander-content");
     gtk_widget_set_visible(expander, FALSE);
-    ecs_remove_id(world, entity, component);
+    ecs_remove_id(gobu_ecs_world(), entity, component);
 }
 
 static GtkWidget *gapp_inspector_create_text_field(const char *current_text)
@@ -475,7 +474,7 @@ GtkWidget *gapp_inspector_create_field_row(GtkWidget *size_group, const char *la
     return box;
 }
 
-GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_world_t *world, ecs_entity_t entity, ecs_entity_t component)
+GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRemove, const gchar *title_str, ecs_entity_t entity, ecs_entity_t component)
 {
     GtkWidget *expander = gtk_expander_new(NULL);
     gtk_expander_set_expanded(GTK_EXPANDER(expander), TRUE);
@@ -509,7 +508,6 @@ GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRem
             g_object_set_data(G_OBJECT(button), "expander-content", expander);
             gtk_box_append(GTK_BOX(title), button);
             // ECS DATA
-            g_object_set_data(G_OBJECT(button), "entity_world", world);
             g_object_set_data(G_OBJECT(button), "entity_component", GUINT_TO_POINTER(component));
             g_object_set_data(G_OBJECT(button), "entity_entity", GUINT_TO_POINTER(entity));
             //
@@ -525,8 +523,10 @@ GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRem
     return content;
 }
 
-void gapp_inspector_create_component_fields(ecs_world_t *world, void *ptr, ecs_entity_t component, GtkWidget *parent, GappPropsReadyCallback fieldCallback, gpointer data)
+void gapp_inspector_create_component_fields(void *ptr, ecs_entity_t component, GtkWidget *parent, GappPropsReadyCallback fieldCallback, gpointer data)
 {
+    ecs_world_t *world = gobu_ecs_world();
+
     struct WidgetCreator
     {
         ecs_entity_t type;

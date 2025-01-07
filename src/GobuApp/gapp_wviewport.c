@@ -102,11 +102,8 @@ static gboolean gapp_s_render(GappViewport *area, GdkGLContext *context, gpointe
         g_signal_emit(area, signals[VIEWPORT_READY], 0);
     }
 
-    gfxb_viewport_begin(area->context_render);
-    {
-        g_signal_emit(area, signals[VIEWPORT_RENDER], 0, width, height);
-    }
-    gfxb_viewport_end(area->context_render);
+    g_signal_emit(area, signals[VIEWPORT_RENDER], 0, width, height);
+
     glFlush();
 
     return TRUE;

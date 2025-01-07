@@ -250,7 +250,7 @@ static void outlinerEntitySelected(GappScene *scene, ecs_entity_t entity, gboole
     if (selected)
         outlinerSelectItemByEntity(scene, entity);
 
-    gapp_inspector_set_target_entity(scene->inspector, scene->world, entity);
+    gapp_inspector_set_target_entity(scene->inspector, entity);
 }
 
 static gboolean outlinerSelectItemByEntity(GappScene *scene, ecs_entity_t entity)

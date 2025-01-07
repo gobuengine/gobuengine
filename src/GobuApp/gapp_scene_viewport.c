@@ -37,15 +37,15 @@ static void gapp_scene_viewport_init(GappSceneViewport *self)
 
 static void gapp_scene_viewport_ready(GtkWidget *viewport)
 {
-    // ecs_entity_t paint = gobu_ecs_entity_new(GWORLD, gobu_ecs_scene_get_open(GWORLD), "ShapeRect");
-    // ecs_set(GWORLD, paint, gb_comp_rectangle_t, {.width = 100, .height = 100, .color = YELLOW, .lineColor = RED, .lineWidth = 2});
-    // gb_transform_t *transform = ecs_get(GWORLD, paint, gb_transform_t);
+    // ecs_entity_t paint = gobu_ecs_entity_new(gobu_ecs_scene_get_open(), "ShapeRect");
+    // ecs_set(gobu_ecs_world(), paint, gb_comp_rectangle_t, {.width = 100, .height = 100, .color = YELLOW, .lineColor = RED, .lineWidth = 2});
+    // gb_transform_t *transform = ecs_get(gobu_ecs_world(), paint, gb_transform_t);
     // transform->position = (gb_vec2_t){100, 100};
 }
 
 static void gapp_scene_viewport_render(GtkWidget *viewport, int width, int height)
 {
-    ecs_entity_t scene_id = gobu_ecs_scene_get_open(GWORLD);
+    ecs_entity_t scene_id = gobu_ecs_scene_get_open();
     if (!scene_id)
         return;
 
@@ -53,19 +53,24 @@ static void gapp_scene_viewport_render(GtkWidget *viewport, int width, int heigh
     if (!projectSettings)
         return;
 
-    gb_core_scene_t *scene = ecs_get_mut(GWORLD, scene_id, gb_core_scene_t);
-    gb_core_scene_grid_t *grid = ecs_get_mut(GWORLD, scene_id, gb_core_scene_grid_t);
-    gb_core_project_settings3_t *rendering = ecs_get_mut(GWORLD, projectSettings, gb_core_project_settings3_t);
-
-    gfxb_viewport_color(gapp_widget_viewport_context(viewport), scene->color.r, scene->color.g, scene->color.b);
-
+    gb_core_scene_t *scene = ecs_get_mut(gobu_ecs_world(), scene_id, gb_core_scene_t);
+    gb_core_scene_grid_t *grid = ecs_get_mut(gobu_ecs_world(), scene_id, gb_core_scene_grid_t);
+    gb_core_project_settings3_t *rendering = ecs_get_mut(gobu_ecs_world(), projectSettings, gb_core_project_settings3_t);
     gb_color_t gridColor = gobu_color_adjust_contrast(scene->color, 0.1f);
-    if (grid && grid->enabled)
-        gobu_draw_grid(width, height, grid->size, gridColor, 0);
 
-    gobu_draw_rect(0, 0, rendering->resolution.width, rendering->resolution.height, BLANK, gobu_color_adjust_contrast(gridColor, 0.2f), 2.0f, 0);
+    gfx_backend_t *backend = gapp_widget_viewport_context(viewport);
+    gfxb_viewport_color(backend, scene->color.r, scene->color.g, scene->color.b);
 
-    gobu_ecs_process(GWORLD, 0.0f);
+    gfxb_viewport_begin(backend);
+    {
+        if (grid && grid->enabled)
+            gobu_draw_grid(width, height, grid->size, gridColor, 0);
+
+        gobu_draw_rect(0, 0, rendering->resolution.width, rendering->resolution.height, BLANK, gobu_color_adjust_contrast(gridColor, 0.2f), 2.0f, 0);
+    }
+    gfxb_viewport_end(backend);
+
+    gobu_ecs_process(0.0f);
 }
 
 GappSceneViewport *gapp_scene_viewport_new(void)
