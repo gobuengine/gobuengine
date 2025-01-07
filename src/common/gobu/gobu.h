@@ -86,6 +86,9 @@ typedef enum
 {
     GB_PROPERTY_TYPE_NONE = 0,
     GB_PROPERTY_TYPE_TEXT,
+    GB_PROPERTY_TYPE_TEXTURE,
+    GB_PROPERTY_TYPE_FONT,
+    GB_PROPERTY_TYPE_AUDIO
 }gb_property_type_t;
 
 typedef enum

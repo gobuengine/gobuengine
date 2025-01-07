@@ -414,7 +414,7 @@ static GtkWidget *_input_resource(GtkFileFilter *filter, ecs_meta_cursor_t curso
     return box;
 }
 
-static GtkWidget *gapp_inspector_create_resource_field(ecs_meta_cursor_t cursor, ecs_member_t *member)
+static GtkWidget *gapp_inspector_create_resource_field(ecs_meta_cursor_t cursor, ecs_member_t *member, const gb_property_t *props)
 {
     GtkFileFilter *file_filter = gtk_file_filter_new();
 
@@ -424,29 +424,25 @@ static GtkWidget *gapp_inspector_create_resource_field(ecs_meta_cursor_t cursor,
     const char *type = gobu_util_string(types[1]);
     gobu_util_string_split_free(types);
 
-    if (type == NULL)
+    if (props == NULL)
     {
         gtk_file_filter_add_pattern(file_filter, "*");
     }
-    else if (gobu_util_string_isequal(type, "font"))
+    else if (props && props->type == GB_PROPERTY_TYPE_FONT)
     {
         gtk_file_filter_add_pattern(file_filter, "*.ttf");
     }
-    else if (gobu_util_string_isequal(type, "audio"))
+    else if (props && props->type == GB_PROPERTY_TYPE_AUDIO)
     {
         gtk_file_filter_add_pattern(file_filter, "*.wav");
         gtk_file_filter_add_pattern(file_filter, "*.mp3");
         gtk_file_filter_add_pattern(file_filter, "*.ogg");
     }
-    else if (gobu_util_string_isequal(type, "texture"))
+    else if (props && props->type == GB_PROPERTY_TYPE_TEXTURE)
     {
         gtk_file_filter_add_pattern(file_filter, "*.png");
         gtk_file_filter_add_pattern(file_filter, "*.jpg");
         gtk_file_filter_add_pattern(file_filter, "*.jpeg");
-    }
-    else if (gobu_util_string_isequal(type, "anim"))
-    {
-        gtk_file_filter_add_pattern(file_filter, "*.anim");
     }
 
     GtkWidget *widget = _input_resource(file_filter, cursor);

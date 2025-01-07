@@ -550,25 +550,19 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: COMPONENT DRAW
-    ecs_struct(world, {
-        .entity = ecs_id(gb_comp_text_t),
-        .members = {
-            {.name = "text", .type = ecs_id(ecs_string_t)},
-            {.name = "fontSize", .type = ecs_id(ecs_u32_t)},
-            {.name = "spacing", .type = ecs_id(ecs_f32_t)},
-            {.name = "color", .type = ecs_id(gb_color_t)},
-            {.name = "font#font", .type = ecs_id(gb_resource_t)},
-        },
+    gobu_ecs_struct(world, ecs_id(gb_comp_text_t),{
+        {.name = "text", .type = ecs_id(ecs_string_t)},
+        {.name = "fontSize", .type = ecs_id(ecs_u32_t)},
+        {.name = "spacing", .type = ecs_id(ecs_f32_t)},
+        {.name = "color", .type = ecs_id(gb_color_t)},
+        {.name = GPROPERTY(world, "font", {.type = GB_PROPERTY_TYPE_FONT}), .type = ecs_id(gb_resource_t)},
     });
 
-    ecs_struct(world, {
-        .entity = ecs_id(gb_comp_sprite_t),
-        .members = {
-            {.name = "texture#texture", .type = ecs_id(gb_resource_t)},
-            {.name = "filter", .type = ecs_id(gb_texture_filter_t)},
-            {.name = "flip", .type = ecs_id(gb_texture_flip_t)},
-            {.name = "tint", .type = ecs_id(gb_color_t)},
-        },
+    gobu_ecs_struct(world, ecs_id(gb_comp_sprite_t),{
+        {.name = GPROPERTY(world, "texture", {.type = GB_PROPERTY_TYPE_TEXTURE}), .type = ecs_id(gb_resource_t)},
+        {.name = "filter", .type = ecs_id(gb_texture_filter_t)},
+        {.name = "flip", .type = ecs_id(gb_texture_flip_t)},
+        {.name = "tint", .type = ecs_id(gb_color_t)},
     });
 
     ecs_struct(world, {
@@ -627,10 +621,10 @@ static void gobucoreImport(ecs_world_t *world)
     });
 
 // MARK: PROJECT SETTINGS
-    gobu_ecs_struct(world, ecs_id(gb_core_project_settings1_t), {
-            {.name = "name", .type = ecs_id(ecs_string_t)},
-            {.name = GPROPERTY(world, "description", {.type = GB_PROPERTY_TYPE_TEXT}), .type = ecs_id(ecs_string_t)},
-            {.name = "author", .type = ecs_id(ecs_string_t)},
+    gobu_ecs_struct(world, ecs_id(gb_core_project_settings1_t),{
+        {.name = "name", .type = ecs_id(ecs_string_t)},
+        {.name = GPROPERTY(world, "description", {.type = GB_PROPERTY_TYPE_TEXT}), .type = ecs_id(ecs_string_t)},
+        {.name = "author", .type = ecs_id(ecs_string_t)},
     });
 
     ecs_struct(world, {
