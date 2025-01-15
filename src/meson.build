@@ -1,2 +1,2 @@
 subdir('common')
-subdir('GobuApp')
+subdir('editor')
