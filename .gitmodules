@@ -1,3 +1,0 @@
-[submodule "Gobu/engine/thirdparty/raylib"]
-	path = Gobu/engine/thirdparty/raylib
-	url = https://github.com/raysan5/raylib.git
