@@ -48,7 +48,7 @@ TOutlinerItem *toutliner_item_new(ecs_world_t *world, ecs_entity_t entity)
     TOutlinerItem *self = g_object_new(TOUTLINER_TYPE_ITEM, NULL);
 
     self->entity = entity;
-    self->name = gobu_util_string(ecs_get_name(world, entity));
+    self->name = go_util_string(ecs_get_name(world, entity));
     self->children = g_list_store_new(TOUTLINER_TYPE_ITEM);
     self->root = NULL;
     self->expander = NULL;
@@ -71,7 +71,7 @@ ecs_entity_t toutliner_item_get_entity(TOutlinerItem *self)
 void toutliner_item_set_name(TOutlinerItem *self, const gchar *name)
 {
     g_free(self->name);
-    self->name = gobu_util_string(name);
+    self->name = go_util_string(name);
 }
 
 gchar *toutliner_item_get_name(TOutlinerItem *self)

@@ -77,7 +77,7 @@ static GKeyFile *gapp_config_load_from_file(const char *filename)
     GKeyFile *keyfile = g_key_file_new();
     GError *error = NULL;
 
-    gchar *fileconfig = gobu_util_path_build(g_get_current_dir(), "Config", filename);
+    gchar *fileconfig = go_util_path_build(g_get_current_dir(), "Config", filename);
 
     if (!g_key_file_load_from_file(keyfile, fileconfig, G_KEY_FILE_NONE, &error))
     {
@@ -134,8 +134,8 @@ static void gapp_signal_project_save(GtkWidget *widget, GappMain *self)
 {
     g_return_if_fail(self != NULL);
 
-    g_autofree gchar *path_world = gobu_util_path_build(gapp_get_project_path(), GAPP_PROJECT_GAME_FILE);
-    gobu_ecs_save_to_file(path_world);
+    g_autofree gchar *path_world = go_util_path_build(gapp_get_project_path(), GAPP_PROJECT_GAME_FILE);
+    go_ecs_save_to_file(path_world);
 }
 
 static void gapp_signal_project_preview(GtkWidget *widget, GappMain *self)
@@ -182,7 +182,7 @@ static void gapp_signal_observer_scene_open(ecs_iter_t *it)
     for (int i = 0; i < it->count; i++)
     {
         ecs_entity_t entity = it->entities[i];
-        gapp_inspector_set_target_entity(self->inspector, gobu_ecs_scene_get_open());
+        gapp_inspector_set_target_entity(self->inspector, go_ecs_scene_get_open());
     }
 }
 
@@ -298,7 +298,7 @@ static GtkWidget *gapp_module_editor(GappMain *app)
         gtk_paned_set_end_child(cpaned, app->inspector);
     }
 
-    gobu_ecs_observer(gbOnSceneOpen, gapp_signal_observer_scene_open, app);
+    go_ecs_observer(gbOnSceneOpen, gapp_signal_observer_scene_open, app);
 
     return hpaned;
 }
@@ -312,7 +312,7 @@ static GtkWidget *gapp_module_project_manager(GappMain *app)
 static void gapp_main_activate(GappMain *app)
 {
     gapp_config_init();
-    gobu_ecs_init();
+    go_ecs_init();
 
     app->window = gtk_window_new();
     gtk_window_set_application(GTK_WINDOW(app->window), GTK_APPLICATION(app));
@@ -350,31 +350,31 @@ void gapp_open_project(GappMain *self, const gchar *path)
     g_return_if_fail(GAPP_IS_MAIN(self));
     g_return_if_fail(path != NULL && *path != '\0');
 
-    gapp_set_project_path(gobu_util_path_dirname(path));
+    gapp_set_project_path(go_util_path_dirname(path));
 
     gtk_stack_set_visible_child_name(GTK_STACK(self->stack), "editor");
     gapp_headerbar_set_button_visible(self, TRUE);
 
     // cargamos el world del proyecto
-    if (!gobu_ecs_load_from_file(gobu_util_path_build(gapp_get_project_path(), GAPP_PROJECT_GAME_FILE)))
+    if (!go_ecs_load_from_file(go_util_path_build(gapp_get_project_path(), GAPP_PROJECT_GAME_FILE)))
     {
         g_warning("Failed to load project world");
     }else 
-        gobu_ecs_scene_reload();
+        go_ecs_scene_reload();
 
-    g_autofree gchar *title = gobu_util_string_format("%s - %s", GAPP_VERSION_STR, gapp_project_settings_name());
+    g_autofree gchar *title = go_util_string_format("%s - %s", GAPP_VERSION_STR, gapp_project_settings_name());
     gtk_label_set_text(GTK_LABEL(self->title_window), title);
 }
 
 const gchar *gapp_get_project_path(void)
 {
-    return gobu_util_string(gappMain->path_project);
+    return go_util_string(gappMain->path_project);
 }
 
 void gapp_set_project_path(const gchar *path)
 {
     g_return_if_fail(path != NULL && *path != '\0');
-    gappMain->path_project = gobu_util_string(path);
+    gappMain->path_project = go_util_string(path);
 }
 
 int main(int argc, char *argv[])

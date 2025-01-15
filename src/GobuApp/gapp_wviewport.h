@@ -11,7 +11,6 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE(GappViewport, gapp_widget_viewport, GAPP_WIDGET, VIEWPORT, GtkGLArea)
 
 GappViewport *gapp_widget_viewport_new(void);
-gfx_backend_t *gapp_widget_viewport_context(GappViewport *self);
 
 G_END_DECLS
 

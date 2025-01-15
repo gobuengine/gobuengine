@@ -1,1 +1,1 @@
-option('brender', type : 'string', value : 'glcore')
+option('backrender', type : 'string', value : 'glcore')

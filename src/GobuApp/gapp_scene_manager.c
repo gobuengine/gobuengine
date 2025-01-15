@@ -88,7 +88,7 @@ static TSceneItem *tscene_item_new(ecs_entity_t entity, const gchar *name)
     TSceneItem *self = g_object_new(TSCENEITEM_TYPE_ITEM, NULL);
 
     self->entity = entity;
-    self->name = gobu_util_string(name);
+    self->name = go_util_string(name);
 
     return self;
 }
@@ -96,10 +96,10 @@ static TSceneItem *tscene_item_new(ecs_entity_t entity, const gchar *name)
 static void tscene_item_set_name(TSceneItem *self, const gchar *name)
 {
     g_object_set(self, "name", name, NULL);
-    gobu_ecs_scene_rename(self->entity, name);
+    go_ecs_scene_rename(self->entity, name);
 
-    g_autofree gchar *thumbnail_path = gobu_util_path_build(gapp_get_project_path(), "saved", gobu_util_string_format("scene_thumbnail_%s.jpg", name));
-    if (gobu_util_path_exist(thumbnail_path))
+    g_autofree gchar *thumbnail_path = go_util_path_build(gapp_get_project_path(), "saved", go_util_string_format("scene_thumbnail_%s.jpg", name));
+    if (go_util_path_exist(thumbnail_path))
         gtk_image_set_from_file(self->icon, thumbnail_path);
 
     gtk_label_set_text(GTK_LABEL(self->label), name);
@@ -137,7 +137,7 @@ static void object_class_dispose(GObject *object)
 {
     GappSceneManager *self = GAPP_SCENE_MANAGER(object);
 
-    ecs_delete(gobu_ecs_world(), self->event_observer1);
+    ecs_delete(go_ecs_world(), self->event_observer1);
 
     G_OBJECT_CLASS(gapp_scene_manager_parent_class)->dispose(object);
 }
@@ -201,7 +201,7 @@ static void gapp_scene_manager_init(GappSceneManager *self)
         }
     }
 
-    self->event_observer1 = gobu_ecs_observer(gbOnSceneCreate, signal_observer_scene_create, self);
+    self->event_observer1 = go_ecs_observer(gbOnSceneCreate, signal_observer_scene_create, self);
 }
 
 // -----------------
@@ -212,8 +212,8 @@ static GListStore *gapp_scene_manager_get_scene_list(void)
 {
     GListStore *store = g_list_store_new(TSCENEITEM_TYPE_ITEM);
 
-    ecs_query_t *q = ecs_query(gobu_ecs_world(), {.terms = {{gbTagScene}, {EcsDisabled, .oper = EcsOptional}}});
-    ecs_iter_t it = ecs_query_iter(gobu_ecs_world(), q);
+    ecs_query_t *q = ecs_query(go_ecs_world(), {.terms = {{gbTagScene}, {EcsDisabled, .oper = EcsOptional}}});
+    ecs_iter_t it = ecs_query_iter(go_ecs_world(), q);
 
     while (ecs_query_next(&it))
         for (int i = 0; i < it.count; i++)
@@ -230,7 +230,7 @@ static int g_list_store_sort_by_name(TSceneItem *item_a, TSceneItem *item_b, gpo
 
 static void gapp_scene_manager_append(GListStore *store, ecs_entity_t clone)
 {
-    const gchar *name = ecs_get_name(gobu_ecs_world(), clone);
+    const gchar *name = ecs_get_name(go_ecs_world(), clone);
     TSceneItem *item_clone = tscene_item_new(clone, name);
     g_list_store_append(store, item_clone);
 }
@@ -244,7 +244,7 @@ static void signal_grid_view_activated(GtkGridView *view, guint position, GappSc
     GtkNoSelection *selection = gtk_grid_view_get_model(view);
     TSceneItem *item = TSCENEITEM_ITEM(g_object_ref(g_list_model_get_item(G_LIST_MODEL(selection), position)));
 
-    gobu_ecs_scene_open(item->entity);
+    go_ecs_scene_open(item->entity);
     // gtk_widget_add_css_class(gtk_widget_get_ancestor(item->icon, GTK_TYPE_BOX) , "active_scene");
     gtk_window_close(GTK_WINDOW(self));
 }
@@ -296,21 +296,21 @@ static void signal_factory_bind_item(GtkListItemFactory *factory, GtkListItem *l
     item->label = gtk_widget_get_next_sibling(item->icon);
     g_return_if_fail(GTK_IS_LABEL(item->label));
 
-    g_autofree gchar *thumbnail_path = gobu_util_path_build(gapp_get_project_path(), "saved", gobu_util_string_format("scene_thumbnail_%s.jpg", item->name));
-    if (gobu_util_path_exist(thumbnail_path))
+    g_autofree gchar *thumbnail_path = go_util_path_build(gapp_get_project_path(), "saved", go_util_string_format("scene_thumbnail_%s.jpg", item->name));
+    if (go_util_path_exist(thumbnail_path))
         gtk_image_set_from_file(item->icon, thumbnail_path);
 
     gtk_label_set_text(GTK_LABEL(item->label), item->name);
 
     // Seleccionamos el item si esta activo
-    if (gobu_ecs_is_enabled(item->entity))
+    if (go_ecs_is_enabled(item->entity))
         gtk_widget_add_css_class(box, "active_scene");
     else gtk_widget_remove_css_class(box, "active_scene");
 }
 
 static void signal_create_scene(GtkWidget *widget, GappSceneManager *self)
 {
-    gobu_ecs_scene_new("Scene");
+    go_ecs_scene_new("Scene");
 }
 
 static void signal_observer_scene_create(ecs_iter_t *it)
@@ -350,7 +350,7 @@ static void signal_gesture_menu_context_list_item(GtkGesture *gesture, guint n_p
 
             gtk_box_append(GTK_BOX(vbox), gapp_widget_separator_h());
 
-            bool is_remove = (gobu_ecs_scene_count() > 1 && gobu_ecs_scene_get_open() != entityScene);
+            bool is_remove = (go_ecs_scene_count() > 1 && go_ecs_scene_get_open() != entityScene);
 
             GtkWidget *btn_delete = gapp_widget_button_new_icon_with_label("user-trash-full-symbolic", "Delete");
             gtk_widget_set_sensitive(btn_delete, is_remove);
@@ -368,7 +368,7 @@ static void signal_rename_scene_response(GtkWidget *button, GappWidgetDialogEntr
     GappSceneManager *self = g_object_get_data(G_OBJECT(dialog->data), "GappSceneManager");
 
     const char *name = gapp_widget_entry_get_text(GTK_ENTRY(dialog->entry));
-    if (gobu_ecs_scene_get_by_name(name) > 0)
+    if (go_ecs_scene_get_by_name(name) > 0)
         gtk_widget_add_css_class(dialog->entry, "error");
     else
     {
@@ -404,7 +404,7 @@ static void signal_duplicate_scene(GtkWidget *button, GtkListItem *list_item)
     TSceneItem *item = gtk_list_item_get_item(list_item);
     GappSceneManager *self = g_object_get_data(G_OBJECT(list_item), "GappSceneManager");
 
-    ecs_entity_t clone = gobu_ecs_scene_clone(item->entity);
+    ecs_entity_t clone = go_ecs_scene_clone(item->entity);
     gapp_scene_manager_append(self->store, clone);
 }
 
@@ -418,7 +418,7 @@ static void signal_delete_scene_response(GtkAlertDialog *dialog, GAsyncResult *r
         GappSceneManager *self = g_object_get_data(G_OBJECT(list_item), "GappSceneManager");
         guint position = gtk_list_item_get_position(list_item);
 
-        gobu_ecs_scene_delete(item->entity);
+        go_ecs_scene_delete(item->entity);
         g_list_store_remove(self->store, position);
     }
 }

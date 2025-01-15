@@ -44,7 +44,7 @@ GappInspector *gapp_inspector_new(void)
 static void gapp_inspector_handle_entity_enabled_toggle(GtkWidget *widget, GappInspector *self)
 {
     gboolean enabled = gtk_check_button_get_active(GTK_CHECK_BUTTON(widget));
-    gobu_ecs_enable(self->entity, enabled);
+    go_ecs_enable(self->entity, enabled);
     gapp_inspector_set_target_entity(self, self->entity);
 }
 
@@ -54,9 +54,9 @@ static void gapp_inspector_handle_entity_name_change(GtkEditable *widget, GappIn
 
     const gchar *name = gtk_editable_get_text(widget);
 
-    if (ecs_lookup(gobu_ecs_world(), name) == 0)
+    if (ecs_lookup(go_ecs_world(), name) == 0)
     {
-        gobu_ecs_set_name(self->entity, name);
+        go_ecs_set_name(self->entity, name);
     }
     else
     {
@@ -66,10 +66,10 @@ static void gapp_inspector_handle_entity_name_change(GtkEditable *widget, GappIn
 
 static void gapp_inspector_create_entity_properties(GappInspector *self, GtkWidget *size_group)
 {
-    bool enabled = gobu_ecs_is_enabled(self->entity);
-    const char *name = gobu_ecs_name(self->entity);
+    bool enabled = go_ecs_is_enabled(self->entity);
+    const char *name = go_ecs_name(self->entity);
 
-    GtkWidget *content = gapp_inspector_create_component_group(self->listbox, FALSE, "gb_entity_t", 0, 0);
+    GtkWidget *content = gapp_inspector_create_component_group(self->listbox, FALSE, "go_entity_t", 0, 0);
 
     GtkWidget *entity_enabled = gtk_check_button_new();
     gtk_check_button_set_active(GTK_CHECK_BUTTON(entity_enabled), enabled);
@@ -100,12 +100,12 @@ static void field_callback(GtkWidget *parent, GtkWidget *input, const char *fiel
 
 static void inspector_load_component(GappInspector *self, ecs_entity_t entity)
 {
-    if (!gobu_ecs_is_enabled(entity))
+    if (!go_ecs_is_enabled(entity))
         return;
 
-    ecs_world_t *world = gobu_ecs_world();
+    ecs_world_t *world = go_ecs_world();
 
-    const ecs_type_t *type = ecs_get_type(gobu_ecs_world(), entity);
+    const ecs_type_t *type = ecs_get_type(go_ecs_world(), entity);
 
     for (uint32_t i = type->count - 1; i < type->count; i--)
     {
@@ -118,7 +118,7 @@ static void inspector_load_component(GappInspector *self, ecs_entity_t entity)
         if (!component_ptr)
             continue;
 
-        const char *component_name = gobu_ecs_name(e_component);
+        const char *component_name = go_ecs_name(e_component);
 
         GtkWidget *expander = gapp_inspector_create_component_group(self->listbox, FALSE, component_name, entity, e_component);
         g_object_set_data(G_OBJECT(expander), "size-group", self->size_group);
@@ -135,7 +135,7 @@ void gapp_inspector_set_target_entity(GappInspector *self, ecs_entity_t entity)
 
     self->entity = entity;
 
-    bool is_scene = gobu_ecs_scene_has(entity);
+    bool is_scene = go_ecs_scene_has(entity);
 
     if (!is_scene)
         gapp_inspector_create_entity_properties(self, self->size_group);

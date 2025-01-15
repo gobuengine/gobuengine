@@ -14,7 +14,7 @@ struct _GappViewport
 {
     GtkWidget parent;
     gboolean initialized;
-    gfx_backend_t *context_render;
+    go_gfx_context_t gfx_context;
     guint loop;
     guint framebuffer_id;
 };
@@ -80,7 +80,7 @@ static void gapp_s_resize(GappViewport *area, gint width, gint height)
         return;
 
     if (area->initialized)
-        gfxb_viewport_resize(area->context_render, width, height);
+        go_gfx_viewport_set_resize(width, height);
 }
 
 static gboolean gapp_s_render(GappViewport *area, GdkGLContext *context, gpointer data)
@@ -96,9 +96,8 @@ static gboolean gapp_s_render(GappViewport *area, GdkGLContext *context, gpointe
         glGetIntegerv(GL_FRAMEBUFFER_BINDING, &area->framebuffer_id);
 
         area->initialized = TRUE;
-        area->context_render = gfxb_viewport_create();
-        gfxb_viewport_resize(area->context_render, width, height);
-        gfxb_viewport_framebuffer(area->context_render, area->framebuffer_id);
+        go_gfx_init(&area->gfx_context, width, height);
+        go_gfx_viewport_set_framebuffer(area->framebuffer_id);
         g_signal_emit(area, signals[VIEWPORT_READY], 0);
     }
 
@@ -125,7 +124,7 @@ static void gapp_s_unrealize(GtkWidget *widget, GappViewport *self)
         return;
 
     gtk_widget_remove_tick_callback(self, self->loop);
-    gfxb_destroy(self->context_render);
+    // go_gfx_shutdown();
 }
 
 static gboolean gapp_tick_callback(GtkWidget *widget, GdkFrameClock *frame_clock, gpointer user_data)
@@ -139,12 +138,6 @@ static gboolean gapp_tick_callback(GtkWidget *widget, GdkFrameClock *frame_clock
 GappViewport *gapp_widget_viewport_new(void)
 {
     return g_object_new(GAPP_WIDGET_TYPE_VIEWPORT, NULL);
-}
-
-gfx_backend_t *gapp_widget_viewport_context(GappViewport *self)
-{
-    g_return_val_if_fail(GAPP_WIDGET_IS_VIEWPORT(self), NULL);
-    return self->context_render;
 }
 
 // -- END API PUBLIC

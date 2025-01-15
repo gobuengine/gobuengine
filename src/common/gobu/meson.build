@@ -2,7 +2,7 @@ message('Build: module::libgobu')
 
 cc = meson.get_compiler('c')
 
-renderer_selected = get_option('brender')
+renderer_selected = get_option('backrender')
 
 # Definiciones de backends
 backends_defines = {
@@ -35,14 +35,35 @@ endif
 
 libgobu_src = files(
     'externs/flecs.c',
-    'gb_audio.c',
-    'gb_ecs.c',
-    'gfx_backend.c', # TODO: Move to renderer
-    'gb_shapes.c',
-    'gb_text.c',
-    'gb_texture.c',
-    'gb_util.c',
+    'gobu-backend-sokol.c',
+    'gobu-util.c',
+    'gobu-ecs.c',
+    'gobu-gfx.c',
+    'gobu-input.c',
+    'gobu-renderer-draw.c',
+    'gobu-text.c',
+    'gobu-texture.c',
+    'gobu-audio.c',
 )
+
+libgobu_header = files(
+    'gobu.h',
+    'gobu-backend-sokol.h',
+    'gobu-util.h',
+    'gobu-ecs.h',
+    'gobu-gfx.h',
+    'gobu-input.h',
+    'gobu-renderer-draw.h',
+    'gobu-gfx-internal.h',
+    'gobu-text.h',
+    'gobu-texture.h',
+    'gobu-audio.h',
+)
+
+message('Renderer selected: ' + backends_defines[renderer_selected])
+
+# headers
+install_headers(libgobu_header, subdir: 'gobu')
 
 libgobu = static_library('gobu', libgobu_src, dependencies: deps, install: true, c_args : backends_defines[renderer_selected])
 

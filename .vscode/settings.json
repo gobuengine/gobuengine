@@ -92,8 +92,26 @@
         "gapp_scene_hierarchy.h": "c",
         "gapp_scene_viewport.h": "c",
         "gapp_wviewport.h": "c",
-        "gb_input.h": "c",
-        "string.h": "c"
+        "go_input.h": "c",
+        "string.h": "c",
+        "sokol_fontstash.h": "c",
+        "go_type.h": "c",
+        "go_util.h": "c",
+        "go_backend.h": "c",
+        "fontstash.h": "c",
+        "math.h": "c",
+        "windows.h": "c",
+        "go_text.h": "c",
+        "sokol_log.h": "c",
+        "gobu-renderer-draw.h": "c",
+        "gobu-text.h": "c",
+        "gobu-type.h": "c",
+        "gobu-context.h": "c",
+        "gobu-gfx.h": "c",
+        "gobu-gfx-internal.h": "c",
+        "gobu-util.h": "c",
+        "gobu-texture.h": "c",
+        "gobu-backend-sokol.h": "c"
     },
     "mesonbuild.configureOnOpen": false
 }

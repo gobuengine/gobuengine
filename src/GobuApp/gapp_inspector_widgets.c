@@ -2,7 +2,7 @@
 #include "gapp_widget.h"
 #include "types/type_enum.h"
 
-static GdkRGBA gb_color_to_gdk_rgba(const gb_color_t *color)
+static GdkRGBA go_color_to_gdk_rgba(const go_color_t *color)
 {
     return (GdkRGBA){
         .red = (gdouble)color->r / 255.0,
@@ -11,9 +11,9 @@ static GdkRGBA gb_color_to_gdk_rgba(const gb_color_t *color)
         .alpha = (gdouble)color->a / 255.0};
 }
 
-static gb_color_t gdk_rgba_to_color(const GdkRGBA *gdk_color)
+static go_color_t gdk_rgba_to_color(const GdkRGBA *gdk_color)
 {
-    return (gb_color_t){
+    return (go_color_t){
         .r = (uint8_t)(gdk_color->red * 255.0),
         .g = (uint8_t)(gdk_color->green * 255.0),
         .b = (uint8_t)(gdk_color->blue * 255.0),
@@ -55,28 +55,28 @@ static void signal_input_f32(GtkSpinButton *self, ecs_f32_t *field)
     *field = gtk_spin_button_get_value(self);
 }
 
-static void signal_input_color(GtkColorDialogButton *self, GParamSpec *ignored, gb_color_t *field)
+static void signal_input_color(GtkColorDialogButton *self, GParamSpec *ignored, go_color_t *field)
 {
     const GdkRGBA *color = gtk_color_dialog_button_get_rgba(self);
     *field = gdk_rgba_to_color(color);
 }
 
-static void signal_input_vect2_x(GtkSpinButton *self, gb_vec2_t *field)
+static void signal_input_vect2_x(GtkSpinButton *self, go_vec2_t *field)
 {
     field->x = (float)gtk_spin_button_get_value(self);
 }
 
-static void signal_input_vect2_y(GtkSpinButton *self, gb_vec2_t *field)
+static void signal_input_vect2_y(GtkSpinButton *self, go_vec2_t *field)
 {
     field->y = (float)gtk_spin_button_get_value(self);
 }
 
-static void signal_input_size_width(GtkSpinButton *self, gb_size_t *field)
+static void signal_input_size_width(GtkSpinButton *self, go_size_t *field)
 {
     field->width = (float)gtk_spin_button_get_value(self);
 }
 
-static void signal_input_size_height(GtkSpinButton *self, gb_size_t *field)
+static void signal_input_size_height(GtkSpinButton *self, go_size_t *field)
 {
     field->height = (float)gtk_spin_button_get_value(self);
 }
@@ -94,7 +94,7 @@ static void inspector_widget_signal_component_remove(GtkWidget *button, gpointer
 
     GtkWidget *expander = g_object_get_data(G_OBJECT(button), "expander-content");
     gtk_widget_set_visible(expander, FALSE);
-    ecs_remove_id(gobu_ecs_world(), entity, component);
+    ecs_remove_id(go_ecs_world(), entity, component);
 }
 
 static GtkWidget *gapp_inspector_create_text_field(const char *current_text)
@@ -112,7 +112,7 @@ static GtkWidget *gapp_inspector_create_text_field(const char *current_text)
     return text_view;
 }
 
-static GtkWidget *gapp_inspector_create_string_field(ecs_meta_cursor_t cursor, ecs_member_t *member, gb_property_t *props)
+static GtkWidget *gapp_inspector_create_string_field(ecs_meta_cursor_t cursor, ecs_member_t *member, go_property_t *props)
 {
     GtkWidget *input;
     ecs_string_t **field = (ecs_string_t **)ecs_meta_get_ptr(&cursor);
@@ -211,8 +211,8 @@ static GtkWidget *gapp_inspector_create_number_f32_field(ecs_meta_cursor_t curso
 
 static GtkWidget *gapp_inspector_create_color_field(ecs_meta_cursor_t cursor)
 {
-    gb_color_t *field = (gb_color_t *)ecs_meta_get_ptr(&cursor);
-    GdkRGBA color = gb_color_to_gdk_rgba(field);
+    go_color_t *field = (go_color_t *)ecs_meta_get_ptr(&cursor);
+    GdkRGBA color = go_color_to_gdk_rgba(field);
 
     GtkWidget *color_button = gtk_color_dialog_button_new(gtk_color_dialog_new());
     gtk_color_dialog_button_set_rgba(GTK_COLOR_DIALOG_BUTTON(color_button), &color);
@@ -226,7 +226,7 @@ static GtkWidget *gapp_inspector_create_color_field(ecs_meta_cursor_t cursor)
 
 static GtkWidget *gapp_inspector_create_vector2_field(ecs_meta_cursor_t cursor)
 {
-    gb_vec2_t *field = (gb_vec2_t *)ecs_meta_get_ptr(&cursor);
+    go_vec2_t *field = (go_vec2_t *)ecs_meta_get_ptr(&cursor);
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
 
@@ -262,7 +262,7 @@ static GtkWidget *gapp_inspector_create_vector2_field(ecs_meta_cursor_t cursor)
 
 static GtkWidget *gapp_inspector_create_size_field(ecs_meta_cursor_t cursor)
 {
-    gb_size_t *field = (gb_size_t *)ecs_meta_get_ptr(&cursor);
+    go_size_t *field = (go_size_t *)ecs_meta_get_ptr(&cursor);
 
     GtkWidget *box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 1);
 
@@ -378,7 +378,7 @@ static void bind_listitem(GtkListItemFactory *factory, GtkListItem *list_item, g
 
     // TODO: Una func para obtener el icono de los archivos...
     const char *ext_file = g_file_info_get_name(fileinfo);
-    if (gobu_util_is_extension(ext_file, ".png") || gobu_util_is_extension(ext_file, ".jpg"))
+    if (go_util_is_extension(ext_file, ".png") || go_util_is_extension(ext_file, ".jpg"))
         gtk_image_set_from_file(icon, g_file_get_path(file));
     else
         gtk_image_set_from_gicon(GTK_IMAGE(icon), g_file_info_get_icon(fileinfo));
@@ -413,15 +413,15 @@ static GtkWidget *_input_resource(GtkFileFilter *filter, ecs_meta_cursor_t curso
     return box;
 }
 
-static GtkWidget *gapp_inspector_create_resource_field(ecs_meta_cursor_t cursor, ecs_member_t *member, const gb_property_t *props)
+static GtkWidget *gapp_inspector_create_resource_field(ecs_meta_cursor_t cursor, ecs_member_t *member, const go_property_t *props)
 {
     GtkFileFilter *file_filter = gtk_file_filter_new();
 
     ecs_entity_t ftype = ecs_meta_get_type(&cursor);
     const char *field_name = ecs_meta_get_member(&cursor);
-    const char **types = gobu_util_string_split(field_name, "#");
-    const char *type = gobu_util_string(types[1]);
-    gobu_util_string_split_free(types);
+    const char **types = go_util_string_split(field_name, "#");
+    const char *type = go_util_string(types[1]);
+    go_util_string_split_free(types);
 
     if (props == NULL)
     {
@@ -525,22 +525,22 @@ GtkWidget *gapp_inspector_create_component_group(GtkWidget *list, bool buttonRem
 
 void gapp_inspector_create_component_fields(void *ptr, ecs_entity_t component, GtkWidget *parent, GappPropsReadyCallback fieldCallback, gpointer data)
 {
-    ecs_world_t *world = gobu_ecs_world();
+    ecs_world_t *world = go_ecs_world();
 
     struct WidgetCreator
     {
         ecs_entity_t type;
-        GtkWidget *(*create_widget)(ecs_meta_cursor_t, ecs_member_t *, const gb_property_t *props);
+        GtkWidget *(*create_widget)(ecs_meta_cursor_t, ecs_member_t *, const go_property_t *props);
     } WidgetCreator[] = {
         {ecs_id(ecs_string_t), gapp_inspector_create_string_field},
         {ecs_id(ecs_bool_t), gapp_inspector_create_bool_field},
         {ecs_id(ecs_u32_t), gapp_inspector_create_number_u32_field},
         {ecs_id(ecs_f64_t), gapp_inspector_create_number_f64_field},
         {ecs_id(ecs_f32_t), gapp_inspector_create_number_f32_field},
-        {ecs_id(gb_vec2_t), gapp_inspector_create_vector2_field},
-        {ecs_id(gb_size_t), gapp_inspector_create_size_field},
-        {ecs_id(gb_color_t), gapp_inspector_create_color_field},
-        {ecs_id(gb_resource_t), gapp_inspector_create_resource_field},
+        {ecs_id(go_vec2_t), gapp_inspector_create_vector2_field},
+        {ecs_id(go_size_t), gapp_inspector_create_size_field},
+        {ecs_id(go_color_t), gapp_inspector_create_color_field},
+        {ecs_id(go_resource_t), gapp_inspector_create_resource_field},
         {0, NULL} // Marca de fin
         // Agregar más tipos según sea necesario
     };
@@ -556,7 +556,7 @@ void gapp_inspector_create_component_fields(void *ptr, ecs_entity_t component, G
             break;
 
         // props input config field
-        gb_property_t *props = ecs_get_mut(world, ecs_lookup_child(world, component, field_name), gb_property_t);
+        go_property_t *props = ecs_get_mut(world, ecs_lookup_child(world, component, field_name), go_property_t);
         if (props && props->hidden){
             goto NEXT_META;
         }

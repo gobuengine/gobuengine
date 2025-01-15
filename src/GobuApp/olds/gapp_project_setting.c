@@ -61,7 +61,7 @@ static GtkWidget *gapp_project_setting_prop_color_new(const char *tooltip, gchar
     g_object_get(gapp_get_config_instance(), id_property, &value, NULL);
     gtk_color_dialog_button_set_rgba(GTK_COLOR_DIALOG_BUTTON(color_button), (value ? value : &(GdkRGBA){0.0f, 0.0f, 0.0f, 1.0f}));
 
-    g_signal_connect(color_button, "notify::rgba", G_CALLBACK(gapp_project_config_s_color_activate), gobu_util_string(id_property));
+    g_signal_connect(color_button, "notify::rgba", G_CALLBACK(gapp_project_config_s_color_activate), go_util_string(id_property));
 
     return color_button;
 }
@@ -85,7 +85,7 @@ static GtkWidget *gapp_project_setting_prop_select_new(const char *const *string
     g_object_get(gapp_get_config_instance(), id_property, &value, NULL);
     gtk_drop_down_set_selected(GTK_DROP_DOWN(select_option), value);
 
-    g_signal_connect(select_option, "notify::selected", G_CALLBACK(gapp_project_config_s_select_activate), gobu_util_string(id_property));
+    g_signal_connect(select_option, "notify::selected", G_CALLBACK(gapp_project_config_s_select_activate), go_util_string(id_property));
 
     return select_option;
 }
@@ -109,7 +109,7 @@ static GtkWidget *gapp_project_setting_prop_check_new(const gchar *label, const 
     g_object_get(gapp_get_config_instance(), id_property, &value, NULL);
     gtk_check_button_set_active(GTK_CHECK_BUTTON(check), value);
 
-    g_signal_connect(check, "toggled", G_CALLBACK(gapp_project_config_s_check_toggled), gobu_util_string(id_property));
+    g_signal_connect(check, "toggled", G_CALLBACK(gapp_project_config_s_check_toggled), go_util_string(id_property));
 
     return check;
 }
@@ -135,7 +135,7 @@ static GtkWidget *gapp_project_setting_prop_number_new(const char *tooltip, gcha
     g_object_get(gapp_get_config_instance(), id_property, &value, NULL);
     gtk_spin_button_set_value(GTK_SPIN_BUTTON(number_spin), value);
 
-    g_signal_connect(number_spin, "value-changed", G_CALLBACK(gapp_project_config_s_spin_button_changed), gobu_util_string(id_property));
+    g_signal_connect(number_spin, "value-changed", G_CALLBACK(gapp_project_config_s_spin_button_changed), go_util_string(id_property));
 
     return number_spin;
 }
@@ -146,7 +146,7 @@ static GtkWidget *gapp_project_setting_prop_number_new(const char *tooltip, gcha
 static void gapp_project_config_s_entry_changed(GtkEditable *self, gchar *id_property)
 {
     const gchar *text = gtk_editable_get_text(GTK_EDITABLE(self));
-    g_object_set(gapp_get_config_instance(), id_property, gobu_util_string(text), NULL);
+    g_object_set(gapp_get_config_instance(), id_property, go_util_string(text), NULL);
 }
 
 static GtkWidget *gapp_project_setting_prop_entry_new(const char *placeholder, const char *tooltip, const gchar *id_property)
@@ -164,7 +164,7 @@ static GtkWidget *gapp_project_setting_prop_entry_new(const char *placeholder, c
     gapp_widget_entry_set_text(entry, (value ? value : ""));
     g_free(value);
 
-    g_signal_connect(entry, "changed", G_CALLBACK(gapp_project_config_s_entry_changed), gobu_util_string(id_property));
+    g_signal_connect(entry, "changed", G_CALLBACK(gapp_project_config_s_entry_changed), go_util_string(id_property));
 
     return entry;
 }
@@ -175,7 +175,7 @@ static GtkWidget *gapp_project_setting_prop_entry_new(const char *placeholder, c
 static void gapp_project_config_s_text_view_changed(GtkTextBuffer *self, gchar *id_property)
 {
     gchar *text = gapp_widget_text_view_get_text(self);
-    g_object_set(gapp_get_config_instance(), id_property, gobu_util_string(text), NULL);
+    g_object_set(gapp_get_config_instance(), id_property, go_util_string(text), NULL);
     g_free(text);
 }
 
@@ -196,7 +196,7 @@ static GtkWidget *gapp_project_setting_prop_text_view_new(const gchar *id_proper
     gapp_widget_text_view_set_text(text_view, (value ? value : ""));
     g_free(value);
 
-    g_signal_connect(gtk_text_view_get_buffer(text_view), "changed", G_CALLBACK(gapp_project_config_s_text_view_changed), gobu_util_string(id_property));
+    g_signal_connect(gtk_text_view_get_buffer(text_view), "changed", G_CALLBACK(gapp_project_config_s_text_view_changed), go_util_string(id_property));
 
     return text_view;
 }

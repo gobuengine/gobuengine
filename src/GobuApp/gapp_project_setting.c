@@ -55,10 +55,10 @@ static void gapp_project_setting_init(GappProjectSetting *self)
     g_object_set_data_full(G_OBJECT(self), "size-group", size_group, g_object_unref);
 
     // ECS GET SETTINGS
-    ecs_entity_t project = gobu_ecs_project_settings();
-    gb_core_project_settings1_t *gameinfo = ecs_get_mut(gobu_ecs_world(), project, gb_core_project_settings1_t);
-    gb_core_project_settings1_t *packaging = ecs_get_mut(gobu_ecs_world(), project, gb_core_project_settings2_t);
-    gb_core_project_settings1_t *renderer = ecs_get_mut(gobu_ecs_world(), project, gb_core_project_settings3_t);
+    ecs_entity_t project = go_ecs_project_settings();
+    go_core_project_settings1_t *gameinfo = ecs_get_mut(go_ecs_world(), project, go_core_project_settings1_t);
+    go_core_project_settings1_t *packaging = ecs_get_mut(go_ecs_world(), project, go_core_project_settings2_t);
+    go_core_project_settings1_t *renderer = ecs_get_mut(go_ecs_world(), project, go_core_project_settings3_t);
 
     GtkWidget *input_props;
     {
@@ -67,20 +67,20 @@ static void gapp_project_setting_init(GappProjectSetting *self)
             listbox = gapp_project_create_settings_group("Game info");
             gtk_box_append(vbox, listbox);
             {
-                gapp_inspector_create_component_fields(gameinfo, ecs_id(gb_core_project_settings1_t), listbox, gapp_project_setting_handle_field, self);
+                gapp_inspector_create_component_fields(gameinfo, ecs_id(go_core_project_settings1_t), listbox, gapp_project_setting_handle_field, self);
             }
 
             listbox = gapp_project_create_settings_group("Packaging");
             gtk_box_append(vbox, listbox);
             {
-                gapp_inspector_create_component_fields(packaging, ecs_id(gb_core_project_settings2_t), listbox, gapp_project_setting_handle_field, self);
+                gapp_inspector_create_component_fields(packaging, ecs_id(go_core_project_settings2_t), listbox, gapp_project_setting_handle_field, self);
             }
 
             listbox = gapp_project_create_settings_group("Resolution and rendering");
             gtk_widget_set_margin_bottom(listbox, 30);
             gtk_box_append(vbox, listbox);
             {
-                gapp_inspector_create_component_fields(renderer, ecs_id(gb_core_project_settings3_t), listbox, gapp_project_setting_handle_field, self);
+                gapp_inspector_create_component_fields(renderer, ecs_id(go_core_project_settings3_t), listbox, gapp_project_setting_handle_field, self);
             }
         }
     }
@@ -207,12 +207,12 @@ void gapp_project_setting_show(GappProjectSetting *self)
 
 void gapp_project_settings_set_name(const char *name)
 {
-    gb_core_project_settings1_t *settings = ecs_get_mut(gobu_ecs_world(), gobu_ecs_project_settings(), gb_core_project_settings1_t);
-    settings->name = gobu_util_string(name);
+    go_core_project_settings1_t *settings = ecs_get_mut(go_ecs_world(), go_ecs_project_settings(), go_core_project_settings1_t);
+    settings->name = go_util_string(name);
 }
 
 const char *gapp_project_settings_name(void)
 {
-    gb_core_project_settings1_t *settings = ecs_get_mut(gobu_ecs_world(), gobu_ecs_project_settings(), gb_core_project_settings1_t);
+    go_core_project_settings1_t *settings = ecs_get_mut(go_ecs_world(), go_ecs_project_settings(), go_core_project_settings1_t);
     return settings->name;
 }
